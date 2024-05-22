@@ -35,19 +35,21 @@ app.use(bodyParser.json());
 app.use(cors());
 
 if (env === 'development') {
-  return morgan('dev');
+  app.use(morgan('dev'));
 } else if (env === 'production') {
-  return morgan('combined');
+  app.use(morgan('combined'));
 } else {
-  return morgan('tiny');
+  app.use(morgan('tiny'));
 }
 // app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, 'public')));
 
 // route
-const registerRoutes = require('./app/routes');
-registerRoutes(app);
-
+//const registerRoutes = require('./app/routes');
+//registerRoutes(app);
+// Register routes
+const userMarketRoutes = require('./app/routes/userMarketRoutes');
+app.use('/api', userMarketRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
