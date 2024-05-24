@@ -1,9 +1,9 @@
 // app/controllers/UserMarketController.js
-const UserMarketService = require('../services/userMarketService');
+const UsermarketService = require('../services/usermarketService');
 const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../constants/statusCodes');
-
-class UserMarketController {
+const BinanceAuthService = require('../services/binanceAuthService');
+class UsermarketController {
 
   // const getUsers = async (req, res) => {
   //   const users = await userService.getAllUsers();
@@ -14,34 +14,34 @@ class UserMarketController {
   //   const newUser = await userService.createUser(req.body);
   //   res.success(res, newUser, STATUS_TYPE.http.created, STATUS_TYPE.success);
   // };
-  async getAllUserMarkets(req, res) {
+  async getAllUsermarkets(req, res) {
     try {
-      const userMarkets = await UserMarketService.getAllUserMarkets();
+      const userMarkets = await UsermarketService.getAllUsermarkets();
       ResponseHandler.success(res, userMarkets);
     } catch (error) {
       ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
     }
   }
 
-  async getUserMarketById(req, res) {
+  async getUsermarketById(req, res) {
     try {
-      const userMarket = await UserMarketService.getUserMarketById(req.params.id);
+      const userMarket = await UsermarketService.getUsermarketById(req.params.id);
       if (userMarket) {
           ResponseHandler.success(res, userMarket);
       } else {
-          ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.internalError, 'UserMarket not found');
+          ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.internalError, 'Usermarket not found');
         }
       } catch (error) {
         ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
       }
     }
   
-  async createUserMarket(req, res) {
+  async createUsermarket(req, res) {
     try {
-      const { name, exchange, accessKey, secretKey, remarks } = req.body;
-      const userMarketData = { name, exchange, accessKey, secretKey, remarks };
-      console.log(userMarketData); // Debug log
-      const userMarket = await UserMarketService.createUserMarket( userMarketData );
+      const { exchange, accessKey, secretKey, desc } = req.body;
+      const usermarketData = { exchange, accessKey, secretKey, desc };
+      console.log(usermarketData); // Debug log
+      const userMarket = await UsermarketService.createUsermarket( usermarketData );
       ResponseHandler.success(res, userMarket, STATUS_TYPE.created);
     } catch (error) {
       console.error(error); // Debug log
@@ -49,5 +49,16 @@ class UserMarketController {
     }
   }
 
+  async getAccountInfo(req, res) {
+    try {
+      const { apiKey, apiSecret } = req.body; // 从请求体中获取API Key和Secret Key
+      const binanceAuthService = new BinanceAuthService(apiKey, apiSecret);
+      const accountInfo = await binanceAuthService.getAccountInfo();
+      ResponseHandler.success(res, accountInfo);
+    } catch (error) {
+      ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
+    }
+  }
+
 }
-module.exports = new UserMarketController();
+module.exports = new UsermarketController();

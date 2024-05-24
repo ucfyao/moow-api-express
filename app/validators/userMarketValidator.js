@@ -1,7 +1,4 @@
-const createUserMarketValidatorSchema = {
-    name: {
-      notEmpty: { errorMessage: 'Name is required' }
-    },
+const createUsermarketValidatorSchema = {
     exchange: {
       notEmpty: { errorMessage: 'Exchange is required' }
     },
@@ -11,17 +8,10 @@ const createUserMarketValidatorSchema = {
     secretKey: {
       notEmpty: { errorMessage: 'SecretKey is required' }
     },
-    remarks: {
+    desc: {
       trim: true,
-      notEmpty: { errorMessage: 'Remarks is required' }
-    },
-    url: {
-      trim: true,
-      optional: true,
-      isURL: {
-        errorMessage: 'URL must be valid'
-      }
+      notEmpty: { errorMessage: 'Describtion is required' }
     },
     
   };
-module.exports = { createUserMarketValidatorSchema };
+module.exports = { createUsermarketValidatorSchema };

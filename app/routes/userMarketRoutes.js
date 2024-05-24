@@ -1,15 +1,17 @@
 // routes/usermarketRoutes.js
 const express = require('express');
-const UserMarketController = require('../controllers/userMarketController');
+const UsermarketController = require('../controllers/usermarketController');
 const validateParams = require('../middlewares/validateMiddleware');
 
-const { createUserMarketValidatorSchema } = require('../validators/userMarketValidator');
+const { createUsermarketValidatorSchema } = require('../validators/userMarketValidator');
 
 const router = express.Router();
 
-router.get('/usermarkets', UserMarketController.getAllUserMarkets);
-router.post('/usermarkets', validateParams(createUserMarketValidatorSchema), UserMarketController.createUserMarket);
-router.get('/usermarkets/:id', UserMarketController.getUserMarketById);
+router.get('/usermarkets', UsermarketController.getAllUsermarkets);
+router.post('/usermarkets', validateParams(createUsermarketValidatorSchema), UsermarketController.createUsermarket);
+router.get('/usermarkets/:id', UsermarketController.getUsermarketById);
+
+router.post('/account-info', UsermarketController.getAccountInfo);
 // router.put('/usermarkets/:id', UserMarketController.updateUserMarket);
 // router.delete('/usermarkets/:id', UserMarketController.deleteUserMarket);
 

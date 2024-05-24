@@ -1,22 +1,22 @@
-// services/userMarketService.js
+// services/usermarketService.js
 const UserMarket = require('../models/userMarket');
 
-class UserMarketService {
-  async getAllUserMarkets() {
+class UsermarketService {
+  async getAllUsermarkets() {
     return UserMarket.find();
   }
 
-  async getUserMarketById(id) {
+  async getUsermarketById(id) {
     return UserMarket.findById(id);
   }
 
   
-  async createUserMarket(userMarketData) {
-    if (typeof userMarketData !== 'object' || userMarketData === null) {
-      console.error('Service userMarketData:', userMarketData); // Debug log
-      throw new Error('Invalid argument: userMarketData must be an object');
+  async createUsermarket(usermarketData) {
+    if (typeof usermarketData !== 'object' || usermarketData === null) {
+      console.error('Service usermarketData:', usermarketData); // Debug log
+      throw new Error('Invalid argument: usermarketData must be an object');
     }
-    const userMarket = new UserMarket(userMarketData);
+    const userMarket = new UserMarket(usermarketData);
     return userMarket.save();
   }
 
@@ -27,4 +27,4 @@ class UserMarketService {
 
 }
 
-module.exports = new UserMarketService();
+module.exports = new UsermarketService();

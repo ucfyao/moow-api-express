@@ -52,7 +52,8 @@ const userMarketRoutes = require('./app/routes/userMarketRoutes');
 app.use('/api', userMarketRoutes);
 const userRoutes = require('./app/routes/userRoutes');
 app.use('/api', userRoutes);
-
+const marketRoutes = require('./app/routes/marketRoutes');
+app.use('/api', marketRoutes);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
