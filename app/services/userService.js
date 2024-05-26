@@ -41,7 +41,7 @@ class UserService {
     user.seq_Id = await sequenceService.getNextSequenceValue('portal_user');
     user.referral_code = hashidsEncode(user.seq_Id);
 
-    // TODO 自动直接激活
+    // TODO  temporaryily auto active new user
     user.is_activated = true;
     // give new user 10 days vip
     user.vip_time_out_at = moment().add(10, 'days').toDate();
@@ -56,7 +56,7 @@ class UserService {
     //const { from, coin, sign } = giveToken;
     //await assets.sendToken({ from, email: user.email, token: coin, amount: sign, describe: 'signup', invitee: '', invitee_email: '' });
 
-    // TODO 先取消邮件激活功能
+    // TODO ignore the email service temporarily
     // const userId = doc._id;
     // const start = Date.now();
     // await this.sendActivateEmail({ userId });

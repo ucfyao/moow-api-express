@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema({
   instagram: { type: String, default: '', trim: true }, // instagram account
   referral_code: { type: String, trim: true}, // user's own referral code 
   //role: { type: Schema.Types.ObjectId, ref: 'PortalRole', default: [] }, // role resource
-  last_LoginTime: { type: Date }, // lastest login time
+  last_login_ime: { type: Date }, // lastest login time
   vip_time_out_at: { type: Date }, // VIP expire time
   last_login_IP: { type: String, trim: true }, // lastest login IP
   is_activated: { type: Boolean, default: false }, // check user already active

@@ -1,4 +1,4 @@
-const CommonConfigModel = require('../models/commonConfigModel');  // 确保你有相应的Mongoose模型
+const CommonConfigModel = require('../models/commonConfigModel');
 
 class CommonConfigService {
   constructor() {
