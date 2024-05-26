@@ -47,6 +47,7 @@ const StartegySchema = new mongoose.Schema({
         timestamps: true, // Automatically adds createdAt and updatedAt fields
         collection: 'strategy',
     });
-    
-module.exports = mongoose.model('Startegy', StartegySchema);
+
+const Strategy = mongoose.model('Startegy', StartegySchema);
+module.exports = Strategy;
 
