@@ -18,8 +18,6 @@ route.get('/strategies/:id', strategyController.getStrategyById);
 // update a single strategy 
 route.patch('/strategies/:id', strategyController.getStrategyById); 
 
-// view all oder histories of a single strategy
-route.get('/oders', oderController.getAlloders); 
 
 module.exports = route;
 

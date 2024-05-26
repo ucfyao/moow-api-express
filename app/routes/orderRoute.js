@@ -1,5 +1,5 @@
 const express = require('express');
-const oderController = require('../controllers/oderController');
+const orderController = require('../controllers/orderController');
 const validateParams = require('../middlewares/validateMiddleware');
 
 // const {creategetEachStrategySchema} = require('../validators/getEachStrategyValidator')
@@ -9,7 +9,6 @@ const route = express.Router();
 
 // RESTful API routes for investment strategies
 // view all oder histories of a single strategy
-route.get('/oders', oderController.getAllorders); 
-route.get('/oders?id=:id', oderController.getOrderById); 
+route.get('/orders?strategy_id=:strategy_id', orderController.getOrders); 
 
 module.exports = route;

@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
-const OderModel = new mongoose.Schema({
+const OrderModel = new mongoose.Schema({
 
     strategy_id: { type: String, trim: true }, // Strategy id
-    order_id: { type: String, trim: true }, // Oder id
+    order_id: { type: String, trim: true }, // Order id
     type: { type: String, trim: true }, // Order category
     price: { type: String, trim: true }, // Order price
     side: { type: String, trim: true }, // Transaction type: sell, buy
@@ -32,8 +32,8 @@ const OderModel = new mongoose.Schema({
 
   }, {
       timestamps: true, // Automatically adds createdAt and updatedAt fields
-      collection: 'oder',
+      collection: 'order',
   });
     
-module.exports = mongoose.model('OderModel', OderModelSchema);
+module.exports = mongoose.model('OrderModel', OrderModelSchema);
 
