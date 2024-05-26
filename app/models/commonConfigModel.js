@@ -11,4 +11,4 @@ const ConfigSchema = new mongoose.Schema({
   collection: 'common_config' 
 });
 
-module.exports = mongoose.model('CommonConfig', ConfigSchema);
+module.exports = mongoose.model('common_config', ConfigSchema);

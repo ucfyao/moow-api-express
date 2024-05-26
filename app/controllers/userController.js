@@ -35,6 +35,8 @@ class UserController {
     } catch (error) {
       if (error.message === 'Email already registered') {
         ResponseHandler.fail(res, STATUS_TYPE.conflict, STATUS_TYPE.otherError, error.message);
+      } else if (error.message === 'Your reference code is invalid.') {
+        ResponseHandler.fail(res, STATUS_TYPE.badRequest, STATUS_TYPE.otherError, error.message);
       } else {
         ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
       } 

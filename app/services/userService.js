@@ -4,7 +4,7 @@ const moment = require('moment');
 const {hashidsEncode, hashidsDecode} = require('../utils/hashidsHandler');
 const {generatePassword, comparePassword} = require('../utils/passwordHandler');
 const sequenceService = require('./sequenceService');
-const commonConfig = require('./commonConfig')
+const commonConfig = require('./commonConfigService')
 //const assets = require('./assets');
 class UserService {
   async getAllUsers() {
@@ -26,22 +26,25 @@ class UserService {
     // if new user is recommanded by other user, we can get referrer's information
     if (refCode) {
       const seqId = await hashidsDecode(refCode);
-      const refUser = await User.findOne({ seqId }).lean();
+      const refUser = await User.findOne({ seq_Id: seqId }).lean();
       if (refUser) {
-        user.ref = refUser._id;
+        user.referrer = refUser._id;
+      } else{
+        throw new Error('Your reference code is invalid.');
       }
     }
 
     const pwdObj = await generatePassword(user.password);
     user.salt = pwdObj.salt;
     user.password = pwdObj.password;
-    user.nickName = name;
-    user.seqId = await sequenceService.getNextSequenceValue('portal_user');
+    user.nick_name = name;
+    user.seq_Id = await sequenceService.getNextSequenceValue('portal_user');
+    user.referral_code = hashidsEncode(user.seq_Id);
 
     // TODO 自动直接激活
-    user.isActivated = true;
-    // 默认新注册用户免费会员的天数
-    user.vipTimeoutAt = moment().add(10, 'days').toDate();
+    user.is_activated = true;
+    // give new user 10 days vip
+    user.vip_time_out_at = moment().add(10, 'days').toDate();
 
     const doc = await user.save();
 
@@ -49,8 +52,8 @@ class UserService {
       throw new Error('Failed to register, please try again.');
     }
 
-    const giveToken = await commonConfig.getGiveToken();
-    const { from, coin, sign } = giveToken;
+    //const giveToken = await commonConfig.getGiveToken();
+    //const { from, coin, sign } = giveToken;
     //await assets.sendToken({ from, email: user.email, token: coin, amount: sign, describe: 'signup', invitee: '', invitee_email: '' });
 
     // TODO 先取消邮件激活功能

@@ -1,4 +1,4 @@
-const SequenceCounter = require('../models/sequenceCounter'); // 引入模型
+const SequenceCounter = require('../models/sequenceCounterModel'); // 引入模型
 
 class SequenceService {
   static async getNextSequenceValue(sequenceName) {
