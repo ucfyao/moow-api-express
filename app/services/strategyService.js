@@ -1,25 +1,25 @@
-const EachStrategy = require('../models/getEachStrategyModel');
+const Strategy = require('../models/strategyModel');
 
-class EachStrategyService {
+class StrategyService {
 
   async getAllStrategies() {
-    return EachStrategy.find();
+    return Strategy.find();
   }
 
   async getStrategyById(id) {
-    return EachStrategy.findById(id);
+    return Strategy.findById(id);
   }
 
-  async createEachStrategy(EachStrategyData) {
-    if (typeof EachStrategyData !== 'object' || EachStrategyData === null) {
-      console.error('Service EachStrategyData:', EachStrategyData); // Debug log
-      throw new Error('Invalid argument: EachStrategyData must be an object');
+  async createStrategy(StrategyData) {
+    if (typeof StrategyData !== 'object' || StrategyData === null) {
+      console.error('Service StrategyData:', StrategyData); // Debug log
+      throw new Error('Invalid argument: StrategyData must be an object');
     }
-    const eachstrategy = new Market(EachStrategyData);
-    return eachstrategy.save();
+    const strategy = new Market(StrategyData);
+    return strategy.save();
   }
 }
 
-module.exports = new EachStrategyService();
+module.exports = new StrategyService();
 
 
