@@ -9,7 +9,7 @@ class StrategyController {
       const strategy = await strategyService.getAllStrategies();
       ResponseHandler.success(res, strategy);
     } catch (error) { 
-      ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
+      ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, error.message);
     }
   }
 
@@ -19,10 +19,10 @@ class StrategyController {
       if (strategy) {
         ResponseHandler.success(res, strategy);
       } else {
-        ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.internalError, 'Strategy not found');
+        ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, 'Strategy not found');
       }
     } catch (error) {
-        ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
+        ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, error.message);
       }
   }
 }
