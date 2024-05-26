@@ -1,6 +1,10 @@
+/*
+  单条策略详情
+*/
+
 const mongoose = require('mongoose');
 
-const getEachStrategySchema = new mongoose.Schema({
+const StrategyInfoSchema = new mongoose.Schema({
     // id: { type: String, unique: true, trim: true }, // 自增id
 
     strategy_id: { type: String, trim: true }, // 定投策略id
@@ -32,9 +36,9 @@ const getEachStrategySchema = new mongoose.Schema({
     profit_percentage: { type: Number, default: 0 }, // 购买完成后当前利润率
 
   }, {
-      timestamps: true,
-      collection: 'quants_dingtou_orders',
-});
+      timestamps: true, // 自动添加 createdAt 和 updatedAt 字段
+      collection: 'strategy_info',
+  });
     
-module.exports = mongoose.model('getEachStrategy', getEachStrategySchema);
+module.exports = mongoose.model('StrategyInfo', StrategyInfoSchema);
 
