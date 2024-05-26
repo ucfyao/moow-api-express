@@ -25,7 +25,6 @@ class StrategyController {
         ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
       }
   }
-
 }
 
 module.exports = new StrategyController();

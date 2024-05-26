@@ -2,7 +2,7 @@ const express = require('express');
 const strategyController = require('../controllers/strategyController');
 const validateParams = require('../middlewares/validateMiddleware');
 
-const {creategetEachStrategySchema} = require('../validators/getEachStrategyValidator')
+// const {creategetEachStrategySchema} = require('../validators/getEachStrategyValidator')
 
 const router = express.Router();
 
