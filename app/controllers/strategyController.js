@@ -25,6 +25,8 @@ class StrategyController {
         ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, error.message);
       }
   }
+
+  
 }
 
 module.exports = new StrategyController();
