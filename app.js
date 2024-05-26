@@ -2,7 +2,7 @@ const express = require('express');
 // const path = require('path');
 // var cookieParser = require('cookie-parser');
 const morgan = require('morgan');
-const bodyParser = require('body-parser');
+// const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
@@ -31,22 +31,32 @@ app.use((req, res, next) => {
 });
 
 app.use(helmet());
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 app.use(cors());
 
+
 if (env === 'development') {
-  return morgan('dev');
+  app.use(morgan('dev'));
 } else if (env === 'production') {
-  return morgan('combined');
+  app.use(morgan('combined'));
 } else {
-  return morgan('tiny');
+  app.use(morgan('tiny'));
 }
+// if (env === 'development') {
+//   return morgan('dev');
+// } else if (env === 'production') {
+//   return morgan('combined');
+// } else {
+//   return morgan('tiny');
+// }
 // app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, 'public')));
 
 // route
 const registerRoutes = require('./app/routes');
 registerRoutes(app);
+const getEachStrategyRoutes = require('./app/routes/getEachStrategyRoute')
+app.use('/api', getEachStrategyRoutes)
 
 
 // catch 404 and forward to error handler
