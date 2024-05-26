@@ -29,11 +29,15 @@ class UserController {
 
   async createUser(req, res) {
     try {
-      const { name, email } = req.body;
-      const user = await UserService.createUser(name, email);
+      const { name, email, password, refCode} = req.body;
+      const user = await UserService.createUser(name, email, password, refCode);
       ResponseHandler.success(res, user, STATUS_TYPE.created);
     } catch (error) {
-      ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
+      if (error.message === 'Email already registered') {
+        ResponseHandler.fail(res, STATUS_TYPE.conflict, STATUS_TYPE.otherError, error.message);
+      } else {
+        ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
+      } 
     }
   }
 
