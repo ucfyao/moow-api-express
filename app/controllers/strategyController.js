@@ -7,7 +7,7 @@ class StrategyController {
   async getAllStrategies(req, res) {
     try {
       const strategy = await strategyService.getAllStrategies();
-      ResponseHandler.success(res, strategy);
+      ResponseHandler.success(res, strategy, STATUS_TYPE.created);
     } catch (error) { 
       ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, error.message);
     }
@@ -26,7 +26,24 @@ class StrategyController {
       }
   }
 
-  
+  // create a strategy
+  async createStrategy(){
+    try {
+      const strategy = await strategyService.createStrategy();
+      ResponseHandler.success(res, strategy, STATUS_TYPE.created);
+    } catch (error) { 
+      ResponseHandler.fail(res, STATUS_TYPE.internalServerError, 
+        STATUS_TYPE.internalServerError, error.message);
+    }
+  }
+
+  async updateStrategy(){
+    try {
+
+    } catch {
+      
+    }
+  }
 }
 
 module.exports = new StrategyController();
