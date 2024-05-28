@@ -6,6 +6,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
+const session = require('./config/session');
+
 
 const { STATUS_TYPE } = require('./app/constants/statusCodes');
 const ResponseHandler = require('./app/utils/responseHandler');
@@ -35,7 +37,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 if (env === 'development') {
-  return morgan('dev');
+  morgan('dev');
 } else if (env === 'production') {
   return morgan('combined');
 } else {
@@ -43,6 +45,9 @@ if (env === 'development') {
 }
 // app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, 'public')));
+
+// session 
+app.use(session);
 
 // route
 const registerRoutes = require('./app/routes');
@@ -68,5 +73,7 @@ app.listen(PORT, () => {
   console.log(`http://127.0.0.1:${PORT}`);
 
 });
+
+
 
 module.exports = app;
