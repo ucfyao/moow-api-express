@@ -36,12 +36,13 @@ app.use(helmet());
 app.use(bodyParser.json());
 app.use(cors());
 
+
 if (env === 'development') {
   morgan('dev');
 } else if (env === 'production') {
-  return morgan('combined');
+  morgan('combined');
 } else {
-  return morgan('tiny');
+  morgan('tiny');
 }
 // app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, 'public')));
@@ -59,12 +60,14 @@ app.use(function(req, res, next) {
   ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, '');
 });
 
+
 // error handler
 app.use((error, req, res, next) => {
   const httpCode = error.status || STATUS_TYPE.internalServerError;
   const businessCode = error.businessCode || httpCode;
   ResponseHandler.fail(res, httpCode, businessCode, error.message || 'Internal Server Error');
 });
+
 
 // serve
 const PORT = process.env.PORT || 3000;

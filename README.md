@@ -32,10 +32,10 @@ mongoDB v7.0.2
 1. import initial datas(data/*.json) to mogodb
 
 ```
-mongoimport --db xiaobao --collection portal_resource --file data/portal_resource.json --host 127.0.0.1:27017
-mongoimport --db xiaobao --collection portal_user --file data/portal_user.json --host 127.0.0.1:27017
-mongoimport --db xiaobao --collection common_config --file data/common_config.json --host 127.0.0.1:27017
-mongoimport --db xiaobao --collection market --file data/markets.json --host 127.0.0.1:27017
+mongoimport --db mydatabase --collection portal_resource --file data/portal_resource.json --host 127.0.0.1:27017
+mongoimport --db mydatabase --collection portal_user --file data/portal_user.json --host 127.0.0.1:27017
+mongoimport --db mydatabase --collection common_config --file data/common_config.json --host 127.0.0.1:27017
+mongoimport --db mydatabase --collection market --file data/markets.json --host 127.0.0.1:27017
 ```
 
 2. start node backend
