@@ -55,8 +55,8 @@ if (env === 'development') {
 // route
 const registerRoutes = require('./app/routes');
 registerRoutes(app);
-const getEachStrategyRoutes = require('./app/routes/getEachStrategyRoute')
-app.use('/api', getEachStrategyRoutes)
+const getStrategiesRoutes = require('./app/routes/strategyRoutes')
+app.use('/api', getStrategiesRoutes)
 
 
 // catch 404 and forward to error handler

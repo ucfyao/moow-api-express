@@ -1,6 +1,7 @@
 const express = require('express');
 const strategyController = require('../controllers/strategyController');
 const validateParams = require('../middlewares/validateMiddleware');
+const createStrategyValidatorSchema = require('../validators/createStrategyValidatorSchema');
 
 // const {creategetEachStrategySchema} = require('../validators/getEachStrategyValidator')
 
