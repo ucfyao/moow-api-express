@@ -26,9 +26,9 @@ class UserService {
     // if new user is recommanded by other user, we can get referrer's information
     if (refCode) {
       const seqId = await hashidsDecode(refCode);
-      const refUser = await User.findOne({ seq_Id: seqId }).lean();
+      const refUser = await User.findOne({ seq_id: seqId }).lean();
       if (refUser) {
-        user.referrer = refUser._id;
+        user.inviter = refUser._id;
       } else{
         throw new Error('Your reference code is invalid.');
       }
@@ -38,8 +38,8 @@ class UserService {
     user.salt = pwdObj.salt;
     user.password = pwdObj.password;
     user.nick_name = name;
-    user.seq_Id = await sequenceService.getNextSequenceValue('portal_user');
-    user.referral_code = hashidsEncode(user.seq_Id);
+    user.seq_id = await sequenceService.getNextSequenceValue('portal_user');
+    user.invitation_code = hashidsEncode(user.seq_id);
 
     // TODO  temporaryily auto active new user
     user.is_activated = true;

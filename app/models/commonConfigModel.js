@@ -7,8 +7,11 @@ const ConfigSchema = new mongoose.Schema({
   updated_at: { type: Date }, // latest update time stamp
   created_at: { type: Date }, // creation time stamp
 }, {
-  timestamps: true, 
+  timestamps: {
+    createdAt: 'created_at', 
+    updatedAt: 'updated_at'  
+  }, // auto create created_at and updated_at
   collection: 'common_config' 
 });
 
-module.exports = mongoose.model('common_config', ConfigSchema);
+module.exports = mongoose.model('common_configs', ConfigSchema);
