@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
+const session = require('./config/session');
 
 const { STATUS_TYPE } = require('./app/constants/statusCodes');
 const ResponseHandler = require('./app/utils/responseHandler');
@@ -35,25 +36,22 @@ app.use(bodyParser.json());
 app.use(cors());
 
 if (env === 'development') {
-  app.use(morgan('dev'));
+  morgan('dev');
 } else if (env === 'production') {
-  app.use(morgan('combined'));
+  return morgan('combined');
 } else {
-  app.use(morgan('tiny'));
+  return morgan('tiny');
 }
 // app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, 'public')));
 
+// session 
+app.use(session);
+
 // route
-//const registerRoutes = require('./app/routes');
-//registerRoutes(app);
-// userMarketRoutes
-const userMarketRoutes = require('./app/routes/userMarketRoutes');
-app.use('/api', userMarketRoutes);
-const userRoutes = require('./app/routes/userRoutes');
-app.use('/api', userRoutes);
-const marketRoutes = require('./app/routes/marketRoutes');
-app.use('/api', marketRoutes);
+const registerRoutes = require('./app/routes');
+registerRoutes(app);
+
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
