@@ -36,6 +36,7 @@ class KeyController {
       const { key, validation } = await KeyService.createKey(keyData);
       if (validation) {
         ResponseHandler.success(res, { key, validation }, STATUS_TYPE.created);
+
       } else {
         ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, 'Failed to create key');
       }
