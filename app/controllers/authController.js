@@ -1,4 +1,5 @@
 const svgCaptcha = require("svg-captcha");
+const AuthService = require("../services/authService");
 const ResponseHandler = require("../utils/responseHandler");
 const { STATUS_TYPE } = require("../constants/statusCodes");
 
@@ -27,7 +28,7 @@ class AuthController {
 
       // Ensure the session is properly initialized
       if (!req.session) {
-        throw new Error('Session is not initialized');
+        throw new Error("Session is not initialized");
       }
 
       req.session.captcha = captcha.text;
@@ -44,6 +45,30 @@ class AuthController {
         error.message
       );
     }
+  }
+
+  async signin(req, res) {
+    const { captcha, ...loginInfo } = req.body;
+    const userIp = req.ip;
+
+    // Verify captcha
+    if (
+      !AuthService.captchaIsValid(
+        captcha,
+        req.session.captcha,
+        process.env.NODE_ENV
+      )
+    ) {
+      return ResponseHandler.fail(
+        res,
+        STATUS_TYPE.badRequest,
+        STATUS_TYPE.validationError,
+        "Invalid captcha"
+      );
+    }
+    // Perform sign-in
+    const userInfo = await AuthService.signin(loginInfo, userIp);
+    ResponseHandler.success(res, userInfo);
   }
 }
 
