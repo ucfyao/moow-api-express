@@ -39,13 +39,6 @@ class StrategyController {
     }
   }
 
-  async updateStrategy(){
-    try {
-
-    } catch {
-      
-    }
-  }
 }
 
 module.exports = new StrategyController();

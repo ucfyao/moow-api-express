@@ -8,7 +8,7 @@ const MarketSchema = new mongoose.Schema({
   is_deleted: { type: Boolean, default: false }, // The flag of delete
 }, {
   timestamps: true, // Auto-add created_at and updated_at fields
-  collection: 'markets', // Collection name
+  collection: 'portal_markets', // Collection name
 });
 
 const Market = mongoose.model('Market', MarketSchema);

@@ -1,7 +1,7 @@
 const express = require('express');
 const strategyController = require('../controllers/strategyController');
 const validateParams = require('../middlewares/validateMiddleware');
-const strategyValidatorSchema = require('../validators/strategyValidator');
+const createStrategyValidatorSchema = require('../validators/createStrategyValidator');
 
 // const {creategetEachStrategySchema} = require('../validators/getEachStrategyValidator')
 
@@ -13,9 +13,7 @@ const router = express.Router();
 router.get('/strategies', strategyController.getAllStrategies);
 
 // new a strategy
-router.post('/strategies', 
-    validateParams(strategyValidatorSchema),
-    strategyController.createStrategy);
+router.post('/strategies', validateParams(createStrategyValidatorSchema), strategyController.createStrategy);
 
 // view a strategy
 router.get('/strategies/:id', strategyController.getStrategyById);    
