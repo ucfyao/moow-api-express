@@ -1,4 +1,4 @@
-const strategyValidatorSchema = {
+const createStrategyValidatorSchema = {
     
     _id: { 
         notEmpty: { errorMessage: 'id is required' },
@@ -71,4 +71,4 @@ const strategyValidatorSchema = {
     }
 }
 
-module.exports = { strategyValidatorSchema };
+module.exports = { createStrategyValidatorSchema };

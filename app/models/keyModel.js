@@ -12,7 +12,7 @@ const KeySchema = new mongoose.Schema({
   is_deleted: { type: Boolean, default: false }, // delete mark
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
-  collection: 'key',
+  collection: 'aip_key',
 });
 
 KeySchema.pre('save', function (next) {
@@ -31,5 +31,4 @@ KeySchema.pre('save', function (next) {
 //KeySchema.index({ _id: 1 }, { unique: true });
 
 const Key = mongoose.model('Key', KeySchema);
-
 module.exports = Key;
