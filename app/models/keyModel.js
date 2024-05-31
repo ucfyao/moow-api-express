@@ -11,9 +11,8 @@ const KeySchema = new mongoose.Schema({
   is_deleted: { type: Boolean, default: false }, // delete mark
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
-  collection: 'key',
+  collection: 'aip_key',
 });
 
 const Key = mongoose.model('Key', KeySchema);
-
 module.exports = Key;

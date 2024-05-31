@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 // After selecting the period, perform normal distribution to different days and times to prevent concurrency issues.
+
 const AwaitSchema = new mongoose.Schema({
     id: { type: String, unique: true, trim: true }, // Auto-increment id
 
@@ -23,9 +24,11 @@ const AwaitSchema = new mongoose.Schema({
 
     }, {
         timestamps: true,
-        collection: 'await',
+        collection: 'aip_awaits',
     });
   // QuantsDingtouAwaitSchema.statics.findAndModify = function (query, sort, doc, options, callback) {
   //   return this.collection.findAndModify(query, sort, doc, options, callback);
   // };
-module.exports = mongoose.model('Await', AwaitSchema);
+
+const Await = mongoose.model('Await', AwaitSchema);
+module.exports = Await;

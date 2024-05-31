@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const OrderModel = new mongoose.Schema({
+const OrderSchema = new mongoose.Schema({
 
     strategy_id: { type: String, trim: true }, // Strategy id
     order_id: { type: String, trim: true }, // Order id
@@ -32,8 +32,9 @@ const OrderModel = new mongoose.Schema({
 
   }, {
       timestamps: true, // Automatically adds createdAt and updatedAt fields
-      collection: 'order',
+      collection: 'aip_orders',
   });
-    
-module.exports = mongoose.model('OrderModel', OrderModelSchema);
+
+const Order = mongoose.model('Order', OrderSchema);
+module.exports = Order;
 

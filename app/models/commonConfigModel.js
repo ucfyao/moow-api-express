@@ -11,7 +11,8 @@ const ConfigSchema = new mongoose.Schema({
     createdAt: 'created_at', 
     updatedAt: 'updated_at'  
   }, // auto create created_at and updated_at
-  collection: 'common_config' 
+  collection: 'common_configs' 
 });
 
-module.exports = mongoose.model('common_configs', ConfigSchema);
+const CommonConfig = mongoose.model('CommonConfig', ConfigSchema);
+module.exports = CommonConfig;

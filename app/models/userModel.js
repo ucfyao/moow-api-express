@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
 const UserSchema = new mongoose.Schema({
   seq_id: { type: Number, unique: true }, // unique Id
@@ -25,8 +24,9 @@ const UserSchema = new mongoose.Schema({
   timestamps: {
     createdAt: 'created_at', 
     updatedAt: 'updated_at'  
-  }  // auto create created_at and updated_at
+  },  // auto create created_at and updated_at
+  collection: 'portal_users',
 });
 
-const User = mongoose.model('portal_users', UserSchema);
+const User = mongoose.model('PortalUser', UserSchema);
 module.exports = User;
