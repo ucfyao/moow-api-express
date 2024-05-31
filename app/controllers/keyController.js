@@ -2,8 +2,7 @@
 const KeyService = require('../services/keyService');
 const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../constants/statusCodes');
-const ccxt = require('ccxt');
-const { decrypt } = require('../utils/cryptoUtils');
+
 
 class KeyController {
 
@@ -17,71 +16,37 @@ class KeyController {
   //   res.success(res, newUser, STATUS_TYPE.http.created, STATUS_TYPE.success);
   // };
   async getAllKeys(req, res) {
-    try {
-      const keys = await KeyService.getAllKeys();
-      ResponseHandler.success(res, keys);
-    } catch (error) {
-      ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
-    }
+    const keys = await KeyService.getAllKeys();
+    ResponseHandler.success(res, keys);
   }
 
   async getKeyById(req, res) {
-    try {
-      const key = await KeyService.getKeyById(req.params.id);
-      if (key) {
-          ResponseHandler.success(res, key);
-      } else {
-          ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.internalError, 'Key not found');
-        }
-      } catch (error) {
-        ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
+    const key = await KeyService.getKeyById(req.params.id);
+    if (key) {
+        ResponseHandler.success(res, key);
+    } else {
+        ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.internalError, 'Key not found');
       }
     }
   
     async createKey(req, res) {
-      try {
-        const { exchange, access_key, secret_key, desc } = req.body;
-        const keyData = { exchange, access_key, secret_key, desc };
-  
-        const newexchange = new ccxt[exchange]({
-          apiKey: access_key,
-          secret: secret_key,
-        });
-        let validation;
-        const response = await newexchange.fetchBalance();
-        validation = { valid: true, data: response };
-  
-        const key = await KeyService.createKey(keyData);
-        
-        // Partially hide returned API keys and secret keys
-        const decryptedaccess_key = decrypt(JSON.parse(key.access_key));
-        const decryptedsecret_key = decrypt(JSON.parse(key.secret_key));
-        key.access_key = `${decryptedaccess_key.slice(0, 3)}******${decryptedaccess_key.slice(-4)}`;
-        key.secret_key = `${decryptedsecret_key.slice(0, 3)}******${decryptedsecret_key.slice(-4)}`;
-  
-        ResponseHandler.success(res, { key, balances: validation.data }, STATUS_TYPE.created);
-      } catch (error) {
-        if (error.message === 'API Key already created') {
-          ResponseHandler.fail(res, STATUS_TYPE.conflict, STATUS_TYPE.otherError, error.message);
-        } else if (error.message === 'Invalid API Key or Secret Key') {
-          ResponseHandler.fail(res, STATUS_TYPE.unauthorized, STATUS_TYPE.internalError, error.message);
-        } else {
-          ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
-        }
+      const { exchange, access_key, secret_key, desc } = req.body;
+      const keyData = { exchange, access_key, secret_key, desc };
+
+      const { key, validation } = await KeyService.createKey(keyData);
+      if (validation) {
+        ResponseHandler.success(res, { key, validation }, STATUS_TYPE.created);
+      } else {
+        ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, 'Failed to create key');
       }
     }
   async deleteKey(req, res) {
-    try {
-      const result = await KeyService.deleteKey(req.params.id);
-      if (result) {
-        ResponseHandler.success(res, { message: 'Key deleted successfully' });
-      } else {
-        ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.internalError, 'Key not found');
-      }
-    } catch (error) {
-      ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
+    const result = await KeyService.deleteKey(req.params.id);
+    if (result) {
+      ResponseHandler.success(res, { message: 'Key deleted successfully' });
+    } else {
+      ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.internalError, 'Key not found');
     }
   }
-
 }
 module.exports = new KeyController();
