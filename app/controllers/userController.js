@@ -18,7 +18,7 @@ class UserController {
   }
 
   async getUserById(req, res) {
-    const user = await UserService.getUserById(req.params.id);
+    const user = await UserService.getUserById(req.params.id, req.query);
     if (user) {
       ResponseHandler.success(res, user);
     } else {

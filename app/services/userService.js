@@ -3,7 +3,8 @@ const crypto = require('crypto');
 const moment = require('moment');
 const {hashidsEncode, hashidsDecode} = require('../utils/hashidsHandler');
 const sequenceService = require('./sequenceService');
-const commonConfig = require('./commonConfigService')
+const commonConfig = require('./commonConfigService');
+const { copyFileSync } = require('fs');
 
 //const assets = require('./assets');
 class UserService {
@@ -11,8 +12,43 @@ class UserService {
     return User.find();
   }
 
-  async getUserById(id) {
-    return User.findById(id);
+  async getUserById(id, query = {}) {
+    const user = await User.findOne({seq_id: id}).select('-password -salt').lean();
+    // if user not exist then return.
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // if no query parameters then return all basic ingormation of user
+    if (Object.keys(query).length === 0) {
+      return user;
+    }
+
+    // if have query parameters then check whether each field available and return it
+    const queryData = {};
+    if (query.invitation_code && user.invitation_code) {
+      queryData.invitation_code = user.invitation_code;
+    }
+
+    if (query.inviter && user.inviter) {
+      const userInviter = await User.findById(user.inviter);
+      queryData.inviter = userInviter ? userInviter.email : null;
+    }
+
+    // TODO: get a list of all names of coins, then search one by one
+    // Or set asset as a field and set type as dict which can include all coins with nonezero value.
+    //if (query.assets && user.assets) {
+    //  queryData.assets = user.assets;
+    //}
+
+    if (query.invitations && user.invitation_code) {
+      console.log(user.invitation_code);
+      const invitationList = await User.find({ inviter: user._id }).select('email created_at');
+      console.log(invitationList);
+      queryData.invitations = invitationList
+    }
+
+    return queryData;
   }
 
   async createUser(name, email, password, refCode='') {
@@ -26,9 +62,11 @@ class UserService {
     // if new user is recommanded by other user, we can get referrer's information
     if (refCode) {
       const seqId = await hashidsDecode(refCode);
-      const refUser = await User.findOne({ seqId }).lean();
+      const refUser = await User.findOne({ seq_id: seqId }).lean();
       if (refUser) {
         user.inviter = refUser._id;
+      } else {
+        throw new Error('Invaild invitation code');
       }
     }
 
@@ -37,7 +75,7 @@ class UserService {
     user.password = pwdObj.password;
     user.nick_name = name;
     user.seq_id = await sequenceService.getNextSequenceValue('portal_user');
-    user.referral_code = hashidsEncode(user.seq_id);
+    user.invitation_code = hashidsEncode(user.seq_id);
 
     // TODO 自动直接激活
     user.is_activated = true;

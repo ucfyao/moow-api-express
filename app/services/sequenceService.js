@@ -14,4 +14,4 @@ class SequenceService {
   }
 }
 
-module.exports = new SequenceService();
+module.exports = SequenceService;
