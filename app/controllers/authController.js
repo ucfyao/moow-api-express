@@ -70,6 +70,13 @@ class AuthController {
     const userInfo = await AuthService.signin(loginInfo, userIp);
     ResponseHandler.success(res, userInfo);
   }
+
+  // user logout 
+  async exit(req, res) {
+    const token = req.headers['token'];
+    await AuthService.exit(token);
+    ResponseHandler.success(res);
+  }
 }
 
 module.exports = new AuthController();
