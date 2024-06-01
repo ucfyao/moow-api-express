@@ -7,7 +7,7 @@ const MarketSchema = new mongoose.Schema({
   url: { type: String, trim: true, default: '' }, // The official website of the exchange platform
   is_deleted: { type: Boolean, default: false }, // The flag of delete
 }, {
-  timestamps: true, // Auto-add created_at and updated_at fields
+  timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }, // Auto-add created_at and updated_at fields
   collection: 'portal_markets', // Collection name
 });
 
