@@ -1,17 +1,17 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const TokenSchema = new mongoose.Schema(
+const PortalTokenSchema = new mongoose.Schema(
   {
     user_id: {
       type: Schema.Types.ObjectId,
-      ref: "portal_users",
+      ref: "PortalUser",
       required: true,
       unique: true,
     }, // user identifier
     token: { type: String, required: true }, // Token
     user_ip: { type: String, required: true, trim: true }, // User IP
-    email: { type: String, required: true, trim: true }, // User email
+    email: { type: String, required: true, unique: true, trim: true }, // User email
     nick_name: { type: String, required: true, trim: true }, // User nick name
     type: {
       type: String,
@@ -27,5 +27,5 @@ const TokenSchema = new mongoose.Schema(
   }
 );
 
-const Token = mongoose.model("Token", TokenSchema);
-module.exports = Token;
+const PortalTokenModel = mongoose.model("PortalTokenModel", PortalTokenSchema);
+module.exports = PortalTokenModel;
