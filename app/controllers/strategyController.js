@@ -1,6 +1,6 @@
 const StrategyService = require('../services/strategyService')
 const ResponseHandler = require('../utils/responseHandler');
-const { STATUS_TYPE } = require('../constants/statusCodes');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class StrategyController {
 
@@ -8,7 +8,7 @@ class StrategyController {
     try {
       const strategy = await StrategyService.getAllStrategies();
       ResponseHandler.success(res, strategy, STATUS_TYPE.created);
-    } catch (error) { 
+    } catch (error) {
       ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, error.message);
     }
   }
@@ -33,8 +33,8 @@ class StrategyController {
       // console.log(strategyData);
       const strategy = await StrategyService.createStrategy( strategyData );
       ResponseHandler.success(res, strategy, STATUS_TYPE.created);
-    } catch (error) { 
-      ResponseHandler.fail(res, STATUS_TYPE.internalServerError, 
+    } catch (error) {
+      ResponseHandler.fail(res, STATUS_TYPE.internalServerError,
         STATUS_TYPE.internalServerError, error.message);
     }
   }

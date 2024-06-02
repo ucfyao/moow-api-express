@@ -1,17 +1,17 @@
-const userRoutes = require("./userRoutes");
-const marketRoutes = require("./marketRoutes");
-const authRoutes = require("./authRoutes");
-const keyRoutes = require('./keyRoutes');
-const strategyRoutes = require("./strategyRoutes");
-const orderRoutes = require("./orderRoutes");
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
 
-const registerRoutes = (app) => {
-  app.use("/api/v1", userRoutes);
-  app.use("/api/v1", marketRoutes);
-  app.use("/api/v1", authRoutes);
-  app.use('/api/v1', keyRoutes);
-  app.use("/api/v1", strategyRoutes);
-  app.use("/api/v1", orderRoutes);
+const registerRoutes = (router, routesPath) => {
+    fs.readdirSync(routesPath).forEach(file => {
+        if (file.endsWith('.js') && file !== 'index.js') {
+            const route = require(path.join(routesPath, file));
+            router.use('/', route);
+        }
+    });
 };
 
-module.exports = registerRoutes;
+const router = express.Router();
+registerRoutes(router, __dirname);
+
+module.exports = router;

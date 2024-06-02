@@ -1,6 +1,6 @@
 const OrderService = require('../services/orderService');
 const ResponseHandler = require('../utils/responseHandler');
-const { STATUS_TYPE } = require('../constants/statusCodes');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class OrderController {
     async getAllOrders(req, res) {
@@ -15,7 +15,7 @@ class OrderController {
             } else {
                 ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, 'Orders not found');
             }
-        } catch (error) { 
+        } catch (error) {
             ResponseHandler.fail(res, STATUS_TYPE.internalError, STATUS_TYPE.internalError, error.message);
         }
     }
