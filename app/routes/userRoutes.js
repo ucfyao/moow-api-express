@@ -1,14 +1,15 @@
 const express = require('express');
 const UserController = require('../controllers/userController');
 const validateParams = require('../middlewares/validateMiddleware');
+const asyncHandler = require('../utils/asyncHandler');
 
 const { createUserValidatorSchema } = require('../validators/userValidator');
 
 const router = express.Router();
 
-router.get('/users', UserController.getAllUsers);
-router.post('/users', validateParams(createUserValidatorSchema), UserController.createUser);
-router.get('/users/:id', UserController.getUserById);
+router.get('/api/v1/users', asyncHandler(UserController.getAllUsers));
+router.post('/api/v1/users', validateParams(createUserValidatorSchema), asyncHandler(UserController.createUser));
+router.get('/api/v1/users/:id', asyncHandler(UserController.getUserById));
 // router.put('/users/:id', UserController.updateUser);
 // router.delete('/users/:id', UserController.deleteUser);
 

@@ -1,6 +1,6 @@
 const _ = require("lodash");
 const ResponseHandler = require("../utils/responseHandler");
-const { STATUS_TYPE } = require("../constants/statusCodes");
+const { STATUS_TYPE } = require("../utils/statusCodes");
 const AuthService = require("../services/authService");
 
 const authMiddleware = async (req, res, next) => {

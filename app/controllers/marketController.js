@@ -1,6 +1,6 @@
 const MarketService = require('../services/marketService');
 const ResponseHandler = require('../utils/responseHandler');
-const { STATUS_TYPE } = require('../constants/statusCodes');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class MarketController {
   async getAllMarkets(req, res) {

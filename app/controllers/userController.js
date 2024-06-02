@@ -1,6 +1,7 @@
 const UserService = require("../services/userService");
+const CustomError = require("../utils/customError");
 const ResponseHandler = require("../utils/responseHandler");
-const { STATUS_TYPE } = require("../constants/statusCodes");
+const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class UserController {
   // const getUsers = async (req, res) => {
@@ -14,52 +15,18 @@ class UserController {
   // };
   async getAllUsers(req, res) {
     const users = await UserService.getAllUsers();
-    ResponseHandler.success(res, users);
+    return ResponseHandler.success(res, users);
   }
 
   async getUserById(req, res) {
     const user = await UserService.getUserById(req.params.id, req.query);
-    if (user) {
-      ResponseHandler.success(res, user);
-    } else {
-      ResponseHandler.fail(
-        res,
-        STATUS_TYPE.notFound,
-        STATUS_TYPE.internalError,
-        "User not found"
-      );
-    }
+    return ResponseHandler.success(res, user);
   }
 
   async createUser(req, res) {
-    try {
-      const { name, email, password, refCode } = req.body;
-      const user = await UserService.createUser(name, email, password, refCode);
-      ResponseHandler.success(res, user, STATUS_TYPE.created);
-    } catch (error) {
-      if (error.message === "Email already registered") {
-        ResponseHandler.fail(
-          res,
-          STATUS_TYPE.conflict,
-          STATUS_TYPE.otherError,
-          error.message
-        );
-      } else if (error.message === "Your reference code is invalid.") {
-        ResponseHandler.fail(
-          res,
-          STATUS_TYPE.badRequest,
-          STATUS_TYPE.otherError,
-          error.message
-        );
-      } else {
-        ResponseHandler.fail(
-          res,
-          STATUS_TYPE.internalServerError,
-          STATUS_TYPE.internalError,
-          error.message
-        );
-      }
-    }
+    const { name, email, password, refCode } = req.body;
+    const user = await UserService.createUser(name, email, password, refCode);
+    return ResponseHandler.success(res, user, STATUS_TYPE.HTTP_CREATED);
   }
 }
 module.exports = new UserController();

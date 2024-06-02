@@ -1,7 +1,7 @@
 const svgCaptcha = require("svg-captcha");
 const AuthService = require("../services/authService");
 const ResponseHandler = require("../utils/responseHandler");
-const { STATUS_TYPE } = require("../constants/statusCodes");
+const { STATUS_TYPE } = require("../utils/statusCodes");
 
 class AuthController {
   async getCaptcha(req, res) {
@@ -71,7 +71,7 @@ class AuthController {
     ResponseHandler.success(res, userInfo);
   }
 
-  // user logout 
+  // user logout
   async exit(req, res) {
     const token = req.headers['token'];
     await AuthService.exit(token);

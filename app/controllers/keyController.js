@@ -1,7 +1,7 @@
 // app/controllers/KeyController.js
 const KeyService = require('../services/keyService');
 const ResponseHandler = require('../utils/responseHandler');
-const { STATUS_TYPE } = require('../constants/statusCodes');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 const { validateBinanceKeys } = require('../validators/binanceValidator');
 const { decrypt } = require('../utils/cryptoUtils');
 
@@ -37,7 +37,7 @@ class KeyController {
         ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
       }
     }
-  
+
   async createKey(req, res) {
     try {
       const { exchange, access_key, secret_key, desc } = req.body;
@@ -52,7 +52,7 @@ class KeyController {
       const decryptedaccess_key = decrypt(JSON.parse(key.access_key));
       const decryptedsecret_key = decrypt(JSON.parse(key.secret_key));
       key.access_key = `${decryptedaccess_key.slice(0, 3)}******${decryptedaccess_key.slice(-4)}`;
-      key.secret_key = `${decryptedsecret_key.slice(0, 3)}******${decryptedsecret_key.slice(-4)}`;     
+      key.secret_key = `${decryptedsecret_key.slice(0, 3)}******${decryptedsecret_key.slice(-4)}`;
 
       ResponseHandler.success(res, { key, balances: validation.data }, STATUS_TYPE.created);
     } catch (error) {

@@ -1,5 +1,5 @@
 const { validationResult, checkSchema } = require("express-validator");
-const { STATUS_TYPE } = require("../constants/statusCodes");
+const { STATUS_TYPE } = require("../utils/statusCodes");
 const ResponseHandler = require("../utils/responseHandler");
 
 const validateParams = (schema) => {

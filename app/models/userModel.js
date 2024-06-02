@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema({
   salt: { type: String, required: true, unique: true, trim: true }, // salt
   mobile: { type: String, default: '', trim: true }, // phone number
   instagram: { type: String, default: '', trim: true }, // instagram account
-  invitation_code: { type: String, trim: true}, // user's own referral code 
+  invitation_code: { type: String, trim: true}, // user's own referral code
   //role: { type: Schema.Types.ObjectId, ref: 'PortalRole', default: [] }, // role resource
   last_login_time: { type: Date }, // lastest login time
   vip_time_out_at: { type: Date }, // VIP expire time
@@ -22,11 +22,11 @@ const UserSchema = new mongoose.Schema({
   invite_total: { type: String, default: '0' } // total invited reward
 }, {
   timestamps: {
-    createdAt: 'created_at', 
-    updatedAt: 'updated_at'  
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
   },  // auto create created_at and updated_at
   collection: 'portal_users',
 });
 
-const User = mongoose.model('PortalUser', UserSchema);
-module.exports = User;
+const PortalUserModel = mongoose.model('PortalUser', UserSchema);
+module.exports = PortalUserModel;

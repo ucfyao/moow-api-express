@@ -1,22 +1,22 @@
-const User = require('../models/userModel');
+const PortalUserModel = require('../models/userModel');
 const crypto = require('crypto');
 const moment = require('moment');
 const {hashidsEncode, hashidsDecode} = require('../utils/hashidsHandler');
 const sequenceService = require('./sequenceService');
 const commonConfig = require('./commonConfigService');
-const { copyFileSync } = require('fs');
+const CustomError = require('../utils/customError');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 
-//const assets = require('./assets');
 class UserService {
   async getAllUsers() {
-    return User.find();
+    return PortalUserModel.find();
   }
 
   async getUserById(id, query = {}) {
-    const user = await User.findOne({seq_id: id}).select('-password -salt').lean();
+    const user = await PortalUserModel.findOne({seq_id: id}).select('-password -salt').lean();
     // if user not exist then return.
     if (!user) {
-      throw new Error("User not found");
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
     }
 
     // if no query parameters then return all basic ingormation of user
@@ -31,7 +31,7 @@ class UserService {
     }
 
     if (query.inviter && user.inviter) {
-      const userInviter = await User.findById(user.inviter);
+      const userInviter = await PortalUserModel.findById(user.inviter);
       queryData.inviter = userInviter ? userInviter.email : null;
     }
 
@@ -43,7 +43,7 @@ class UserService {
 
     if (query.invitations && user.invitation_code) {
       console.log(user.invitation_code);
-      const invitationList = await User.find({ inviter: user._id }).select('email created_at');
+      const invitationList = await PortalUserModel.find({ inviter: user._id }).select('email created_at');
       console.log(invitationList);
       queryData.invitations = invitationList
     }
@@ -52,21 +52,21 @@ class UserService {
   }
 
   async createUser(name, email, password, refCode='') {
-    const existingUser = await User.findOne({ email }).lean();
-        if (existingUser) {
-            throw new Error('The email is already registered.');
-        }
+    const existingUser = await PortalUserModel.findOne({ email }).lean();
+    if (existingUser) {
+      console.log(STATUS_TYPE.PORTAL_EMAIL_ALREADY_REGISTERED)
+      throw new CustomError(STATUS_TYPE.PORTAL_EMAIL_ALREADY_REGISTERED);
+    }
+    const user = new PortalUserModel({ name, email, password});
 
-    const user = new User({ name, email, password});
-    
     // if new user is recommanded by other user, we can get referrer's information
     if (refCode) {
       const seqId = await hashidsDecode(refCode);
-      const refUser = await User.findOne({ seq_id: seqId }).lean();
+      const refUser = await PortalUserModel.findOne({ seq_id: seqId }).lean();
       if (refUser) {
         user.inviter = refUser._id;
       } else {
-        throw new Error('Invaild invitation code');
+        throw new AppError(STATUS_TYPE.PORTAL_INVALID_INVITATION_CODE);
       }
     }
 
@@ -85,7 +85,7 @@ class UserService {
     const doc = await user.save();
 
     if (!doc) {
-      throw new Error('Failed to register, please try again.');
+      throw new AppError(STATUS_TYPE.PORTAL_REGISTRATION_FAILED);
     }
 
     //const giveToken = await commonConfig.getGiveToken();
@@ -103,11 +103,11 @@ class UserService {
   }
 
   async updateUser(id, name, email) {
-    return User.findByIdAndUpdate(id, { name, email }, { new: true });
+    return PortalUserModel.findByIdAndUpdate(id, { name, email }, { new: true });
   }
 
   async deleteUser(id) {
-    return User.findByIdAndDelete(id);
+    return PortalUserModel.findByIdAndDelete(id);
   }
 
   async generatePassword(password) {
