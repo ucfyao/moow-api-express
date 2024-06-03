@@ -1,12 +1,9 @@
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-
-// 加载环境变量
-dotenv.config();
+const config = require('./index');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/mydatabase', {
+    await mongoose.connect(config.MONGO_URI, {
       // useNewUrlParser: true,
       // useUnifiedTopology: true,
     });

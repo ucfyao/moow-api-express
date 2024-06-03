@@ -1,33 +1,30 @@
 const express = require('express');
-// const path = require('path');
-// var cookieParser = require('cookie-parser');
-const morgan = require('morgan');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const dotenv = require('dotenv');
-const helmet = require('helmet');
-
-const { STATUS_TYPE } = require('./app/constants/statusCodes');
-const ResponseHandler = require('./app/utils/responseHandler');
-
 const connectDB = require('./config/db');
+const setupMiddleware = require('./config/middleware');
+const routes = require('./app/routes');
+// const registerRoutes = require('./app/routes');
+const { STATUS_TYPE } = require('./app/utils/statusCodes');
+const ResponseHandler = require('./app/utils/responseHandler');
+const CustomError = require('./app/utils/customError');
 
-// Load environment variables
-dotenv.config();
-const env = process.env.NODE_ENV || 'development'
-
-// connect MongoDB
-connectDB();
+const config = require('./config');
 
 const app = express();
 
-// view engine setup
-// app.set('views', path.join(__dirname, 'views'));
-// app.set('view engine', 'jade');
+// Connect to MongoDB
+connectDB();
 
+// Setup middleware
+setupMiddleware(app);
+
+// Use routes
+// registerRoutes(app);
+app.use(routes);
+
+
+// Handle 404 errors
 app.use((req, res, next) => {
-  res.set('Cache-Control', 'no-store');
-  next();
+  next(new CustomError(STATUS_TYPE.HTTP_NOT_FOUND));
 });
 
 app.use(helmet());
@@ -57,18 +54,19 @@ app.use(function(req, res, next) {
 });
 
 // error handler
+// Global error handler
 app.use((error, req, res, next) => {
-  const httpCode = error.status || STATUS_TYPE.internalServerError;
-  const businessCode = error.businessCode || httpCode;
-  ResponseHandler.fail(res, httpCode, businessCode, error.message || 'Internal Server Error');
+  if (error instanceof CustomError) {
+    return ResponseHandler.fail(res, error.statusCode, error.businessCode, error.message);
+  }else{
+    return ResponseHandler.fail(res, STATUS_TYPE.HTTP_INTERNAL_SERVER_ERROR, STATUS_TYPE.HTTP_INTERNAL_SERVER_ERROR, error.message || 'Internal Server Error');
+  }
 });
 
-// serve
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`http://127.0.0.1:${PORT}`);
-
+// Start the server
+app.listen(config.port, () => {
+  console.log(`Server is running on port ${config.port}`);
+  console.log(`http://127.0.0.1:${config.port}`);
 });
 
 module.exports = app;
