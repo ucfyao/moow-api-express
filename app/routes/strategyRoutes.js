@@ -2,6 +2,7 @@ const express = require('express');
 const strategyController = require('../controllers/strategyController');
 const validateParams = require('../middlewares/validateMiddleware');
 const createStrategyValidatorSchema = require('../validators/createStrategyValidator');
+const asyncHandler = require('../utils/asyncHandler');
 
 // const {creategetEachStrategySchema} = require('../validators/getEachStrategyValidator')
 
@@ -10,13 +11,13 @@ const router = express.Router();
 
 // RESTful API routes for investment strategies
 // view all strategies
-router.get('/strategies', strategyController.getAllStrategies);
+router.get('/strategies', asyncHandler(strategyController.getAllStrategies));
 
-// new a strategy
-router.post('/strategies', validateParams(createStrategyValidatorSchema), strategyController.createStrategy);
+// Create a new strategy
+router.post('/strategies', validateParams(createStrategyValidatorSchema), asyncHandler(strategyController.createStrategy));
 
 // view a strategy
-router.get('/strategies/:id', strategyController.getStrategyById);    
+router.get('/strategies/:id', asyncHandler(strategyController.getStrategyById));    
 
 // update a strategy 
 // router.patch('/strategies/:id',  

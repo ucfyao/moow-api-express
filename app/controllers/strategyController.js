@@ -5,40 +5,21 @@ const { STATUS_TYPE } = require('../utils/statusCodes');
 class StrategyController {
 
   async getAllStrategies(req, res) {
-    try {
-      const strategy = await StrategyService.getAllStrategies();
-      ResponseHandler.success(res, strategy, STATUS_TYPE.created);
-    } catch (error) {
-      ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, error.message);
-    }
+    const strategies = await StrategyService.getAllStrategies();
+    return ResponseHandler.success(res, strategies);
   }
 
   async getStrategyById(req, res) {
-    try {
-      const strategy = await StrategyService.getStrategyById(req.params.id);
-      if (strategy) {
-        ResponseHandler.success(res, strategy);
-      } else {
-        ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, 'Strategy not found');
-      }
-    } catch (error) {
-        ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.notFound, error.message);
-      }
+    const strategy = await StrategyService.getStrategyById(req.params.id);
+    return ResponseHandler.success(res, strategy);
   }
 
   // create a strategy
-  async createStrategy(req, res){
-    try {
-      const strategyData = req.body;
-      // console.log(strategyData);
-      const strategy = await StrategyService.createStrategy( strategyData );
-      ResponseHandler.success(res, strategy, STATUS_TYPE.created);
-    } catch (error) {
-      ResponseHandler.fail(res, STATUS_TYPE.internalServerError,
-        STATUS_TYPE.internalServerError, error.message);
-    }
+  async createStrategy(req, res) {
+    const strategyData = req.body;
+    const strategy = await StrategyService.createStrategy(strategyData);
+    return ResponseHandler.success(res, strategy, STATUS_TYPE.created);
   }
-
 }
 
 module.exports = new StrategyController();
