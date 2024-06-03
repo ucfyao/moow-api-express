@@ -53,7 +53,10 @@ const STATUS_TYPE = {
     PORTAL_EMAIL_ALREADY_REGISTERED: 11007, // Email already registered
     PORTAL_INVALID_INVITATION_CODE: 11008, // Invalid invitation code
     PORTAL_REGISTRATION_FAILED: 11009, // Registration failed
-    PORTAL_USER_NOT_FOUND: 11010, // Registration failed
+    PORTAL_USER_NOT_FOUND: 11010, // Uer not found
+    PORTAL_INCORRECT_PASSWORD: 11011, // Password incorrect
+    PORTAL_UPDATE_FAILED: 11012, // Update user information failed/
+
 
     // Custom status codes for aip module (12001-13000)
     AIP_SERVER_BUSY: 12001, // Trading module server is busy
@@ -116,6 +119,8 @@ const STATUS_MESSAGE_ZH = {
     [STATUS_TYPE.PORTAL_INVALID_INVITATION_CODE]: '无效的邀请代码',
     [STATUS_TYPE.PORTAL_REGISTRATION_FAILED]: '注册失败，请重试',
     [STATUS_TYPE.PORTAL_USER_NOT_FOUND]: '用户未找到',
+    [STATUS_TYPE.PORTAL_INCORRECT_PASSWORD]: '用户密码错误',
+    [STATUS_TYPE.PORTAL_UPDATE_FAILED]: '用户信息更新失败',
 
     // AIP module messages
     [STATUS_TYPE.AIP_SERVER_BUSY]: '交易模块服务器繁忙',
@@ -178,6 +183,8 @@ const STATUS_MESSAGE = {
     [STATUS_TYPE.PORTAL_INVALID_INVITATION_CODE]: 'Invalid invitation code',
     [STATUS_TYPE.PORTAL_REGISTRATION_FAILED]: 'Failed to register, please try again',
     [STATUS_TYPE.PORTAL_USER_NOT_FOUND]: 'User not found',
+    [STATUS_TYPE.PORTAL_INCORRECT_PASSWORD]: 'Incorrect password',
+    [STATUS_TYPE.PORTAL_UPDATE_FAILED]: 'Update user information failed',
 
     // AIP module messages
     [STATUS_TYPE.AIP_SERVER_BUSY]: 'Trading module server is busy',

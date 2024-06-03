@@ -1,11 +1,10 @@
 const PortalUserModel = require('../models/userModel');
-const crypto = require('crypto');
-const moment = require('moment');
-const {hashidsEncode, hashidsDecode} = require('../utils/hashidsHandler');
 const sequenceService = require('./sequenceService');
-const commonConfig = require('./commonConfigService');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
+const {hashidsEncode, hashidsDecode} = require('../utils/hashidsHandler');
+const crypto = require('crypto');
+const moment = require('moment');
 
 class UserService {
   async getAllUsers() {
@@ -66,7 +65,7 @@ class UserService {
       if (refUser) {
         user.inviter = refUser._id;
       } else {
-        throw new AppError(STATUS_TYPE.PORTAL_INVALID_INVITATION_CODE);
+        throw new CustomError(STATUS_TYPE.PORTAL_INVALID_INVITATION_CODE);
       }
     }
 
@@ -85,7 +84,7 @@ class UserService {
     const doc = await user.save();
 
     if (!doc) {
-      throw new AppError(STATUS_TYPE.PORTAL_REGISTRATION_FAILED);
+      throw new CustomError(STATUS_TYPE.PORTAL_REGISTRATION_FAILED);
     }
 
     //const giveToken = await commonConfig.getGiveToken();
@@ -102,12 +101,41 @@ class UserService {
     return doc;
   }
 
-  async updateUser(id, name, email) {
-    return PortalUserModel.findByIdAndUpdate(id, { name, email }, { new: true });
-  }
+  async updateUser(id, userData) {
+    const user = await PortalUserModel.findOne({seq_id: id});
+    if (!user) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
 
-  async deleteUser(id) {
-    return PortalUserModel.findByIdAndDelete(id);
+    // change password
+    if (userData.password && userData.new_password) {
+      const isMatch = await this.comparePassword(userData.password, user.salt, user.password);
+      if (!isMatch) {
+        throw new CustomError(STATUS_TYPE.PORTAL_INCORRECT_PASSWORD);
+      }
+      const pwdObj = await this.generatePassword(userData.new_password);
+      user.password = pwdObj.password;
+      user.salt = pwdObj.salt;
+    }
+
+    // update basic information
+    const fieldsToUpdate = ["real_name", "nick_name", "mobile", "instagram", "role", "is_deleted", "invite_reward", "invite_total"];
+    fieldsToUpdate.forEach(field => {
+      if (userData[field] !== undefined){
+        user[field] = userData[field];
+      }
+    });
+    const userDoc = await user.save();
+
+    if (!userDoc) {
+      throw new CustomError(STATUS_TYPE.PORTAL_UPDATE_FAILED);
+    }
+
+    // avoid return password and salt
+    const doc = user.toObject();
+    delete doc.password;
+    delete doc.salt;
+    return doc;
   }
 
   async generatePassword(password) {
@@ -118,13 +146,12 @@ class UserService {
         salt: salt,
         password: cryptoPassword.toString('base64')
     };
-}
+  }
 
   async comparePassword(password, salt, hash) {
     const cryptoPassword = crypto.pbkdf2Sync(password, salt, 1000, 32, 'sha512');
     return cryptoPassword.toString('base64') === hash;
-}
-
+  }
 }
 
 module.exports = new UserService();
