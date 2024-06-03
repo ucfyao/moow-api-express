@@ -20,6 +20,13 @@ class StrategyController {
     const strategy = await StrategyService.createStrategy(strategyData);
     return ResponseHandler.success(res, strategy, STATUS_TYPE.created);
   }
+
+  // update a strategt
+  async updateStrategy(req, res) {
+    const updateData = req.body;
+    const strategy = await StrategyService.updateStrategy(req.params.id, updateData);
+    return ResponseHandler.success(res, strategy);
+  }
 }
 
 module.exports = new StrategyController();

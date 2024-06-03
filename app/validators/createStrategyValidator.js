@@ -31,12 +31,12 @@ const createStrategyValidatorSchema = {
     },
     key: { 
         optional: true,
-        notEmpty: { errorMessage: 'key is required' },
+        notEmpty: { errorMessage: 'key is optional' },
         isString: { errorMessage: 'key must be a tring' }
     },
     secret: { 
         optional: true,
-        notEmpty: { errorMessage: 'secret is required' },
+        notEmpty: { errorMessage: 'secret is optional' },
         isString: { errorMessage: 'secret must be a tring' }
     },
 
@@ -47,12 +47,12 @@ const createStrategyValidatorSchema = {
     },
     exchange: { 
         optional: true,
-        notEmpty: { errorMessage: 'exchange is required' },
+        notEmpty: { errorMessage: 'exchange is optional' },
         isString: { errorMessage: 'exchange must be a tring' }
     },
 
     status: { 
-        notEmpty: { errorMessage: 'status is required' },
+        notEmpty: { errorMessage: 'status is optional' },
         isString: { errorMessage: 'status must be a tring' }
     },
     stop_reason: { 
