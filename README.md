@@ -3,7 +3,7 @@
 ## Xiaobao.io - Your Crypto Concierge
 
 Xiaobao.io is an intelligent investment advisory platform specifically developed for the cryptocurrency market. The platform offers users a range of practical functions, including one-click arbitrage, periodic investments, intelligent alerts, and volume-price analysis. Backed by a team of experienced quantitative investors and traders, Xiaobao.io also provides a variety of market-tested and effective quantitative trading strategies to choose from.
-3
+7
 ## Key features
 
 **1. Big Data Services**: Utilize extensive data analytics to inform your investment decisions and strategies.
