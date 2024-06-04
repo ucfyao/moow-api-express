@@ -3,6 +3,12 @@ const crypto = require("crypto");
 const { v1: uuidv1 } = require("uuid");
 const User = require("../models/userModel");
 const PortalTokenModel = require("../models/tokenModel");
+const PortalUserModel = require("../models/userModel");
+const CustomError = require('../utils/customError');
+const { STATUS_TYPE } = require('../utils/statusCodes');
+const UserService = require("./userService")
+const config = require("../../config")
+
 
 class AuthService {
   // verify captcha
@@ -78,6 +84,36 @@ class AuthService {
     return loginInfoObj;
   }
 
+  async resetPassword(newPassword, token) {
+    // reset password
+    const tokenDoc = await PortalTokenModel.findOne({
+      token: token,
+      type: "code"
+    });
+    // If token not exist
+    if (!tokenDoc) {
+      throw new CustomError(STATUS_TYPE.PORTAL_ACTIVATE_CODE_ILLEGAL);
+    }
+
+    if ((+new Date() - tokenDoc.last_access_time) / 1000 > config.tokenTimeOut) {
+      await PortalTokenModel.deleteOne({ _id: tokenDoc._id });
+      throw new CustomError(STATUS_TYPE.PORTAL_ACTIVATE_CODE_EXPIRED);
+    }
+
+    // update password 
+    const user = await PortalUserModel.findById(tokenDoc.user_id)
+    const pwdObj = await UserService.generatePassword(newPassword);
+    user.password = pwdObj.password;
+    user.salt = pwdObj.salt;
+    await user.save()
+      
+    // remove token
+    await PortalTokenModel.deleteOne({ _id: tokenDoc._id });
+
+    return {
+      message: 'Password reset successfully',
+    };
+  }
 
   async _verifyPassword(password, salt, encryptedPwd) {
     const iteration = 1000;

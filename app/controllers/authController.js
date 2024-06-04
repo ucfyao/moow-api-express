@@ -68,6 +68,13 @@ class AuthController {
     await AuthService.exit(token);
     ResponseHandler.success(res);
   }
+
+  async resetPassword(req, res) {
+    const newPassword = req.body.new_password;
+    const token = req.body.token;
+    const resMessage = await AuthService.resetPassword(newPassword, token);
+    return ResponseHandler.success(res, resMessage);
+  }
 }
 
 module.exports = new AuthController();
