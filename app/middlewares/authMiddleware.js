@@ -47,7 +47,7 @@ const authMiddleware = async (req, res, next) => {
   // Update the latest access time of loginInfoObj
   loginInfoObj.last_access_time = +new Date();
   await AuthService.modifyAccessTime(loginInfoObj);
-
+  // req.userId = userId;
   next();
 };
 
