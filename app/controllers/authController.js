@@ -1,50 +1,41 @@
-const svgCaptcha = require("svg-captcha");
-const AuthService = require("../services/authService");
-const ResponseHandler = require("../utils/responseHandler");
-const { STATUS_TYPE } = require("../utils/statusCodes");
+const svgCaptcha = require('svg-captcha');
+const AuthService = require('../services/authService');
+const ResponseHandler = require('../utils/responseHandler');
+const { STATUS_TYPE } = require('../utils/statusCodes');
+const CustomError = require('../utils/customError');
 
 class AuthController {
+  
+  // Generates a captcha image and returns it in the response.
   async getCaptcha(req, res) {
-    try {
-      const {
-        width = 150,
-        height = 36,
-        fontSize = 50,
-        backgroundColor = "#f5f5f5",
-      } = req.query || {};
-      svgCaptcha.options.width = width;
-      svgCaptcha.options.height = height;
-      svgCaptcha.options.fontSize = fontSize;
+    // Extract query parameters or use default values for captcha configuration
+    const {
+      width = 150,
+      height = 36,
+      fontSize = 50,
+      backgroundColor = '#f5f5f5',
+    } = req.query || {};
 
-      const captcha = svgCaptcha.createMathExpr({
-        size: 4, // Length of the captcha
-        ignoreChars: "0o1i", // Characters to exclude from the captcha
-        noise: 3, // Number of noise lines
-        color: true, // Whether the captcha characters have color (default: no color)
-        background: backgroundColor, // Background color of the captcha image
-      });
+    // Set captcha options
+    svgCaptcha.options.width = width;
+    svgCaptcha.options.height = height;
+    svgCaptcha.options.fontSize = fontSize;
 
-      // console.log(1)
+    // Create a math expression captcha
+    const captcha = svgCaptcha.createMathExpr({
+      size: 4, // Length of the captcha
+      ignoreChars: '0o1i', // Characters to exclude from the captcha
+      noise: 3, // Number of noise lines
+      color: true, // Whether the captcha characters have color (default: no color)
+      background: backgroundColor, // Background color of the captcha image
+    });
 
-      // Ensure the session is properly initialized
-      if (!req.session) {
-        throw new Error("Session is not initialized");
-      }
+    // Store the captcha text in the session for later verification
+    req.session.captcha = captcha.text;
 
-      req.session.captcha = captcha.text;
-      // console.log(2)
-      console.log(captcha.text);
-
-      res.type("image/svg+xml");
-      res.send(captcha.data);
-    } catch (error) {
-      ResponseHandler.fail(
-        res,
-        STATUS_TYPE.internalServerError,
-        STATUS_TYPE.internalError,
-        error.message
-      );
-    }
+    // Set the response content type to SVG and send the captcha image
+    res.type('image/svg+xml');
+    res.send(captcha.data);
   }
 
   async signin(req, res) {
