@@ -2,6 +2,7 @@ const express = require('express');
 const strategyController = require('../controllers/strategyController');
 const validateParams = require('../middlewares/validateMiddleware');
 const createStrategyValidatorSchema = require('../validators/createStrategyValidator');
+const updateStrategyValidatorSchema = require('../validators/updateStrategyValidator');
 const asyncHandler = require('../utils/asyncHandler');
 
 // const {creategetEachStrategySchema} = require('../validators/getEachStrategyValidator')
@@ -19,11 +20,8 @@ router.post('/strategies', validateParams(createStrategyValidatorSchema), asyncH
 // view a strategy
 router.get('/strategies/:id', asyncHandler(strategyController.getStrategyById));    
 
-// update a strategy 
-// router.patch('/strategies/:id',  
-//     validateParams(updateStrategyValidatorSchema),
-//     strategyController.updateStrategy); 
-
+// Stop or start a strategy 
+router.patch('/strategies/:id', validateParams(updateStrategyValidatorSchema),asyncHandler(strategyController.updateStrategy));
 
 module.exports = router;
 
