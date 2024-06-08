@@ -1,6 +1,6 @@
 // routes/ExchangeKeyRoutes.js
 const express = require('express');
-const AipExchangeKeyController = require('../controllers/aipExchangeKeyController');
+const AipExchangeKeyController = require('../controllers/ExchangeKeyController');
 const validateParams = require('../middlewares/validateMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const { createKeyValidatorSchema } = require('../validators/exchangeKeyValidator');
