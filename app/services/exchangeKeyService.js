@@ -1,5 +1,5 @@
 // services/keyService.js
-const AipExchangeKey = require('../models/aipExchangeKeyModel');
+const AipExchangeKey = require('../models/exchangeKeyModel');
 const ccxt = require('ccxt');
 const { decrypt, encrypt } = require('../utils/cryptoUtils');
 

@@ -1,5 +1,5 @@
 // app/controllers/ExchangeKeyController.js
-const AipExchangeKeyService = require('../services/aipexchangeKeyService');
+const ExchangeKeyService = require('../services/exchangeKeyService');
 const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 
@@ -22,12 +22,12 @@ class ExchangeKeyController {
       pageSize: parseInt(req.query.pageSize) || 9999,
       keyword: req.query.keyword,
     };
-    const exchangeKeys = await AipExchangeKeyService.getAllKeys(params);
+    const exchangeKeys = await ExchangeKeyService.getAllKeys(params);
     return ResponseHandler.success(res, exchangeKeys, STATUS_TYPE.HTTP_OK);
   }
 
   async getKeyById(req, res) {
-    const exchangeKey = await AipExchangeKeyService.getKeyById(req.params.id);
+    const exchangeKey = await ExchangeKeyService.getKeyById(req.params.id);
     if (exchangeKey) {
       return ResponseHandler.success(res, exchangeKey);
     }
@@ -37,11 +37,11 @@ class ExchangeKeyController {
     const { exchange, access_key, secret_key, desc } = req.body;
     const keyData = { exchange, access_key, secret_key, desc };
 
-    const { exchangeKey, validation } = await AipExchangeKeyService.createKey(keyData);
+    const { exchangeKey, validation } = await ExchangeKeyService.createKey(keyData);
     return ResponseHandler.success(res, { exchangeKey, validation }, STATUS_TYPE.HTTP_CREATED);
   }
   async deleteKey(req, res) {
-    const result = await AipExchangeKeyService.deleteKey(req.params.id);
+    const result = await ExchangeKeyService.deleteKey(req.params.id);
     return ResponseHandler.success(res, STATUS_TYPE.HTTP_OK);
   }
 }
