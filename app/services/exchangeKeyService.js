@@ -8,6 +8,7 @@ class KeyService {
     const start = Date.now();
 
     let conditions = {
+      //is_deleted: false
     };
 
     const pageNumber = params.pageNumber || 1;
@@ -72,7 +73,7 @@ class KeyService {
   }
 
   async deleteKey(id) {
-    return AipExchangeKey.findByIdAndDelete(id);
+    return AipExchangeKey.findByIdAndUpdate(id, { status: '3' });
   }
 
 }
