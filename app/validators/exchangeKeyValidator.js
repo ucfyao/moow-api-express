@@ -3,10 +3,10 @@ const createKeyValidatorSchema = {
       notEmpty: { errorMessage: 'Exchange is required' }
     },
     access_key: {
-      notEmpty: { errorMessage: 'Access_key is required' }
+      notEmpty: { errorMessage: 'Access Key is required' }
     },
     secret_key: {
-      notEmpty: { errorMessage: 'Secret_key is required' }
+      notEmpty: { errorMessage: 'Secret Key is required' }
     },
     desc: {
       trim: true,

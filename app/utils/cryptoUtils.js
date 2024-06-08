@@ -1,24 +1,31 @@
+const fs = require('fs');
+const path = require('path');
 const crypto = require('crypto');
-const secret_key = crypto.randomBytes(32); // Use a 32-byte random key
 
-const algorithm = 'aes-256-ctr';
-const iv = crypto.randomBytes(16);
+const publicKeyPath = path.join(__dirname, '../keys/damoon.pub');
+const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
+
+const privateKeyPath = path.join(__dirname, '../keys/damoon.pem');
+const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
 
 const encrypt = (text) => {
-  const cipher = crypto.createCipheriv(algorithm, secret_key, iv);
-  const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
+  const encrypted = crypto.publicEncrypt({
+    key: publicKey,
+    //padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+    //oaepHash: 'sha256',
+  }, Buffer.from(text));
 
-  return {
-    iv: iv.toString('hex'),
-    content: encrypted.toString('hex')
-  };
+  return encrypted.toString('base64');
 };
 
-const decrypt = (hash) => {
-  const decipher = crypto.createDecipheriv(algorithm, secret_key, Buffer.from(hash.iv, 'hex'));
-  const decrypted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+const decrypt = (encrypted) => {
+  const decrypted = crypto.privateDecrypt({
+    key: privateKey,
+    //padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
+    //oaepHash: 'sha256',
+  }, Buffer.from(encrypted, 'base64'));
 
-  return decrypted.toString();
+  return decrypted.toString('utf8');
 };
 
 module.exports = { encrypt, decrypt };
