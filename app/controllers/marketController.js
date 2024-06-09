@@ -4,48 +4,29 @@ const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class MarketController {
   async getAllMarkets(req, res) {
-    try {
-        const markets = await MarketService.getAllMarkets();
-        ResponseHandler.success(res, markets);
-      } catch (error) {
-        ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
-      }
+    const markets = await MarketService.getAllMarkets();
+    return ResponseHandler.success(res, markets);  
   }
 
   async getMarketById(req, res) {
-    try {
-        const market = await MarketService.getMarketById(req.params.id);
-        if (market) {
-          ResponseHandler.success(res, market);
-        } else {
-          ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.internalError, 'Market not found');
-        }
-      } catch (error) {
-        ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
-      }
+    const market = await MarketService.getMarketById(req.params.id);
+    return ResponseHandler.success(res, market);
   }
 
   async createMarket(req, res) {
-    try {
-      const { name, exchange, desc, url, is_deleted } = req.body;
-      const market = await MarketService.createMarket(name, exchange, desc, url, is_deleted);
-      ResponseHandler.success(res, market, STATUS_TYPE.created);
-    } catch (error) {
-      ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
-    }
+    const  marketData = req.body;
+    const market = await MarketService.createMarket(marketData);
+    return ResponseHandler.success(res, market, STATUS_TYPE.HTTP_CREATED);
+  }
+
+  async updateMarket(req, res) {
+    const market = await MarketService.updateMarket(req.params.id, req.body);
+    return ResponseHandler.success(res, market);
   }
 
   async deleteMarket(req, res) {
-    try {
-      const market = await MarketService.deleteMarket(req.params.id);
-      if (market) {
-        ResponseHandler.success(res, market);
-      } else {
-        ResponseHandler.fail(res, STATUS_TYPE.notFound, STATUS_TYPE.internalError, 'Market not found');
-      }
-    } catch (error) {
-      ResponseHandler.fail(res, STATUS_TYPE.internalServerError, STATUS_TYPE.internalError, error.message);
-    }
+    const market = await MarketService.deleteMarket(req.params.id);
+    return ResponseHandler.success(res, market, STATUS_TYPE.HTTP_OK);
   }
 }
 module.exports = new MarketController();
