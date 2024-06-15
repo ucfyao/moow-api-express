@@ -8,6 +8,21 @@ const config = {
   MONGO_URI: process.env.MONGO_URI || 'mongodb://localhost:27017/mydatabase',
   session_secret: process.env.SESSION_SECRET || crypto.randomBytes(64).toString('hex'),
   tokenTimeOut: 1000,
+
+  // email service config
+  mail: {
+    host: 'smtp.mxhichina.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: 'no-reply@moow.cc',
+      pass: 'MooW!@#123'
+    },
+    displayName: '币小宝',
+  },
+  siteName: 'moow',
+  siteUrl: 'http://localhost',
+  
   // Add other configuration variables as needed
 };
 

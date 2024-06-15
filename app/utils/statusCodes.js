@@ -57,6 +57,7 @@ const STATUS_TYPE = {
     PORTAL_INCORRECT_PASSWORD: 11011, // Password incorrect
     PORTAL_UPDATE_FAILED: 11012, // Update user information failed
     PORTAL_MARKET_NOT_FOUND: 11013, // The market not found
+    PORTAL_USER_ALREADY_ACTIVATED: 11013, // This user account is already activated
 
 
     // Custom status codes for aip module (12001-13000)
@@ -123,6 +124,7 @@ const STATUS_MESSAGE_ZH = {
     [STATUS_TYPE.PORTAL_INCORRECT_PASSWORD]: '用户密码错误',
     [STATUS_TYPE.PORTAL_UPDATE_FAILED]: '用户信息更新失败',
     [STATUS_TYPE.PORTAL_MARKET_NOT_FOUND]: '第三方交易所未找到',
+    [STATUS_TYPE.PORTAL_USER_ALREADY_ACTIVATED]: '该注册账号已经处于激活状态',
 
     // AIP module messages
     [STATUS_TYPE.AIP_SERVER_BUSY]: '交易模块服务器繁忙',
@@ -188,6 +190,8 @@ const STATUS_MESSAGE = {
     [STATUS_TYPE.PORTAL_INCORRECT_PASSWORD]: 'Incorrect password',
     [STATUS_TYPE.PORTAL_UPDATE_FAILED]: 'Update user information failed',
     [STATUS_TYPE.PORTAL_MARKET_NOT_FOUND]: 'The market not found',
+    [STATUS_TYPE.PORTAL_USER_ALREADY_ACTIVATED]: 'This user account is already activated',
+
 
     // AIP module messages
     [STATUS_TYPE.AIP_SERVER_BUSY]: 'Trading module server is busy',

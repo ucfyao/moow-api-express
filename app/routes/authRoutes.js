@@ -10,6 +10,7 @@ const router = express.Router();
 router.get('/api/v1/captcha', asyncHandler(AuthController.getCaptcha));
 router.post('/api/v1/auth/login', validateParams(signinValidatorSchema), asyncHandler(AuthController.signin));
 router.delete('/api/v1/auth/logout', validateParams(exitValidatorSchema), authMiddleware, asyncHandler(AuthController.exit));
-router.patch("/api/v1/auth/resetPassword", asyncHandler(AuthController.resetPassword))
+router.patch('/api/v1/auth/resetPassword', asyncHandler(AuthController.resetPassword));
+router.post('/api/v1/auth/sendActivateEmail', asyncHandler(AuthController.sendActivateEmail));
 
 module.exports = router;
