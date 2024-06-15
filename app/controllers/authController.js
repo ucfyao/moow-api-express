@@ -5,7 +5,7 @@ const { STATUS_TYPE } = require('../utils/statusCodes');
 const CustomError = require('../utils/customError');
 
 class AuthController {
-  
+
   // Generates a captcha image and returns it in the response.
   async getCaptcha(req, res) {
     // Extract query parameters or use default values for captcha configuration
@@ -80,17 +80,8 @@ class AuthController {
   async sendActivateEmail(req, res) {
     const userId = req.body.user_id || req.headers['user_id']; // user_id is the _id in user model
     const userIp = req.ip;
-    // HELP: 是否添加一个异常处理 如果没有获取到userId字段
-    if (!userId) {
-      return ResponseHandler.fail(
-        res,
-        STATUS_TYPE.badRequest,
-        STATUS_TYPE.COMMON_PARAMS_ERROR,
-        "User id is needed."
-        );
-    }
-    const result = await AuthService.sendActivateEmail(userId, userIp);
-    return res.send(result.html);
+    const resMessage = await AuthService.sendActivateEmail(userId, userIp);
+    return ResponseHandler.success(res, resMessage);
   }
 }
 

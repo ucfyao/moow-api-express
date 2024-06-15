@@ -29,7 +29,7 @@ const PortalEmailSchema = new mongoose.Schema(
       },
       message_id: {type: String}
     }, // task status
-  }, 
+  },
   {
     timestamps: {
       createdAt: 'created_at',

@@ -11,18 +11,17 @@ const config = {
 
   // email service config
   mail: {
-    host: 'smtp.mxhichina.com',
-    port: 465,
+    host: process.env.MAIL_HOST || 'smtp.qiye.aliyun.com',
+    port: process.env.MAIL_PORT || 465,
     secure: true,
     auth: {
-      user: 'no-reply@moow.cc',
-      pass: 'MooW!@#123'
+      user: process.env.MAIL_USER || 'no-reply@moow.cc',
+      pass: process.env.MAIL_PASS
     },
-    displayName: '币小宝',
+    displayName: 'Moow',
   },
   siteName: 'moow',
   siteUrl: 'http://localhost',
-  
   // Add other configuration variables as needed
 };
 

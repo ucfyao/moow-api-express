@@ -1,27 +1,10 @@
 const nodemailer = require('nodemailer');
 const config = require('../../config');
 const PortalEmailModel = require('../models/emailModel');
-const RenderBodyHandler = require('../utils/renderBodyhandler');
-const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class EmailService {
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      //sendmail: true,
-      //newline: 'unix',
-      //path: '/usr/sbin/sendmail'
-      host: config.mail.host, // SMTP 服务器地址
-      port: 465, // SMTP 服务端口，对于 SSL 通常是 465，对于 TLS 通常是 587
-      secure: true, // 如果端口是 465，将这个值设为 true，表示使用 SSL
-      auth: {
-        user: config.mail.auth.user, // 你的邮箱地址
-        pass: config.mail.auth.pass // 你的邮箱密码
-      },
-      authMethod: 'LOGIN', // 指定认证机制为LOGIN
-      tls:{
-        rejectUnauthorized: false
-      }
-    });
+    this.transporter = nodemailer.createTransport(config.mail);
   }
 
   // send alarm mail
@@ -40,21 +23,21 @@ class EmailService {
 
   // send email
   async sendEmail(params) {
-    let response = {};
+    let response = {
+      emailStatus : 0,
+      async: params.async,
+      desc: ''
+    };
     // 1. save information
     await this._beforeSendEmail(params);
 
     // 2. send email
-    if (params.async) {
-      response = RenderBodyHandler.renderBody({
-        statusType: STATUS_TYPE.GLOBAL_SUCCESS,
-        data: {
-          result: null,
-        }
-      });
-    } else {
-      response = await this.send(params);
+    if (!params.async) {
+      let sendRes = await this.send(params);
+      response.emailStatus = sendRes.emailStatus;
+      response.desc = sendRes.desc;
     }
+
     return response;
   }
 
@@ -100,14 +83,12 @@ class EmailService {
       html: params.html, // html body
       attachments,
     };
-    console.log(mailOptions);
-    let result = null;
+    // console.log(mailOptions);
     let response;
     try {
-      // this.transporter.sendMail return promise
-      response = await this.transporter.sendMail(mailOptions);
-      result = 0;
+      console.log(config.mail);
 
+      response = await this.transporter.sendMail(mailOptions);
       if (params._emailId) {
         await PortalEmailModel.findByIdAndUpdate(
           params._emailId,
@@ -124,12 +105,17 @@ class EmailService {
           }
         ).exec();
       }
+      return {
+        emailStatus: 1,
+        desc: response
+      };
     } catch (error) {
-      result = 1;
-      response = error;
+      // console.error('Error sending email:', error);
+      return {
+        emailStatus: 0,
+        desc: error,
+      };
     }
-    console.log(response);
-    return;
   }
 
 }
