@@ -1,16 +1,11 @@
 const express = require('express');
 const strategyController = require('../controllers/strategyController');
 const validateParams = require('../middlewares/validateMiddleware');
-const createStrategyValidatorSchema = require('../validators/createStrategyValidator');
-const updateStrategyValidatorSchema = require('../validators/updateStrategyValidator');
 const asyncHandler = require('../utils/asyncHandler');
+const { createStrategyValidatorSchema } = require('../validators/strategyValidator');
 
-// const {creategetEachStrategySchema} = require('../validators/getEachStrategyValidator')
-
-// or use router, write all routes in one file
 const router = express.Router();
 
-// RESTful API routes for investment strategies
 // view all strategies
 router.get('/strategies', asyncHandler(strategyController.getAllStrategies));
 
