@@ -9,10 +9,16 @@ class OrderController {
         return ResponseHandler.success(res, orders);
     }
 
-    async buyNewOrder(req, res) {
-        const { strategy_id } = req.query
-        const strategy = await OrderService.buyNewOrder(strategy_id);
+    async place(req, res) {
+        const { strategy_id } = req.query;
+        const strategy = await OrderService.place(strategy_id);
         return ResponseHandler.success(res, strategy, STATUS_TYPE.created);
+    }
+
+    async sell(req, res) {
+        const { strategy_id } = req.query;
+        const strategy = await OrderService.sell(strategy_id);
+        return ResponseHandler.success(res, strategy, STATUS_TYPE.accepted);
     }
 }
 
