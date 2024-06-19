@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
-const config = require('./index');
+const config = require('../../config/index');
 
 const publicKeyPath = path.join(__dirname, config.publicKeyPath);
 const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
