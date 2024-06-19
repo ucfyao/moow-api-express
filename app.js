@@ -2,10 +2,11 @@ const express = require('express');
 const connectDB = require('./config/db');
 const setupMiddleware = require('./config/middleware');
 const routes = require('./app/routes');
-// const registerRoutes = require('./app/routes');
 const { STATUS_TYPE } = require('./app/utils/statusCodes');
 const ResponseHandler = require('./app/utils/responseHandler');
 const CustomError = require('./app/utils/customError');
+const ejs = require('ejs');
+const path = require('path');
 
 const config = require('./config');
 
@@ -21,6 +22,9 @@ setupMiddleware(app);
 // registerRoutes(app);
 app.use(routes);
 
+// Set templating engines
+app.set('view engine', 'html'); // set default engine as "html"
+app.engine('html', ejs.renderFile); // use ejs.renderFile to handle .html files
 
 // Handle 404 errors
 app.use((req, res, next) => {

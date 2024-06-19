@@ -2,10 +2,9 @@ const svgCaptcha = require('svg-captcha');
 const AuthService = require('../services/authService');
 const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../utils/statusCodes');
-const CustomError = require('../utils/customError');
 
 class AuthController {
-  
+
   // Generates a captcha image and returns it in the response.
   async getCaptcha(req, res) {
     // Extract query parameters or use default values for captcha configuration
@@ -73,6 +72,14 @@ class AuthController {
     const newPassword = req.body.new_password;
     const token = req.body.token;
     const resMessage = await AuthService.resetPassword(newPassword, token);
+    return ResponseHandler.success(res, resMessage);
+  }
+
+  // send activate email to new user
+  async sendActivateEmail(req, res) {
+    const userEmail = req.body.email; // user_id is the _id in user model
+    const userIp = req.ip;
+    const resMessage = await AuthService.sendActivateEmail(userEmail, userIp);
     return ResponseHandler.success(res, resMessage);
   }
 }
