@@ -16,4 +16,11 @@ const exitValidatorSchema = {
   }
 };
 
-module.exports = { signinValidatorSchema, exitValidatorSchema };
+const sendActivateEmailValidatorSchema = {
+  email: { 
+    notEmpty: { errorMessage: 'Email is required' },
+    isEmail: { errorMessage: 'Invalid email format' }
+  }
+};
+
+module.exports = { signinValidatorSchema, exitValidatorSchema, sendActivateEmailValidatorSchema };
