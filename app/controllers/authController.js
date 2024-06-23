@@ -82,6 +82,13 @@ class AuthController {
     const resMessage = await AuthService.sendActivateEmail(userEmail, userIp);
     return ResponseHandler.success(res, resMessage);
   }
+
+  // activate email
+  async activateUser(req, res) {
+    const token = req.body.token;
+    const resMessage = await AuthService.activateUser(token);
+    return ResponseHandler.success(res, resMessage);
+  }
 }
 
 module.exports = new AuthController();

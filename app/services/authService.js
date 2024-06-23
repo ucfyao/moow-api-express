@@ -12,6 +12,7 @@ const EmailService = require('./emailService');
 const ejs = require('ejs');
 const path = require('path');
 const { EMAIL_STATUS } = require('../utils/authStateEnum');
+const moment = require('moment');
 
 class AuthService {
   // verify captcha
@@ -162,6 +163,67 @@ class AuthService {
 
     return {
       'message': 'Activation email will be sent!'
+    };
+  }
+
+  async activateUser(token) {
+    const existToken = await PortalTokenModel.findOne({ token: token, type: 'code' }).lean();
+    if (!existToken) {
+      throw new CustomError(STATUS_TYPE.PORTAL_ACTIVATE_CODE_ILLEGAL);
+    }
+
+    if ((+new Date() - existToken.last_access_time) / 1000 > config.tokenTimeOut) {
+      await PortalTokenModel.deleteOne({_id: existToken._id});
+      throw new CustomError(STATUS_TYPE.PORTAL_ACTIVATE_CODE_EXPIRED);
+    }
+
+    const objectUser = await PortalUserModel.findById(existToken.user_id);
+    if (!objectUser) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
+    if (objectUser.is_activated) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_ALREADY_ACTIVATED);
+    }
+
+    objectUser.is_activated = true;
+    // Number of free membership days for new users
+    objectUser.vip_time_out_at = moment().add(10, 'days').toDate();
+
+    // Increase the inviter's membership by one day
+    if (objectUser.inviter && /^[a-f\d]{24}$/i.test(objectUser.inviter)) {
+      const refUser = await PortalUserModel.findById(objectUser.inviter);
+      if (refUser) {
+        const timeOutAt = new Date(refUser.vip_time_out_at).getTime();
+        const now = new Date().getTime();
+        const fromTime = (now > timeOutAt) ? now : timeOutAt;
+
+        const toDate = moment(fromTime).add(1, 'days').toDate();
+        refUser.vip_time_out_at = toDate;
+
+        // TODO: handle this part after completing assets module
+        //const giveToken = await this.ctx.service.commonConfig.getGiveToken();
+        //const { from, coin, invitation } = giveToken;
+        //refUser.invite_reward = +refUser.invite_reward + 1;
+        //refUser.invite_total = +refUser.invite_total + invitation;
+
+        // await this.ctx.service.assets.sendToken({
+        //   from,
+        //   email: refUser.email,
+        //   token: coin,
+        //   amount: invitation,
+        //   describe: 'invitation',
+        //   invitee: tokenDoc.userId,
+        //   invitee_email: objectUser.email,
+        // });
+
+        await refUser.save();
+      }
+    }
+
+    await objectUser.save();
+    await PortalTokenModel.deleteOne({_id: existToken._id});
+    return {
+      message: 'Account activation successful.'
     };
   }
 
