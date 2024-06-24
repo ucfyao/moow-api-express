@@ -66,7 +66,7 @@ class AuthService {
   }
 
   // user logout
-  async exit(token) {
+  async signout(token) {
     if (token) {
       await PortalTokenModel.findOneAndDelete({ token });
     }

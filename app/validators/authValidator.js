@@ -9,7 +9,7 @@ const signinValidatorSchema = {
   }
 };
 
-const exitValidatorSchema = {
+const signoutValidatorSchema = {
   user_id: { 
     notEmpty: { errorMessage: 'id is required' },
     isMongoId: { errorMessage: 'User ID must be a valid MongoDB ObjectId' }
@@ -23,4 +23,4 @@ const sendActivateEmailValidatorSchema = {
   }
 };
 
-module.exports = { signinValidatorSchema, exitValidatorSchema, sendActivateEmailValidatorSchema };
+module.exports = { signinValidatorSchema, signoutValidatorSchema, sendActivateEmailValidatorSchema };

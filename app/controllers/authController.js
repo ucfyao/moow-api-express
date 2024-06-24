@@ -62,9 +62,9 @@ class AuthController {
   }
 
   // user logout
-  async exit(req, res) {
+  async signout(req, res) {
     const token = req.headers['token'];
-    await AuthService.exit(token);
+    await AuthService.signout(token);
     ResponseHandler.success(res);
   }
 
