@@ -5,6 +5,14 @@ const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class AuthController {
 
+  // user sign up
+  async signUp(req, res) {
+    const { name, email, password, refCode } = req.body;
+    const userIp = req.ip;
+    const user = await AuthService.signUp(name, email, password, refCode, userIp);
+    return ResponseHandler.success(res, user, STATUS_TYPE.HTTP_CREATED);
+  }
+
   // Generates a captcha image and returns it in the response.
   async getCaptcha(req, res) {
     // Extract query parameters or use default values for captcha configuration
