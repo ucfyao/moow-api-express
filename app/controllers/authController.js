@@ -97,6 +97,14 @@ class AuthController {
     const resMessage = await AuthService.activateUser(token);
     return ResponseHandler.success(res, resMessage);
   }
+
+  // send retrieve password email
+  async sendRetrievePasswordEmail(req, res) {
+    const userEmail = req.body.email;
+    const userIp = req.ip;
+    const resMessage = await AuthService.sendRetrievePasswordEmail(userEmail, userIp);
+    return ResponseHandler.success(res, resMessage);
+  }
 }
 
 module.exports = new AuthController();

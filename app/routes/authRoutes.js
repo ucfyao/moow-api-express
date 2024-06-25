@@ -14,5 +14,6 @@ router.patch('/api/v1/auth/login', asyncHandler(AuthController.resetPassword));
 router.post('/api/v1/auth/activation', validateParams(sendActivateEmailValidatorSchema), asyncHandler(AuthController.sendActivateEmail));
 router.post('/api/v1/auth/signup', validateParams(createUserValidatorSchema), asyncHandler(AuthController.signUp));
 router.patch('/api/v1/auth/verification', asyncHandler(AuthController.activateUser));
+router.post('/api/v1/auth/retrievePassword', asyncHandler(AuthController.sendRetrievePasswordEmail));
 
 module.exports = router;
