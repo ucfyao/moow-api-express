@@ -134,6 +134,42 @@ class AuthService {
     return loginInfoObj;
   }
 
+
+  async sendRetrievePasswordEmail(userEmail, userIp) {
+      const objectUser = await PortalUserModel.findOne({ email: userEmail }).lean();
+      if (!objectUser) {
+        throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+      }
+
+      // generate token
+      const code = await this._getCode(objectUser, userIp);
+      const siteName = config.siteName;
+      const siteUrl = config.siteUrl;
+      const resetPasswordUrl = `${siteUrl}/reset-password/${code}`;
+      const displayName = objectUser.nick_name;
+      const resetPasswordMailPath = path.resolve(__dirname,'../views/forget_password_mail.html');
+
+      const html = await ejs.renderFile(resetPasswordMailPath, { siteName, displayName, resetPasswordUrl, siteUrl });
+      const resetPasswordEmail = {
+        async: false,
+        to: [objectUser.email],
+        subject: `[${siteName}]retrieve password`,
+        text: `Hello, ${displayName}, to reset your password, please click the link: ${resetPasswordUrl}`,
+        html,
+      };
+      console.log(html);
+      const sendEmailRes = await EmailService.sendEmail(resetPasswordEmail);
+
+      if (sendEmailRes.emailStatus == EMAIL_STATUS.FAILED) {
+        // TODO error log
+        console.error('Error sending activation email:', sendEmailRes.desc);
+      }
+
+      return {
+        'message': 'Reset password email will be sent!'
+      };
+  }
+
   async resetPassword(newPassword, token) {
     // reset password
     const tokenDoc = await PortalTokenModel.findOne({
