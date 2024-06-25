@@ -15,19 +15,6 @@
 
 // module.exports = { createUserValidator };
 
-const createUserValidatorSchema = {
-    name: {
-      notEmpty: { errorMessage: 'Name is required' }
-    },
-    email: {
-      notEmpty: { errorMessage: 'Email is required' },
-      isEmail: { errorMessage: 'Invalid email format' }
-    },
-    password: {
-      notEmpty: { errorMessage: 'Password is required' },
-      isLength: { options: { min: 6 }, errorMessage: 'Password must be at least 6 characters long' }
-    }
-};
 
 const updateUserValidatorSchema = {
   realName: {
@@ -60,4 +47,4 @@ const updateUserValidatorSchema = {
   }
 };
 
-module.exports = { createUserValidatorSchema, updateUserValidatorSchema };
+module.exports = { updateUserValidatorSchema };

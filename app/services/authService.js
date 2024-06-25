@@ -6,12 +6,14 @@ const PortalTokenModel = require('../models/tokenModel');
 const PortalUserModel = require('../models/userModel');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
-const UserService = require('./userService')
-const config = require('../../config')
+const UserService = require('./userService');
+const SequenceService = require('./sequenceService');
+const config = require('../../config');
 const EmailService = require('./emailService');
 const ejs = require('ejs');
 const path = require('path');
 const { EMAIL_STATUS } = require('../utils/authStateEnum');
+const {hashidsEncode, hashidsDecode} = require('../utils/hashidsHandler');
 const moment = require('moment');
 
 class AuthService {
@@ -22,6 +24,50 @@ class AuthService {
     }
     return sessionCaptcha === text;
   }
+
+  async signUp(name, email, password, refCode='', userIp) {
+    const existingUser = await PortalUserModel.findOne({ email }).lean();
+    if (existingUser) {
+      throw new CustomError(STATUS_TYPE.PORTAL_EMAIL_ALREADY_REGISTERED);
+    }
+    const user = new PortalUserModel({ name, email, password});
+
+    // if new user is recommanded by other user, we can get referrer's information
+    if (refCode) {
+      const seqId = hashidsDecode(refCode);
+      const refUser = await PortalUserModel.findOne({ seq_id: seqId }).lean();
+      if (refUser) {
+        user.inviter = refUser._id;
+      } else {
+        throw new CustomError(STATUS_TYPE.PORTAL_INVALID_INVITATION_CODE);
+      }
+    }
+
+    const pwdObj = await UserService.generatePassword(user.password);
+    user.salt = pwdObj.salt;
+    user.password = pwdObj.password;
+    user.nick_name = name;
+    user.seq_id = await SequenceService.getNextSequenceValue('portal_user');
+    user.invitation_code = hashidsEncode(user.seq_id);
+
+    // Number of free membership days for new users
+    user.vip_time_out_at = moment().add(10, 'days').toDate();
+
+    const doc = await user.save();
+
+    if (!doc) {
+      throw new CustomError(STATUS_TYPE.PORTAL_REGISTRATION_FAILED);
+    }
+
+    //const giveToken = await commonConfig.getGiveToken();
+    //const { from, coin, sign } = giveToken;
+    //await assets.sendToken({ from, email: user.email, token: coin, amount: sign, describe: 'signup', invitee: '', invitee_email: '' });
+
+    await this.sendActivateEmail(email, userIp);
+
+    return doc;
+  }
+
 
   // user login
   async signin(loginInfo, userIp) {

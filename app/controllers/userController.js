@@ -23,12 +23,6 @@ class UserController {
     return ResponseHandler.success(res, user);
   }
 
-  async createUser(req, res) {
-    const { name, email, password, refCode } = req.body;
-    const user = await UserService.createUser(name, email, password, refCode);
-    return ResponseHandler.success(res, user, STATUS_TYPE.HTTP_CREATED);
-  }
-
   async updateUser(req, res) {
     const user = await UserService.updateUser(req.params.id, req.body);
     return ResponseHandler.success(res, user);

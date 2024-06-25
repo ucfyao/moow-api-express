@@ -1,7 +1,7 @@
 const express = require('express');
 const asyncHandler = require('../utils/asyncHandler');
 const validateParams = require('../middlewares/validateMiddleware');
-const { signinValidatorSchema, signoutValidatorSchema, sendActivateEmailValidatorSchema } = require('../validators/authValidator');
+const { signinValidatorSchema, signoutValidatorSchema, sendActivateEmailValidatorSchema, createUserValidatorSchema } = require('../validators/authValidator');
 const authMiddleware = require('../middlewares/authMiddleware');
 const AuthController = require('../controllers/authController');
 
@@ -12,6 +12,7 @@ router.post('/api/v1/auth/login', validateParams(signinValidatorSchema), asyncHa
 router.delete('/api/v1/auth/logout', validateParams(signoutValidatorSchema), authMiddleware, asyncHandler(AuthController.signout));
 router.patch('/api/v1/auth/login', asyncHandler(AuthController.resetPassword));
 router.post('/api/v1/auth/activation', validateParams(sendActivateEmailValidatorSchema), asyncHandler(AuthController.sendActivateEmail));
+router.post('/api/v1/auth/signup', validateParams(createUserValidatorSchema), asyncHandler(AuthController.signUp));
 router.patch('/api/v1/auth/verification', asyncHandler(AuthController.activateUser));
 
 module.exports = router;
