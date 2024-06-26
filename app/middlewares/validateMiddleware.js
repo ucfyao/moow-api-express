@@ -7,7 +7,6 @@ const validateParams = (schema) => {
     checkSchema(schema),
     (req, res, next) => {
       const errors = validationResult(req);
-      console.log(errors);
 
       if (!errors.isEmpty()) {
         const paramErrors = errors.array().map((err) => ({

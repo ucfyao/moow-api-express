@@ -10,7 +10,6 @@ class ResponseHandler {
   }
 
   static fail(res, httpCode = 500, businessCode = 50000, message = '', data = {}) {
-    console.log(httpCode,businessCode,message)
     res.status(httpCode).json({
       code: businessCode,
       message: message || STATUS_MESSAGE[businessCode] || STATUS_MESSAGE[httpCode] || 'Error',

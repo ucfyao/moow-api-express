@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const session = require('./session');
 const config = require('./index');
+const logger = require('../app/utils/logger');
 
 const setupMiddleware = (app) => {
   app.use(helmet());
@@ -19,10 +20,11 @@ const setupMiddleware = (app) => {
   if (config.env === 'development') {
     app.use(morgan('dev'));
   } else if (config.env === 'production') {
-    app.use(morgan('combined'));
+    app.use(morgan('combined', { stream: logger.stream }));
   } else {
-    app.use(morgan('tiny'));
+    app.use(morgan('tiny', { stream: logger.stream }));
   }
+
 };
 
 module.exports = setupMiddleware;
