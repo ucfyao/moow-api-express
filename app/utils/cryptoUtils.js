@@ -1,13 +1,9 @@
 const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
 const config = require('../../config/index');
 
-const publicKeyPath = path.join(__dirname, config.publicKeyPath);
-const publicKey = fs.readFileSync(publicKeyPath, 'utf8');
-
-const privateKeyPath = path.join(__dirname, config.privateKeyPath);
-const privateKey = fs.readFileSync(privateKeyPath, 'utf8');
+const publicKey = fs.readFileSync(config.publicKeyPath, 'utf8');
+const privateKey = fs.readFileSync(config.privateKeyPath, 'utf8');
 
 const encrypt = (text) => {
   const encrypted = crypto.publicEncrypt({
