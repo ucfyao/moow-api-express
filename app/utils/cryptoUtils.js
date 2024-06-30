@@ -2,10 +2,9 @@ const fs = require('fs');
 const crypto = require('crypto');
 const config = require('../../config/index');
 
-const publicKey = fs.readFileSync(config.publicKeyPath, 'utf8');
-const privateKey = fs.readFileSync(config.privateKeyPath, 'utf8');
-
 const encrypt = (text) => {
+  const publicKey = fs.readFileSync(config.publicKeyPath, 'utf8');
+
   const encrypted = crypto.publicEncrypt({
     key: publicKey,
     //padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
@@ -16,6 +15,8 @@ const encrypt = (text) => {
 };
 
 const decrypt = (encrypted) => {
+  const privateKey = fs.readFileSync(config.privateKeyPath, 'utf8');
+
   const decrypted = crypto.privateDecrypt({
     key: privateKey,
     //padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,

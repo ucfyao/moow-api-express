@@ -54,7 +54,7 @@ class KeyService {
     };
     return exchangeKey;
   }
-  
+
   async createKey(keyData) {
     const newExchange = new ccxt[keyData.exchange]({
       apiKey: keyData.access_key,

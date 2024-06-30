@@ -14,6 +14,17 @@ class OrderService {
         return { list };
     }
 
+    async create( order ) {
+
+        const doc = new Order(order);
+        // const secret = await encrypt(strategy.secret);  // for testing
+        // doc.secret = secret;
+        await doc.save();
+        const orderId = doc ? doc._id : '';
+
+        return { _id: orderId };
+    }
+
     async place(strategyId) {
         const strategy = await Strategy.findById(strategyId);
         const secret = await decrypt(strategy.secret);
@@ -22,7 +33,7 @@ class OrderService {
             'secret': secret,
             timeout: 60000,
         });
-    
+
         const type = 'market';
         const side = 'buy';
         const ticker = await exchange.fetchTicker(strategy.symbol);
@@ -69,7 +80,7 @@ class OrderService {
             quote_total: strategy.quote_total,
             value_total: strategy.quote_total * price,
             base_total: strategy.base_total,
-    
+
             now_base_total: strategy.now_base_total,
             now_quote_total: strategy.now_quote_total,
             pl_created_at: Date.now(),
@@ -92,12 +103,12 @@ class OrderService {
             secret: item.secret,
             timeout: 5000,
         });
-        
+
         const profit = item.quote_total * sellPrice - item.base_total;
         const profitPercentage = profit / item.base_total * 100;
         // Check if the profit reach the setting take-profit rate
         await this.checkProfitRate(item, profitPercentage);
-        
+
         const tickerRes =  await exchange.fetchTicker(item.symbol);
         const sellPrice = tickerRes.bid;
         // Check the peak pullback
@@ -115,7 +126,7 @@ class OrderService {
         const data = await new Await(conditions).save();
         const id = data ? data._id : '';
         const strategyId = data ? data.strategy_id : '';
-        
+
         return { id, strategy_id: strategyId }
     }
 

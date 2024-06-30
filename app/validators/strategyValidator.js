@@ -1,14 +1,14 @@
 const createStrategyValidatorSchema = {
 
-    type: { 
+    type: {
         notEmpty: { errorMessage: 'type is required and cannot be empty' },
         isString: { errorMessage: 'type must be a string' }
     },
-    period: { 
+    period: {
         notEmpty: { errorMessage: 'period is required and cannot be empty' },
         isString: { errorMessage: 'period must be a string' }
     }, // Period type. 1: month, 2: day,3: week
-    period_value: { 
+    period_value: {
         optional: { nullable: true }, //allow empty and optional
         isArray: { errorMessage: 'period_value must be an array' },
         custom: {
@@ -21,33 +21,33 @@ const createStrategyValidatorSchema = {
             errorMessage: 'All items in period_value must be numbers'
         }
     }, // investment period
-    user_market_id: { 
+    user_market_id: {
         notEmpty: { errorMessage: 'user_market_id is required and cannot be empty' },
         isString: { errorMessage: 'user_market_id must be a string' }
     },
-    key: { 
+    key: {
         optional: true,
         isString: { errorMessage: 'key must be a string' }
     },
-    secret: { 
+    secret: {
         optional: true,
         isString: { errorMessage: 'secret must be a string' }
     },
 
-    symbol: { 
+    symbol: {
         notEmpty: { errorMessage: 'symbol is required and cannot be empty' },
         isString: { errorMessage: 'symbol must be a string' }
     },
-    exchange: { 
+    exchange: {
         optional: true,
         isString: { errorMessage: 'exchange must be a string' }
     },
 
-    status: { 
+    status: {
         optional: true,
         isString: { errorMessage: 'status must be a string' }
     },
-    stop_reason: { 
+    stop_reason: {
         optional: { nullable: true }, //allow empty and optional
         isString: { errorMessage: 'stop reason must be a string' }
     },
@@ -55,7 +55,7 @@ const createStrategyValidatorSchema = {
         optional: { nullable: true },
         isString: { errorMessage: 'start time must be a string' }
     },
-    end_at: { 
+    end_at: {
         optional: { nullable: true },
         isString: { errorMessage: 'end time must be a string' }
     }
