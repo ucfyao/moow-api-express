@@ -7,10 +7,9 @@ class AuthController {
 
   // user sign up
   async signUp(req, res) {
-    const { name, email, password, refCode, captcha } = req.body;
-    const sessionCaptcha = req.session.captcha;
+    const { name, email, password, refCode } = req.body;
     const userIp = req.ip;
-    const user = await AuthService.signUp(name, email, password, refCode, captcha, sessionCaptcha, userIp);
+    const user = await AuthService.signUp(name, email, password, refCode, userIp);
     return ResponseHandler.success(res, user, STATUS_TYPE.HTTP_CREATED);
   }
 

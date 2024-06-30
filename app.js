@@ -4,11 +4,11 @@ const setupMiddleware = require('./config/middleware');
 const routes = require('./app/routes');
 const { STATUS_TYPE } = require('./app/utils/statusCodes');
 const ResponseHandler = require('./app/utils/responseHandler');
+const logger = require('./app/utils/logger');
 const CustomError = require('./app/utils/customError');
 const ejs = require('ejs');
-const path = require('path');
-
 const config = require('./config');
+const initializeSchedulers = require('./app/schedulers');
 
 const app = express();
 
@@ -33,6 +33,8 @@ app.use((req, res, next) => {
 
 // Global error handler
 app.use((error, req, res, next) => {
+  logger.error( error.message);
+
   if (error instanceof CustomError) {
     return ResponseHandler.fail(res, error.statusCode, error.businessCode, error.message);
   }else{
@@ -45,5 +47,8 @@ app.listen(config.port, () => {
   console.log(`Server is running on port ${config.port}`);
   console.log(`http://127.0.0.1:${config.port}`);
 });
+
+// Initialize scheduled tasks
+initializeSchedulers();
 
 module.exports = app;

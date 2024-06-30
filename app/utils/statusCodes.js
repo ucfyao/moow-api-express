@@ -59,7 +59,6 @@ const STATUS_TYPE = {
     PORTAL_MARKET_NOT_FOUND: 11013, // The market not found
     PORTAL_USER_ALREADY_ACTIVATED: 11014, // This user account is already activated
     PORTAL_EMAIL_SEND_LIMIT: 11015, // Email cannot be sent more than once within 5 minutes.
-    PORTAL_CAPTCHA_INVAILD: 11016, // Captcha is invaild.
 
 
     // Custom status codes for aip module (12001-13000)
@@ -128,7 +127,6 @@ const STATUS_MESSAGE_ZH = {
     [STATUS_TYPE.PORTAL_MARKET_NOT_FOUND]: '第三方交易所未找到',
     [STATUS_TYPE.PORTAL_USER_ALREADY_ACTIVATED]: '该注册账号已经处于激活状态',
     [STATUS_TYPE.PORTAL_EMAIL_SEND_LIMIT]: '邮箱请求在5分钟内不能超过一次',
-    [STATUS_TYPE.PORTAL_CAPTCHA_INVAILD]: '验证码错误',
 
     // AIP module messages
     [STATUS_TYPE.AIP_SERVER_BUSY]: '交易模块服务器繁忙',
@@ -196,7 +194,6 @@ const STATUS_MESSAGE = {
     [STATUS_TYPE.PORTAL_MARKET_NOT_FOUND]: 'The market not found',
     [STATUS_TYPE.PORTAL_USER_ALREADY_ACTIVATED]: 'This user account is already activated',
     [STATUS_TYPE.PORTAL_EMAIL_SEND_LIMIT]: 'Multiple email sends within a short period are not allowed. Please wait 5 minutes to resend',
-    [STATUS_TYPE.PORTAL_CAPTCHA_INVAILD]: 'Captcha is invaild',
 
 
     // AIP module messages

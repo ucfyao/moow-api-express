@@ -34,6 +34,7 @@ class ExchangeKeyController {
     return ResponseHandler.fail(res, STATUS_TYPE.HTTP_NOT_FOUND);
   }
   async createKey(req, res) {
+    // TODO validators?
     const { exchange, access_key, secret_key, desc } = req.body;
     const keyData = { exchange, access_key, secret_key, desc };
 

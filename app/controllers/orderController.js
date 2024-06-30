@@ -8,18 +8,6 @@ class OrderController {
         const orders = await OrderService.getAllOrders(strategy_id);
         return ResponseHandler.success(res, orders);
     }
-
-    async place(req, res) {
-        const { strategy_id } = req.query;
-        const strategy = await OrderService.place(strategy_id);
-        return ResponseHandler.success(res, strategy, STATUS_TYPE.created);
-    }
-
-    async sell(req, res) {
-        const { strategy_id } = req.query;
-        const strategy = await OrderService.sell(strategy_id);
-        return ResponseHandler.success(res, strategy, STATUS_TYPE.accepted);
-    }
 }
 
 module.exports = new OrderController();

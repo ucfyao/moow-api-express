@@ -25,13 +25,7 @@ class AuthService {
     return sessionCaptcha === text;
   }
 
-  async signUp(name, email, password, refCode='', inputCaptcha, sessionCaptcha, userIp) {
-    // verify captcha
-    const captchaValid = await this.captchaIsValid(inputCaptcha, sessionCaptcha, config.env);
-    if (!captchaValid) {
-      throw new CustomError(STATUS_TYPE.PORTAL_CAPTCHA_INVAILD);
-    }
-
+  async signUp(name, email, password, refCode='', userIp) {
     const existingUser = await PortalUserModel.findOne({ email }).lean();
     if (existingUser) {
       throw new CustomError(STATUS_TYPE.PORTAL_EMAIL_ALREADY_REGISTERED);
