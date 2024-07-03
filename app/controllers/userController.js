@@ -1,7 +1,5 @@
-const UserService = require("../services/userService");
-const CustomError = require("../utils/customError");
-const ResponseHandler = require("../utils/responseHandler");
-const { STATUS_TYPE } = require('../utils/statusCodes');
+const UserService = require('../services/userService');
+const ResponseHandler = require('../utils/responseHandler');
 
 class UserController {
   // const getUsers = async (req, res) => {

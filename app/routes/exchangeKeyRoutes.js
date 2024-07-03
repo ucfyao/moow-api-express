@@ -8,7 +8,11 @@ const { createKeyValidatorSchema } = require('../validators/exchangeKeyValidator
 const router = express.Router();
 
 router.get('/api/v1/keys', asyncHandler(ExchangeKeyController.getAllKeys));
-router.post('/api/v1/keys', validateParams(createKeyValidatorSchema), asyncHandler(ExchangeKeyController.createKey));
+router.post(
+  '/api/v1/keys',
+  validateParams(createKeyValidatorSchema),
+  asyncHandler(ExchangeKeyController.createKey),
+);
 router.get('/api/v1/keys/:id', asyncHandler(ExchangeKeyController.getKeyById));
 router.delete('/api/v1/keys/:id', asyncHandler(ExchangeKeyController.deleteKey));
 

@@ -24,7 +24,6 @@ const setupMiddleware = (app) => {
   } else {
     app.use(morgan('tiny', { stream: logger.stream }));
   }
-
 };
 
 module.exports = setupMiddleware;

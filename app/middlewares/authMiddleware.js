@@ -1,7 +1,7 @@
-const _ = require("lodash");
-const ResponseHandler = require("../utils/responseHandler");
-const { STATUS_TYPE } = require("../utils/statusCodes");
-const AuthService = require("../services/authService");
+const _ = require('lodash');
+const ResponseHandler = require('../utils/responseHandler');
+const { STATUS_TYPE } = require('../utils/statusCodes');
+const AuthService = require('../services/authService');
 
 const authMiddleware = async (req, res, next) => {
   // In non-production environments, if needToken = false, do not validate the token
@@ -12,9 +12,9 @@ const authMiddleware = async (req, res, next) => {
   }
   */
 
-  const currentPath = _.trimEnd(req.path, "/");
-  const token = req.headers["token"];
-  const userId = req.headers["user_id"];
+  const currentPath = _.trimEnd(req.path, '/');
+  const {token} = req.headers;
+  const userId = req.headers.user_id;
 
   // Check if token information is complete
   if (!currentPath || !token || !userId) {
@@ -23,7 +23,7 @@ const authMiddleware = async (req, res, next) => {
   }
 
   // Look for the corresponding document from tokenModel
-  let loginInfoObj = await AuthService.getLoginfoByToken(token);
+  const loginInfoObj = await AuthService.getLoginfoByToken(token);
 
   // Check if the document exists
   if (!loginInfoObj) {

@@ -1,9 +1,8 @@
-const StrategyService = require('../services/strategyService')
+const StrategyService = require('../services/strategyService');
 const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class StrategyController {
-
   async getAllStrategies(req, res) {
     const strategies = await StrategyService.getAllStrategies();
     return ResponseHandler.success(res, strategies);
@@ -65,9 +64,6 @@ class StrategyController {
     const result = await StrategyService.executeSell(strategyId);
     res.json({ sell: result });
   }
-
-
 }
 
 module.exports = new StrategyController();
-

@@ -29,7 +29,7 @@ const config = {
     secure: true,
     auth: {
       user: process.env.MAIL_USER || 'no-reply@moow.cc',
-      pass: process.env.MAIL_PASS
+      pass: process.env.MAIL_PASS,
     },
     displayName: 'Moow',
   },
@@ -46,7 +46,7 @@ const config = {
     maxSize: process.env.LOG_MAX_SIZE || '20m',
     maxFiles: process.env.LOG_MAX_FILES || '14d',
     datePattern: 'YYYY-MM-DD',
-  }
+  },
 };
 
 module.exports = config;

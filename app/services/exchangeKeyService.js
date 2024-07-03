@@ -1,6 +1,6 @@
 // services/keyService.js
-const AipExchangeKey = require('../models/exchangeKeyModel');
 const ccxt = require('ccxt');
+const AipExchangeKey = require('../models/exchangeKeyModel');
 const { decrypt, encrypt } = require('../utils/cryptoUtils');
 
 class KeyService {
@@ -8,7 +8,7 @@ class KeyService {
     const start = Date.now();
 
     let conditions = {
-      //is_deleted: false
+      // is_deleted: false
     };
 
     const pageNumber = params.pageNumber || 1;
@@ -17,18 +17,19 @@ class KeyService {
     const { keyword } = params;
     if (typeof keyword !== 'undefined') {
       conditions = Object.assign(conditions, {
-        $or: [
-          { exchange: new RegExp(keyword, 'i') },
-          { desc: new RegExp(keyword, 'i') }
-        ]
+        $or: [{ exchange: new RegExp(keyword, 'i') }, { desc: new RegExp(keyword, 'i') }],
       });
     }
 
     const query = AipExchangeKey.find(conditions);
-    const exchangeKeys = await query.sort({ created_at: -1 }).skip((pageNumber - 1) * pageSize).limit(pageSize).lean();
+    const exchangeKeys = await query
+      .sort({ created_at: -1 })
+      .skip((pageNumber - 1) * pageSize)
+      .limit(pageSize)
+      .lean();
     const total = await AipExchangeKey.find(conditions).countDocuments();
 
-    exchangeKeys.forEach(exchangeKey => {
+    exchangeKeys.forEach((exchangeKey) => {
       if (exchangeKey.access_key && exchangeKey.secret_key) {
         const decryptedAccessKey = decrypt(exchangeKey.access_key);
         const decryptedSecretKey = decrypt(exchangeKey.secret_key);
@@ -50,8 +51,8 @@ class KeyService {
       const decryptedaccess_key = decrypt(exchangeKey.access_key);
       const decryptedsecret_key = decrypt(exchangeKey.secret_key);
       exchangeKey.access_key = `${decryptedaccess_key.slice(0, 3)}******${decryptedaccess_key.slice(-3)}`;
-      exchangeKey.secret_key = `${decryptedsecret_key.slice(0, 3)}******${decryptedsecret_key.slice(-3)}`
-    };
+      exchangeKey.secret_key = `${decryptedsecret_key.slice(0, 3)}******${decryptedsecret_key.slice(-3)}`;
+    }
     return exchangeKey;
   }
 
@@ -68,14 +69,13 @@ class KeyService {
     keyData.access_key = encrypt(keyData.access_key);
     keyData.secret_key = encrypt(keyData.secret_key);
     const exchangeKey = new AipExchangeKey(keyData);
-    await exchangeKey.save()
+    await exchangeKey.save();
     return { exchangeKey, validation };
   }
 
   async deleteKey(id) {
     return AipExchangeKey.findByIdAndUpdate(id, { status: '3' });
   }
-
 }
 
 module.exports = new KeyService();

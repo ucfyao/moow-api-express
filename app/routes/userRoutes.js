@@ -9,7 +9,11 @@ const router = express.Router();
 
 router.get('/api/v1/users', asyncHandler(UserController.getAllUsers));
 router.get('/api/v1/users/:id', asyncHandler(UserController.getUserById));
-router.patch('/api/v1/users/:id', validateParams(updateUserValidatorSchema), asyncHandler(UserController.updateUser));
+router.patch(
+  '/api/v1/users/:id',
+  validateParams(updateUserValidatorSchema),
+  asyncHandler(UserController.updateUser),
+);
 // router.delete('/users/:id', UserController.deleteUser);
 
 module.exports = router;

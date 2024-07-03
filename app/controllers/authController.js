@@ -4,18 +4,25 @@ const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class AuthController {
-
   // user sign up
-  async signUp(req, res) {
+  static async signUp(req, res) {
     const { name, email, password, refCode, captcha } = req.body;
     const sessionCaptcha = req.session.captcha;
     const userIp = req.ip;
-    const user = await AuthService.signUp(name, email, password, refCode, captcha, sessionCaptcha, userIp);
+    const user = await AuthService.signUp(
+      name,
+      email,
+      password,
+      refCode,
+      captcha,
+      sessionCaptcha,
+      userIp,
+    );
     return ResponseHandler.success(res, user, STATUS_TYPE.HTTP_CREATED);
   }
 
   // Generates a captcha image and returns it in the response.
-  async getCaptcha(req, res) {
+  static async getCaptcha(req, res) {
     // Extract query parameters or use default values for captcha configuration
     const {
       width = 150,
@@ -46,23 +53,17 @@ class AuthController {
     res.send(captcha.data);
   }
 
-  async signin(req, res) {
+  static async signin(req, res) {
     const { captcha, ...loginInfo } = req.body;
     const userIp = req.ip;
 
     // Verify captcha
-    if (
-      !AuthService.captchaIsValid(
-        captcha,
-        req.session.captcha,
-        process.env.NODE_ENV
-      )
-    ) {
+    if (!AuthService.captchaIsValid(captcha, req.session.captcha, process.env.NODE_ENV)) {
       return ResponseHandler.fail(
         res,
         STATUS_TYPE.badRequest,
         STATUS_TYPE.validationError,
-        "Invalid captcha"
+        'Invalid captcha',
       );
     }
     // Perform sign-in
@@ -71,21 +72,21 @@ class AuthController {
   }
 
   // user logout
-  async signout(req, res) {
-    const token = req.headers['token'];
+  static async signout(req, res) {
+    const {token} = req.headers;
     await AuthService.signout(token);
     ResponseHandler.success(res);
   }
 
-  async resetPassword(req, res) {
+  static async resetPassword(req, res) {
     const newPassword = req.body.new_password;
-    const token = req.body.token;
+    const {token} = req.body;
     const resMessage = await AuthService.resetPassword(newPassword, token);
     return ResponseHandler.success(res, resMessage);
   }
 
   // send activate email to new user
-  async sendActivateEmail(req, res) {
+  static async sendActivateEmail(req, res) {
     const userEmail = req.body.email; // user_id is the _id in user model
     const userIp = req.ip;
     const resMessage = await AuthService.sendActivateEmail(userEmail, userIp);
@@ -93,14 +94,14 @@ class AuthController {
   }
 
   // activate email
-  async activateUser(req, res) {
-    const token = req.body.token;
+  static async activateUser(req, res) {
+    const {token} = req.body;
     const resMessage = await AuthService.activateUser(token);
     return ResponseHandler.success(res, resMessage);
   }
 
   // send retrieve password email
-  async sendRetrievePasswordEmail(req, res) {
+  static async sendRetrievePasswordEmail(req, res) {
     const userEmail = req.body.email;
     const userIp = req.ip;
     const resMessage = await AuthService.sendRetrievePasswordEmail(userEmail, userIp);

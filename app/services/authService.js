@@ -1,6 +1,9 @@
 const _ = require('lodash');
 const crypto = require('crypto');
 const { v1: uuidv1 } = require('uuid');
+const ejs = require('ejs');
+const path = require('path');
+const moment = require('moment');
 const User = require('../models/userModel');
 const PortalTokenModel = require('../models/tokenModel');
 const PortalUserModel = require('../models/userModel');
@@ -10,22 +13,19 @@ const UserService = require('./userService');
 const SequenceService = require('./sequenceService');
 const config = require('../../config');
 const EmailService = require('./emailService');
-const ejs = require('ejs');
-const path = require('path');
 const { EMAIL_STATUS } = require('../utils/authStateEnum');
-const {hashidsEncode, hashidsDecode} = require('../utils/hashidsHandler');
-const moment = require('moment');
+const { hashidsEncode, hashidsDecode } = require('../utils/hashidsHandler');
 
 class AuthService {
   // verify captcha
   async captchaIsValid(text, sessionCaptcha, env) {
-    if (env === "local" && text === "888") {
+    if (env === 'local' && text === '888') {
       return true;
     }
     return sessionCaptcha === text;
   }
 
-  async signUp(name, email, password, refCode='', inputCaptcha, sessionCaptcha, userIp) {
+  async signUp(name, email, password, refCode = '', inputCaptcha, sessionCaptcha, userIp) {
     // verify captcha
     const captchaValid = await this.captchaIsValid(inputCaptcha, sessionCaptcha, config.env);
     if (!captchaValid) {
@@ -36,7 +36,7 @@ class AuthService {
     if (existingUser) {
       throw new CustomError(STATUS_TYPE.PORTAL_EMAIL_ALREADY_REGISTERED);
     }
-    const user = new PortalUserModel({ name, email, password});
+    const user = new PortalUserModel({ name, email, password });
 
     // if new user is recommanded by other user, we can get referrer's information
     if (refCode) {
@@ -65,15 +65,14 @@ class AuthService {
       throw new CustomError(STATUS_TYPE.PORTAL_REGISTRATION_FAILED);
     }
 
-    //const giveToken = await commonConfig.getGiveToken();
-    //const { from, coin, sign } = giveToken;
-    //await assets.sendToken({ from, email: user.email, token: coin, amount: sign, describe: 'signup', invitee: '', invitee_email: '' });
+    // const giveToken = await commonConfig.getGiveToken();
+    // const { from, coin, sign } = giveToken;
+    // await assets.sendToken({ from, email: user.email, token: coin, amount: sign, describe: 'signup', invitee: '', invitee_email: '' });
 
     await this.sendActivateEmail(email, userIp);
 
     return doc;
   }
-
 
   // user login
   async signin(loginInfo, userIp) {
@@ -81,32 +80,32 @@ class AuthService {
     const objectUser = await User.findOne({ email: loginInfo.email }).lean();
 
     if (!objectUser) {
-      throw new Error("User does not exist");
+      throw new Error('User does not exist');
     }
 
     const isPasswordCorrect = await this._verifyPassword(
       loginInfo.password,
       objectUser.salt,
-      objectUser.password
+      objectUser.password,
     );
 
     if (!isPasswordCorrect) {
-      throw new Error("Incorrect password");
+      throw new Error('Incorrect password');
     }
 
-    await PortalTokenModel.deleteMany({ user_id: objectUser._id, type: "session" });
+    await PortalTokenModel.deleteMany({ user_id: objectUser._id, type: 'session' });
 
     const token = await this._getToken(objectUser, userIp);
     const userInfo = _.pick(objectUser, [
-      "_id",
-      "real_name",
-      "nick_name",
-      "mobile",
-      "email",
-      "is_activated",
-      "vip_time_out_at",
-      "XBT",
-      "seq_id",
+      '_id',
+      'real_name',
+      'nick_name',
+      'mobile',
+      'email',
+      'is_activated',
+      'vip_time_out_at',
+      'XBT',
+      'seq_id',
     ]);
 
     const info = {
@@ -125,7 +124,7 @@ class AuthService {
   }
 
   async getLoginfoByToken(token) {
-    let tokenObj = await PortalTokenModel.findOne({ token: token });
+    const tokenObj = await PortalTokenModel.findOne({ token });
     return tokenObj;
   }
 
@@ -140,47 +139,51 @@ class AuthService {
     return loginInfoObj;
   }
 
-
   async sendRetrievePasswordEmail(userEmail, userIp) {
-      const objectUser = await PortalUserModel.findOne({ email: userEmail }).lean();
-      if (!objectUser) {
-        throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
-      }
+    const objectUser = await PortalUserModel.findOne({ email: userEmail }).lean();
+    if (!objectUser) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
 
-      // generate token
-      const code = await this._getCode(objectUser, userIp);
-      const siteName = config.siteName;
-      const siteUrl = config.siteUrl;
-      const resetPasswordUrl = `${siteUrl}/reset-password/${code}`;
-      const displayName = objectUser.nick_name;
-      const resetPasswordMailPath = path.resolve(__dirname,'../views/forget_password_mail.html');
+    // generate token
+    const code = await this._getCode(objectUser, userIp);
+    const { siteName } = config;
+    const { siteUrl } = config;
+    const resetPasswordUrl = `${siteUrl}/reset-password/${code}`;
+    const displayName = objectUser.nick_name;
+    const resetPasswordMailPath = path.resolve(__dirname, '../views/forget_password_mail.html');
 
-      const html = await ejs.renderFile(resetPasswordMailPath, { siteName, displayName, resetPasswordUrl, siteUrl });
-      const resetPasswordEmail = {
-        async: false,
-        to: [objectUser.email],
-        subject: `[${siteName}]retrieve password`,
-        text: `Hello, ${displayName}, to reset your password, please click the link: ${resetPasswordUrl}`,
-        html,
-      };
-      console.log(html);
-      const sendEmailRes = await EmailService.sendEmail(resetPasswordEmail);
+    const html = await ejs.renderFile(resetPasswordMailPath, {
+      siteName,
+      displayName,
+      resetPasswordUrl,
+      siteUrl,
+    });
+    const resetPasswordEmail = {
+      async: false,
+      to: [objectUser.email],
+      subject: `[${siteName}]retrieve password`,
+      text: `Hello, ${displayName}, to reset your password, please click the link: ${resetPasswordUrl}`,
+      html,
+    };
+    console.log(html);
+    const sendEmailRes = await EmailService.sendEmail(resetPasswordEmail);
 
-      if (sendEmailRes.emailStatus == EMAIL_STATUS.FAILED) {
-        // TODO error log
-        console.error('Error sending activation email:', sendEmailRes.desc);
-      }
+    if (sendEmailRes.emailStatus === EMAIL_STATUS.FAILED) {
+      // TODO error log
+      console.error('Error sending activation email:', sendEmailRes.desc);
+    }
 
-      return {
-        'message': 'Reset password email will be sent!'
-      };
+    return {
+      message: 'Reset password email will be sent!',
+    };
   }
 
   async resetPassword(newPassword, token) {
     // reset password
     const tokenDoc = await PortalTokenModel.findOne({
-      token: token,
-      type: "code"
+      token,
+      type: 'code',
     });
     // If token not exist
     if (!tokenDoc) {
@@ -208,7 +211,7 @@ class AuthService {
   }
 
   async sendActivateEmail(userEmail, userIp) {
-    const objectUser = await PortalUserModel.findOne({email: userEmail}).lean();
+    const objectUser = await PortalUserModel.findOne({ email: userEmail }).lean();
     if (!objectUser) {
       throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
     }
@@ -217,24 +220,29 @@ class AuthService {
     }
 
     // check whether already sent email in 5 mins（all the 'code' type tokens are used to verify, so check the generate time of the token）
-    const existToken = await PortalTokenModel.findOne({user_id: objectUser._id, type: 'code'});
+    const existToken = await PortalTokenModel.findOne({ user_id: objectUser._id, type: 'code' });
     if (existToken) {
       if ((+new Date() - existToken.last_access_time) / 1000 < config.minEmailSendInterval) {
         throw new CustomError(STATUS_TYPE.PORTAL_EMAIL_SEND_LIMIT);
-      } else{
-        await PortalTokenModel.deleteOne({_id: existToken._id}); // delete exist token and then send a new one.
+      } else {
+        await PortalTokenModel.deleteOne({ _id: existToken._id }); // delete exist token and then send a new one.
       }
     }
 
     // generate Token
     const code = await this._getCode(objectUser, userIp);
-    const siteName = config.siteName;
-    const siteUrl = config.siteUrl;
+    const { siteName } = config;
+    const { siteUrl } = config;
     const activateUrl = `${siteUrl}/active-confirm/${code}`;
     const displayName = objectUser.nick_name;
-    const welcomMailPath = path.resolve(__dirname,'../views/welcome_mail.html');
+    const welcomMailPath = path.resolve(__dirname, '../views/welcome_mail.html');
 
-    const html = await ejs.renderFile( welcomMailPath, { siteName, displayName, activateUrl, siteUrl });
+    const html = await ejs.renderFile(welcomMailPath, {
+      siteName,
+      displayName,
+      activateUrl,
+      siteUrl,
+    });
     const activeEmail = {
       async: false,
       to: [objectUser.email],
@@ -244,24 +252,24 @@ class AuthService {
     };
 
     const sendEmailRes = await EmailService.sendEmail(activeEmail);
-    if (sendEmailRes.emailStatus == EMAIL_STATUS.FAILED) {
+    if (sendEmailRes.emailStatus === EMAIL_STATUS.FAILED) {
       // TODO error log
       console.error('Error sending activation email:', sendEmailRes.desc);
     }
 
     return {
-      'message': 'Activation email will be sent!'
+      message: 'Activation email will be sent!',
     };
   }
 
   async activateUser(token) {
-    const existToken = await PortalTokenModel.findOne({ token: token, type: 'code' }).lean();
+    const existToken = await PortalTokenModel.findOne({ token, type: 'code' }).lean();
     if (!existToken) {
       throw new CustomError(STATUS_TYPE.PORTAL_ACTIVATE_CODE_ILLEGAL);
     }
 
     if ((+new Date() - existToken.last_access_time) / 1000 > config.tokenTimeOut) {
-      await PortalTokenModel.deleteOne({_id: existToken._id});
+      await PortalTokenModel.deleteOne({ _id: existToken._id });
       throw new CustomError(STATUS_TYPE.PORTAL_ACTIVATE_CODE_EXPIRED);
     }
 
@@ -283,16 +291,16 @@ class AuthService {
       if (refUser) {
         const timeOutAt = new Date(refUser.vip_time_out_at).getTime();
         const now = new Date().getTime();
-        const fromTime = (now > timeOutAt) ? now : timeOutAt;
+        const fromTime = now > timeOutAt ? now : timeOutAt;
 
         const toDate = moment(fromTime).add(1, 'days').toDate();
         refUser.vip_time_out_at = toDate;
 
         // TODO: handle this part after completing assets module
-        //const giveToken = await this.ctx.service.commonConfig.getGiveToken();
-        //const { from, coin, invitation } = giveToken;
-        //refUser.invite_reward = +refUser.invite_reward + 1;
-        //refUser.invite_total = +refUser.invite_total + invitation;
+        // const giveToken = await this.ctx.service.commonConfig.getGiveToken();
+        // const { from, coin, invitation } = giveToken;
+        // refUser.invite_reward = +refUser.invite_reward + 1;
+        // refUser.invite_total = +refUser.invite_total + invitation;
 
         // await this.ctx.service.assets.sendToken({
         //   from,
@@ -309,22 +317,16 @@ class AuthService {
     }
 
     await objectUser.save();
-    await PortalTokenModel.deleteOne({_id: existToken._id});
+    await PortalTokenModel.deleteOne({ _id: existToken._id });
     return {
-      message: 'Account activation successful.'
+      message: 'Account activation successful.',
     };
   }
 
   async _verifyPassword(password, salt, encryptedPwd) {
     const iteration = 1000;
-    const cryptoPassword = crypto.pbkdf2Sync(
-      password,
-      salt,
-      iteration,
-      32,
-      "sha512"
-    );
-    return cryptoPassword.toString("base64") === encryptedPwd;
+    const cryptoPassword = crypto.pbkdf2Sync(password, salt, iteration, 32, 'sha512');
+    return cryptoPassword.toString('base64') === encryptedPwd;
   }
 
   async _getToken(user, userIp) {
@@ -336,14 +338,14 @@ class AuthService {
       user_ip: userIp,
       email: user.email,
       nick_name: user.nick_name,
-      type: "session",
+      type: 'session',
       last_access_time: new Date(),
     }).save();
     return token;
   }
 
   _generateToken(user) {
-    return uuidv1().replace(/-/g, "");
+    return uuidv1().replace(/-/g, '');
   }
 
   async _getCode(user, userIp) {

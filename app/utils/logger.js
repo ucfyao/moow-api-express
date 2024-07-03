@@ -1,7 +1,8 @@
 const { createLogger, format, transports } = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 const path = require('path');
-const config = require(path.resolve(process.cwd(), 'config')).logger;
+
+const config = require('../../config').logger;
 
 // Define log format
 const logFormat = format.printf(({ level, message, timestamp, stack }) => {
@@ -24,8 +25,8 @@ const transportsArray = [
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),
       format.align(),
-      logFormat
-    )
+      logFormat,
+    ),
   }),
   new DailyRotateFile({
     filename: path.join(config.directory, 'combined-%DATE%.log'),
@@ -35,9 +36,9 @@ const transportsArray = [
     format: format.combine(
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.align(),
-      logFormat
-    )
-  })
+      logFormat,
+    ),
+  }),
 ];
 
 if (process.env.NODE_ENV !== 'production') {
@@ -48,9 +49,9 @@ if (process.env.NODE_ENV !== 'production') {
         format.colorize(),
         format.timestamp(),
         format.errors({ stack: true }),
-        logFormat
-      )
-    })
+        logFormat,
+      ),
+    }),
   );
 }
 
@@ -59,18 +60,18 @@ const logger = createLogger({
   // error < warn < info < http < verbose < debug < silly
   level: config.level,
   transports: transportsArray,
-  exitOnError: false
+  exitOnError: false,
 });
 
 // Add a stream for Morgan middleware
 logger.stream = {
-  write: message => logger.http(message.trim())
+  write: (message) => logger.http(message.trim()),
 };
 
 // Error handling for file transport
-transportsArray.forEach(transport => {
+transportsArray.forEach((transport) => {
   if (transport instanceof DailyRotateFile) {
-    transport.on('error', error => {
+    transport.on('error', (error) => {
       console.error('Error in transport', error);
     });
   }

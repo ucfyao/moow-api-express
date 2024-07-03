@@ -29,7 +29,7 @@ mongoDB v7.0.2
 
 ### Development
 
-1. import initial datas(data/*.json) to mogodb
+1. import initial datas(data/\*.json) to mogodb
 
 ```
 mongoimport --db xiaobao --collection portal_resource --file data/portal_resource.json --host 127.0.0.1:27017
@@ -60,6 +60,7 @@ $ npm stop
 yaozihao@yaozihao.com
 
 ### doc
+
 ```
 cd doc
 npm install gitbook-cli -g
@@ -68,4 +69,3 @@ gitbook serve
 ```
 
 Open the browser and visit: http://localhost:4000/ to view the documentation.
-
