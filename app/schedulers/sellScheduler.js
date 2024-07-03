@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const StrategyService = require('../services/strategyService.js');
+const StrategyService = require('../services/strategyService');
 
 const sellScheduler = () => {
   cron.schedule('* * * * *', async () => {

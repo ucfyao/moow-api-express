@@ -13,7 +13,7 @@ const authMiddleware = async (req, res, next) => {
   */
 
   const currentPath = _.trimEnd(req.path, '/');
-  const {token} = req.headers;
+  const { token } = req.headers;
   const userId = req.headers.user_id;
 
   // Check if token information is complete

@@ -5,7 +5,7 @@ const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class AuthController {
   // user sign up
-  static async signUp(req, res) {
+  async signUp(req, res) {
     const { name, email, password, refCode, captcha } = req.body;
     const sessionCaptcha = req.session.captcha;
     const userIp = req.ip;
@@ -22,7 +22,7 @@ class AuthController {
   }
 
   // Generates a captcha image and returns it in the response.
-  static async getCaptcha(req, res) {
+  async getCaptcha(req, res) {
     // Extract query parameters or use default values for captcha configuration
     const {
       width = 150,
@@ -53,7 +53,7 @@ class AuthController {
     res.send(captcha.data);
   }
 
-  static async signin(req, res) {
+  async signin(req, res) {
     const { captcha, ...loginInfo } = req.body;
     const userIp = req.ip;
 
@@ -72,21 +72,21 @@ class AuthController {
   }
 
   // user logout
-  static async signout(req, res) {
-    const {token} = req.headers;
+  async signout(req, res) {
+    const { token } = req.headers;
     await AuthService.signout(token);
     ResponseHandler.success(res);
   }
 
-  static async resetPassword(req, res) {
+  async resetPassword(req, res) {
     const newPassword = req.body.new_password;
-    const {token} = req.body;
+    const { token } = req.body;
     const resMessage = await AuthService.resetPassword(newPassword, token);
     return ResponseHandler.success(res, resMessage);
   }
 
   // send activate email to new user
-  static async sendActivateEmail(req, res) {
+  async sendActivateEmail(req, res) {
     const userEmail = req.body.email; // user_id is the _id in user model
     const userIp = req.ip;
     const resMessage = await AuthService.sendActivateEmail(userEmail, userIp);
@@ -94,14 +94,14 @@ class AuthController {
   }
 
   // activate email
-  static async activateUser(req, res) {
-    const {token} = req.body;
+  async activateUser(req, res) {
+    const { token } = req.body;
     const resMessage = await AuthService.activateUser(token);
     return ResponseHandler.success(res, resMessage);
   }
 
   // send retrieve password email
-  static async sendRetrievePasswordEmail(req, res) {
+  async sendRetrievePasswordEmail(req, res) {
     const userEmail = req.body.email;
     const userIp = req.ip;
     const resMessage = await AuthService.sendRetrievePasswordEmail(userEmail, userIp);

@@ -12,7 +12,7 @@ class CommonConfigService {
       {
         new: true,
         select: 'sequence_value',
-      },
+      }
     );
     return sequenceDocument.sequence_value;
   }
@@ -36,7 +36,7 @@ class CommonConfigService {
     const accessToken = await CommonConfigModel.findOneAndUpdate(
       { name: 'access_token' },
       { content: accessToken },
-      { new: true },
+      { new: true }
     );
     return accessToken;
   }

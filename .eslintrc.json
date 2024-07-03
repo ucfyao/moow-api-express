@@ -20,7 +20,7 @@
   "rules": {
     "no-console": "warn", // Warns on usage of console statements
     "no-unused-vars": "warn", // Warns on unused variables
-    "no-underscore-dangle": "warn",
+    "no-underscore-dangle": "off",
     "class-methods-use-this": "off",
     "semi": ["error", "always"], // Enforces semicolon usage
     "quotes": ["error", "single"], // Enforces single quotes

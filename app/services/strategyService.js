@@ -64,7 +64,10 @@ class StrategyService {
         break;
       case 2:
         logger.info('按照周购买: %j, cur hour:', strategy, now.get('hour'));
-        if (strategy.period_value.indexOf(now.get('day').toString()) !== -1 && strategy.hour === now.get('hour')) {
+        if (
+          strategy.period_value.indexOf(now.get('day').toString()) !== -1 &&
+            strategy.hour === now.get('hour')
+        ) {
           const result = await this.executeBuy(strategy);
           results.push(result);
         }
@@ -203,7 +206,9 @@ class StrategyService {
   }
 
   // Method to detect sell signal and execute corresponding operation
-  async executeSell(strategyId) { }
+  async executeSell(strategyId) {
+    return true;
+  }
 
   /**
    * Calculate value averaging for a strategy

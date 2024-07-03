@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Market = require('../models/marketModel');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');

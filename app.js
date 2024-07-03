@@ -37,14 +37,13 @@ app.use((error, req, res, next) => {
 
   if (error instanceof CustomError) {
     return ResponseHandler.fail(res, error.statusCode, error.businessCode, error.message);
-  } 
+  }
   return ResponseHandler.fail(
     res,
     STATUS_TYPE.HTTP_INTERNAL_SERVER_ERROR,
     STATUS_TYPE.HTTP_INTERNAL_SERVER_ERROR,
     error.message || 'Internal Server Error',
   );
-  
 });
 
 // Start the server

@@ -53,7 +53,7 @@ class OrderService {
     if (strategy.type === STRATEGY_TYPE.NORMAL) {
       amount = (strategy.base_limit / price).toFixed(6);
     } else {
-      amount = valueAveraging(strategy).toFixed(6);
+      amount = _valueAveraging(strategy).toFixed(6);
       if (amount <= 0) {
         return false;
       }
