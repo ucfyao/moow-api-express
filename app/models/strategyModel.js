@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
-// After selecting the period, perform normal distribution to different days and 
+// After selecting the period, perform normal distribution to different days and
 // times to prevent concurrency issues.
 
-const StartegySchema = new mongoose.Schema({
+const StartegySchema = new mongoose.Schema(
+  {
     // id: { type: String, unique: true, trim: true }, // Auto-increment id
     // created_by: { type: String, unique: true, trim: true }, // Creator
 
@@ -42,12 +43,12 @@ const StartegySchema = new mongoose.Schema({
     stop_reason: { type: String, trim: true }, // Stop reason
     start_at: { type: Date }, // Start time
     end_at: { type: Date }, // End time
-
-    }, {
-        timestamps: true, // Automatically adds createdAt and updatedAt fields
-        collection: 'aip_strategies',
-    });
+  },
+  {
+    timestamps: true, // Automatically adds createdAt and updatedAt fields
+    collection: 'aip_strategies',
+  },
+);
 
 const Startegy = mongoose.model('Startegy', StartegySchema);
 module.exports = Startegy;
-

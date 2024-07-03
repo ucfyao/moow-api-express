@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const config = require('./index');
+const logger = require('../app/utils/logger');
 
 const connectDB = async () => {
   try {
@@ -7,9 +8,9 @@ const connectDB = async () => {
       // useNewUrlParser: true,
       // useUnifiedTopology: true,
     });
-    console.log(`Connected to MongoDB at ${config.mongoUri}`);
+    logger.info(`Connected to MongoDB at ${config.mongoUri}`);
   } catch (err) {
-    console.error('MongoDB connection error:', err.message);
+    logger.info('MongoDB connection error:', err.message);
     process.exit(1); // 结束进程
   }
 };

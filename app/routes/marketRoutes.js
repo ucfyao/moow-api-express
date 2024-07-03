@@ -1,7 +1,7 @@
 const express = require('express');
 const MarketController = require('../controllers/marketController');
 const validateParams = require('../middlewares/validateMiddleware');
-const { createMarketValidatorSchema }  = require('../validators/marketValidator');
+const { createMarketValidatorSchema } = require('../validators/marketValidator');
 const asyncHandler = require('../utils/asyncHandler');
 
 const router = express.Router();
@@ -10,15 +10,19 @@ const router = express.Router();
 router.get('/api/v1/markets', asyncHandler(MarketController.getAllMarkets));
 
 // create a new markets
-router.post('/api/v1/markets', validateParams(createMarketValidatorSchema), asyncHandler(MarketController.createMarket));
+router.post(
+  '/api/v1/markets',
+  validateParams(createMarketValidatorSchema),
+  asyncHandler(MarketController.createMarket),
+);
 
-//get a market by ID
+// get a market by ID
 router.get('/api/v1/markets/:id', asyncHandler(MarketController.getMarketById));
 
 // update market info updateMarket
 router.put('/api/v1/markets/:id', asyncHandler(MarketController.updateMarket));
 
-//delete a market
+// delete a market
 router.delete('/api/v1/markets/:id', asyncHandler(MarketController.deleteMarket));
 
 module.exports = router;

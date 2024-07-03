@@ -15,36 +15,44 @@
 
 // module.exports = { createUserValidator };
 
-
 const updateUserValidatorSchema = {
   realName: {
     optional: {},
-    isLength: { options: { min: 2, max: 100 }, errorMessage: 'Real name must be between 2 and 100 characters long' }
+    isLength: {
+      options: { min: 2, max: 100 },
+      errorMessage: 'Real name must be between 2 and 100 characters long',
+    },
   },
   displayName: {
     optional: {},
-    isLength: { options: { min: 2, max: 100 }, errorMessage: 'Display name must be between 2 and 100 characters long' }
+    isLength: {
+      options: { min: 2, max: 100 },
+      errorMessage: 'Display name must be between 2 and 100 characters long',
+    },
   },
   mobile: {
     optional: {},
-    isLength: { options: { min: 9 }, errorMessage: 'Mobile must be at least 9 characters long' }
+    isLength: { options: { min: 9 }, errorMessage: 'Mobile must be at least 9 characters long' },
   },
   instagram: {
     optional: {},
-    isLength: { options: { min: 6 }, errorMessage: 'instagram must be at least 6 characters long' }
+    isLength: { options: { min: 6 }, errorMessage: 'instagram must be at least 6 characters long' },
   },
   role: {
     optional: {},
-    isArray: { errorMessage: 'Role must be an array' }
+    isArray: { errorMessage: 'Role must be an array' },
   },
   password: {
     optional: {},
-    isLength: { options: { min: 6 }, errorMessage: 'Password must be at least 6 characters long' }
+    isLength: { options: { min: 6 }, errorMessage: 'Password must be at least 6 characters long' },
   },
   new_password: {
     optional: {},
-    isLength: { options: { min: 6 }, errorMessage: 'New password must be at least 6 characters long' }
-  }
+    isLength: {
+      options: { min: 6 },
+      errorMessage: 'New password must be at least 6 characters long',
+    },
+  },
 };
 
 module.exports = { updateUserValidatorSchema };

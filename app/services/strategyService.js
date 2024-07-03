@@ -1,24 +1,23 @@
-const Strategy = require('../models/strategyModel');
-const { decrypt, encrypt } = require('../utils/cryptoUtils');
 const ccxt = require('ccxt');
-const { STRATEGY_TYPE, DRAWDOWN_STATUS, AWAIT_STATUS, AWAIT_SELL_TYPE } = require('../utils/strategyStateEnum');
+const Strategy = require('../models/strategyModel');
+// const { decrypt, encrypt } = require('../utils/cryptoUtils');
+const { STRATEGY_TYPE } = require('../utils/strategyStateEnum');
 const logger = require('../utils/logger');
 const orderService = require('./orderService');
 
 class StrategyService {
-
   async getAllStrategies() {
     return Strategy.find();
   }
 
-  async getStrategyById( strategy_id ){
+  async getStrategyById(strategy_id) {
     const info = await Strategy.findById(strategy_id);
     return { info };
   }
 
-  async createStrategy( strategy ) {
-    strategy.minute = '' + parseInt(60 * Math.random());
-    strategy.hour = '' + parseInt(24 * Math.random());
+  async createStrategy(strategy) {
+    strategy.minute = `${parseInt(60 * Math.random())}`;
+    strategy.hour = `${parseInt(24 * Math.random())}`;
 
     const doc = new Strategy(strategy);
     // const secret = await encrypt(strategy.secret);  // for testing
@@ -41,40 +40,51 @@ class StrategyService {
       minute: now.get('minute').toString(),
     };
     const strategiesArr = await Strategy.find(conditions);
-    logger.info('cur day: %j, hour: %j, minite: %j', now.get('day'), now.get('hour'), now.get('minute'));
+    logger.info(
+      'cur day: %j, hour: %j, minite: %j',
+      now.get('day'),
+      now.get('hour'),
+      now.get('minute'),
+    );
 
     const results = [];
 
     for (const strategy of strategiesArr) {
       if (strategy.exchange === undefined) {
-        logger.info('[' + strategy._id + '] - exchange is null , call user!');
+        logger.info(`[${strategy._id}] - exchange is null , call user!`);
         continue;
       }
       switch (strategy.period * 1) {
-        case 1:
-          logger.info('按照日购买: %j, cur hour:', strategy.period_value, now.get('hour'));
-          if (strategy.period_value.indexOf(now.get('hour').toString()) !== -1) {
-            const result = await buy(strategy);
-            results.push(result);
-          }
-          break;
-        case 2:
-          logger.info('按照周购买: %j, cur hour:', strategy, now.get('hour'));
-          if (strategy.period_value.indexOf(now.get('day').toString()) !== -1 && strategy.hour === now.get('hour')) {
-            const result = await buy(strategy);
-            results.push(result);
-          }
-          break;
+      case 1:
+        logger.info('按照日购买: %j, cur hour:', strategy.period_value, now.get('hour'));
+        if (strategy.period_value.indexOf(now.get('hour').toString()) !== -1) {
+          const result = await this.executeBuy(strategy);
+          results.push(result);
+        }
+        break;
+      case 2:
+        logger.info('按照周购买: %j, cur hour:', strategy, now.get('hour'));
+        if (
+          strategy.period_value.indexOf(now.get('day').toString()) !== -1 &&
+            strategy.hour === now.get('hour')
+        ) {
+          const result = await this.executeBuy(strategy);
+          results.push(result);
+        }
+        break;
 
-        case 3:
-          logger.info('按照月购买: %j,cur hour:', strategy, now.get('hour'));
-          if (strategy.period_value.indexOf(now.get('date').toString()) !== -1 && strategy.hour === now.get('hour')) {
-            const result = await buy(strategy);
-            results.push(result);
-          }
-          break;
-        default:
-          app.logger.info('未寻到交易周期');
+      case 3:
+        logger.info('按照月购买: %j,cur hour:', strategy, now.get('hour'));
+        if (
+          strategy.period_value.indexOf(now.get('date').toString()) !== -1 &&
+            strategy.hour === now.get('hour')
+        ) {
+          const result = await this.executeBuy(strategy);
+          results.push(result);
+        }
+        break;
+      default:
+        logger.info('未寻到交易周期');
       }
     }
     logger.info('### Round time: %j', Date.now() - start);
@@ -98,13 +108,12 @@ class StrategyService {
    * @returns {Object} Result of the buy operation
    */
   async processBuy(strategy) {
-
     // TODO When creating a Strategy, it is necessary to store the encrypted key and secret.
     // const apiKey = await decrypt(strategy.key);
     // const secret = await decrypt(strategy.secret);
 
     const apiKey = strategy.key;
-    const secret = strategy.secret;
+    const { secret } = strategy;
 
     const exchange = new ccxt[strategy.exchange]({
       apiKey,
@@ -115,7 +124,7 @@ class StrategyService {
     const ticker = await exchange.fetchTicker(strategy.symbol);
     const price = ticker.ask;
 
-    logger.info('== buy price: ' + price);
+    logger.info(`== buy price: ${price}`);
     // TODO: make sure to reach the minimum amount and prize by const markets = await exchange.loadMarkets()[strategy.symbol];
 
     let amount = 0;
@@ -126,24 +135,24 @@ class StrategyService {
       const fundsToInvest = await this._valueAveraging(strategy, price);
       amount = fundsToInvest.toFixed(6);
       if (amount <= 0) {
-        logger.info('== the purchase amount is too low: ' + amount);
+        logger.info(`== the purchase amount is too low: ${amount}`);
         // return false;
       }
     }
-    logger.info('== buy amount: ' + amount);
+    logger.info(`== buy amount: ${amount}`);
 
     const balance = await exchange.fetchBalance();
     const valueTotal = strategy.amount * price;
 
     // TODO Determine if the balance is sufficient.
-    if(balance[strategy.base] < valueTotal){
-      logger.info('== balance is not enough: ' + balance[strategy.base]);
+    if (balance[strategy.base] < valueTotal) {
+      logger.info(`== balance is not enough: ${balance[strategy.base]}`);
       // throw CustomError('');
     }
 
     const inParams = {};
     if (strategy.exchange === 'okex') {
-      in_params.cost = amount;
+      inParams.cost = amount;
     }
     // Limit Order type: allows you to specify a desired price. The order will only execute when the market price reaches or exceeds this price.
     // let type = 'limit';
@@ -156,36 +165,36 @@ class StrategyService {
     // const orderRes = exchange.createOrder(strategy.symbol, type, side, amount, price, inParams);
     const orderRes = await exchange.createOrder('EOS/USDT', 'limit', 'buy', 50, 0.15, inParams);
 
-    logger.info('== exchange res order id: ' + orderRes.id);
+    logger.info(`== exchange res order id: ${orderRes.id}`);
 
     const buyTimes = strategy.buy_times + 1;
     const nowBuyTimes = strategy.now_buy_times + 1;
     const inOrder = {
-        strategy_id: strategy._id,
-        order_id: orderRes.id,
-        type,
-        side,
-        price,
-        amount,
-        symbol:strategy.symbol,
-        funds: strategy.base_limit,
-        avg_price: 0,
-        deal_amount: 0,
-        cost: 0,
-        status: 'open',
-        mid: strategy.user_market_id,
-        record_amount: 0,
-        record_cost: 0,
-        buy_times: buyTimes,
-        now_buy_times: nowBuyTimes,
-        quote_total: strategy.quote_total,
-        value_total: strategy.quote_total * price,
-        base_total: strategy.base_total,
+      strategy_id: strategy._id,
+      order_id: orderRes.id,
+      type,
+      side,
+      price,
+      amount,
+      symbol: strategy.symbol,
+      funds: strategy.base_limit,
+      avg_price: 0,
+      deal_amount: 0,
+      cost: 0,
+      status: 'open',
+      mid: strategy.user_market_id,
+      record_amount: 0,
+      record_cost: 0,
+      buy_times: buyTimes,
+      now_buy_times: nowBuyTimes,
+      quote_total: strategy.quote_total,
+      value_total: strategy.quote_total * price,
+      base_total: strategy.base_total,
 
-        now_base_total: strategy.now_base_total,
-        now_quote_total: strategy.now_quote_total,
-        pl_created_at: Date.now(),
-        created_at: Date.now(),
+      now_base_total: strategy.now_base_total,
+      now_quote_total: strategy.now_quote_total,
+      pl_created_at: Date.now(),
+      created_at: Date.now(),
     };
     await orderService.create(inOrder);
 
@@ -198,7 +207,7 @@ class StrategyService {
 
   // Method to detect sell signal and execute corresponding operation
   async executeSell(strategyId) {
-
+    return true;
   }
 
   /**
@@ -216,16 +225,14 @@ class StrategyService {
     // Current value = already purchased * current price
     // Expected value = each purchase amount * (1 + R)^number of purchases
     // Amount to be purchased = current value - expected value
-    const now_worth = strategy.quote_total * price;
-    const expect_worth = strategy.base_limit * Math.pow((1 + strategy.expect_frowth_rate), strategy.buy_times);
-    const funds = expect_worth - now_worth;
+    const nowWorth = strategy.quote_total * price;
+    const expectWorth =
+      strategy.base_limit * (1 + strategy.expect_frowth_rate) ** strategy.buy_times;
+    const funds = expectWorth - nowWorth;
     // TODO In theory, value averaging sell strategy means selling the portion that exceeds the expected value, so this should be calculated here and added to the sell strategy.
     // TODO Set the maximum or minimum monthly buy/sell limit, for example, 5 times the preset monthly growth amount, to reduce the fund requirement during significant market fluctuations.
     return funds > 0 ? funds / price : 0;
   }
-
 }
 
 module.exports = new StrategyService();
-
-

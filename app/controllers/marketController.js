@@ -5,7 +5,7 @@ const { STATUS_TYPE } = require('../utils/statusCodes');
 class MarketController {
   async getAllMarkets(req, res) {
     const markets = await MarketService.getAllMarkets();
-    return ResponseHandler.success(res, markets);  
+    return ResponseHandler.success(res, markets);
   }
 
   async getMarketById(req, res) {
@@ -14,7 +14,7 @@ class MarketController {
   }
 
   async createMarket(req, res) {
-    const  marketData = req.body;
+    const marketData = req.body;
     const market = await MarketService.createMarket(marketData);
     return ResponseHandler.success(res, market, STATUS_TYPE.HTTP_CREATED);
   }

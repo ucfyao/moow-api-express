@@ -3,9 +3,7 @@ const ExchangeKeyService = require('../services/exchangeKeyService');
 const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 
-
 class ExchangeKeyController {
-
   // const getUsers = async (req, res) => {
   //   const users = await userService.getAllUsers();
   //   res.success(res, users, STATUS_TYPE.http.ok, STATUS_TYPE.success);
@@ -17,7 +15,7 @@ class ExchangeKeyController {
   // };
   async getAllKeys(req, res) {
     const params = {
-      //userId: req.user.id,
+      // userId: req.user.id,
       pageNumber: parseInt(req.query.pageNumber) || 1,
       pageSize: parseInt(req.query.pageSize) || 9999,
       keyword: req.query.keyword,
@@ -33,6 +31,7 @@ class ExchangeKeyController {
     }
     return ResponseHandler.fail(res, STATUS_TYPE.HTTP_NOT_FOUND);
   }
+
   async createKey(req, res) {
     // TODO validators?
     const { exchange, access_key, secret_key, desc } = req.body;
@@ -41,6 +40,7 @@ class ExchangeKeyController {
     const { exchangeKey, validation } = await ExchangeKeyService.createKey(keyData);
     return ResponseHandler.success(res, { exchangeKey, validation }, STATUS_TYPE.HTTP_CREATED);
   }
+
   async deleteKey(req, res) {
     const result = await ExchangeKeyService.deleteKey(req.params.id);
     return ResponseHandler.success(res, STATUS_TYPE.HTTP_OK);

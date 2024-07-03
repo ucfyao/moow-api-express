@@ -10,31 +10,31 @@ class EmailService {
 
   // send alarm mail
   async sendAlarmMail(subject, message) {
-    let to = config.alarm.mailto;
+    const to = config.alarm.mailto;
     if (to.length <= 0) return;
-    let params = {
-      "async": false,
-      "to": to,
-      "subject": subject,
-      "text": message,
-      "html": `<p>${message}</p>`
+    const params = {
+      async: false,
+      to,
+      subject,
+      text: message,
+      html: `<p>${message}</p>`,
     };
     await this.sendEmail(params);
   }
 
   // send email
   async sendEmail(params) {
-    let response = {
-      emailStatus : EMAIL_STATUS.FAILED,
+    const response = {
+      emailStatus: EMAIL_STATUS.FAILED,
       async: params.async,
-      desc: ''
+      desc: '',
     };
     // 1. save information
     await this._saveEmailInfor(params);
 
     // 2. send email
     if (!params.async) {
-      let sendRes = await this.send(params);
+      const sendRes = await this.send(params);
       response.emailStatus = sendRes.emailStatus;
       response.desc = sendRes.desc;
     }
@@ -43,7 +43,7 @@ class EmailService {
   }
 
   async _saveEmailInfor(params) {
-    let sendMark = params.async ? SEND_MARK.ALREADY_SENT : SEND_MARK.WAIT_TO_SEND;
+    const sendMark = params.async ? SEND_MARK.ALREADY_SENT : SEND_MARK.WAIT_TO_SEND;
     const emailInfo = new PortalEmailModel({
       send_mark: sendMark,
       email_detail: {
@@ -60,18 +60,17 @@ class EmailService {
     });
     const doc = await emailInfo.save();
     params._emailId = doc._id;
+    return params;
   }
 
   async send(params) {
     let attachments = [];
     if (params.attachments && params.attachments.length > 0) {
-      attachments = params.attachments.map(att => {
-        return {
-          filename: att.filename,
-          content: att.content,
-          encoding: 'base64',
-        };
-      });
+      attachments = params.attachments.map((att) => ({
+        filename: att.filename,
+        content: att.content,
+        encoding: 'base64',
+      }));
     }
     // setup email data with unicode symbols
     const mailOptions = {
@@ -88,24 +87,21 @@ class EmailService {
     try {
       response = await this.transporter.sendMail(mailOptions);
       if (params._emailId) {
-        await PortalEmailModel.findByIdAndUpdate(
-          params._emailId,
-          {
-            $set: {
-              email_status: {
-                accepted: response.accepted,
-                rejected: response.rejected,
-                envelope: response.envelope,
-                response: response.response,
-                messageId: response.messageId,
-              },
+        await PortalEmailModel.findByIdAndUpdate(params._emailId, {
+          $set: {
+            email_status: {
+              accepted: response.accepted,
+              rejected: response.rejected,
+              envelope: response.envelope,
+              response: response.response,
+              messageId: response.messageId,
             },
-          }
-        ).exec();
+          },
+        }).exec();
       }
       return {
         emailStatus: EMAIL_STATUS.SUCCESS,
-        desc: response
+        desc: response,
       };
     } catch (error) {
       return {
@@ -114,9 +110,6 @@ class EmailService {
       };
     }
   }
-
 }
 
 module.exports = new EmailService();
-
-

@@ -5,7 +5,7 @@ class ResponseHandler {
     res.status(httpCode).json({
       code: businessCode,
       message: message || STATUS_MESSAGE[businessCode] || STATUS_MESSAGE[httpCode] || 'Success',
-      data
+      data,
     });
   }
 
@@ -13,7 +13,7 @@ class ResponseHandler {
     res.status(httpCode).json({
       code: businessCode,
       message: message || STATUS_MESSAGE[businessCode] || STATUS_MESSAGE[httpCode] || 'Error',
-      data
+      data,
     });
   }
 }

@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 // After selecting the period, perform normal distribution to different days and times to prevent concurrency issues.
 
-const AwaitSchema = new mongoose.Schema({
+const AwaitSchema = new mongoose.Schema(
+  {
     id: { type: String, unique: true, trim: true }, // Auto-increment id
 
     strategy_id: { type: String, trim: true }, // Investment strategy id
@@ -21,14 +22,15 @@ const AwaitSchema = new mongoose.Schema({
     base_limit: { type: Number }, // Amount for each purchase
     base_total: { type: Number, default: 0 }, // Total purchase amount
     quote_total: { type: Number, default: 0 }, // Total acquired tokens
-
-    }, {
-        timestamps: true,
-        collection: 'aip_awaits',
-    });
-  // QuantsDingtouAwaitSchema.statics.findAndModify = function (query, sort, doc, options, callback) {
-  //   return this.collection.findAndModify(query, sort, doc, options, callback);
-  // };
+  },
+  {
+    timestamps: true,
+    collection: 'aip_awaits',
+  },
+);
+// QuantsDingtouAwaitSchema.statics.findAndModify = function (query, sort, doc, options, callback) {
+//   return this.collection.findAndModify(query, sort, doc, options, callback);
+// };
 
 const Await = mongoose.model('Await', AwaitSchema);
 module.exports = Await;

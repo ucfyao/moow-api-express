@@ -4,13 +4,20 @@ const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class AuthController {
-
   // user sign up
   async signUp(req, res) {
     const { name, email, password, refCode, captcha } = req.body;
     const sessionCaptcha = req.session.captcha;
     const userIp = req.ip;
-    const user = await AuthService.signUp(name, email, password, refCode, captcha, sessionCaptcha, userIp);
+    const user = await AuthService.signUp(
+      name,
+      email,
+      password,
+      refCode,
+      captcha,
+      sessionCaptcha,
+      userIp,
+    );
     return ResponseHandler.success(res, user, STATUS_TYPE.HTTP_CREATED);
   }
 
@@ -51,18 +58,12 @@ class AuthController {
     const userIp = req.ip;
 
     // Verify captcha
-    if (
-      !AuthService.captchaIsValid(
-        captcha,
-        req.session.captcha,
-        process.env.NODE_ENV
-      )
-    ) {
+    if (!AuthService.captchaIsValid(captcha, req.session.captcha, process.env.NODE_ENV)) {
       return ResponseHandler.fail(
         res,
         STATUS_TYPE.badRequest,
         STATUS_TYPE.validationError,
-        "Invalid captcha"
+        'Invalid captcha',
       );
     }
     // Perform sign-in
@@ -72,14 +73,14 @@ class AuthController {
 
   // user logout
   async signout(req, res) {
-    const token = req.headers['token'];
+    const { token } = req.headers;
     await AuthService.signout(token);
     ResponseHandler.success(res);
   }
 
   async resetPassword(req, res) {
     const newPassword = req.body.new_password;
-    const token = req.body.token;
+    const { token } = req.body;
     const resMessage = await AuthService.resetPassword(newPassword, token);
     return ResponseHandler.success(res, resMessage);
   }
@@ -94,7 +95,7 @@ class AuthController {
 
   // activate email
   async activateUser(req, res) {
-    const token = req.body.token;
+    const { token } = req.body;
     const resMessage = await AuthService.activateUser(token);
     return ResponseHandler.success(res, resMessage);
   }

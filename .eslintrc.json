@@ -1,0 +1,32 @@
+{
+  "env": {
+    "node": true, // Specifies that the code runs in a Node.js environment
+    "es2021": true // Supports ES2021 standard
+  },
+  "extends": [
+    "eslint:recommended", // Uses ESLint's recommended rules
+    // "plugin:@typescript-eslint/recommended", // Uses recommended rules from the TypeScript plugin
+    "airbnb-base", // Uses Airbnb's base JavaScript rules
+    "prettier" // Integrates Prettier for code formatting
+  ],
+  // "parser": "@typescript-eslint/parser", // Uses TypeScript parser to support TypeScript syntax
+  "parserOptions": {
+    "ecmaVersion": 12, // Uses ES2021 standard
+    "sourceType": "module" // Supports ES modules
+  },
+  "plugins": [
+    // "@typescript-eslint" // Uses TypeScript plugin
+  ],
+  "rules": {
+    "no-console": "warn", // Warns on usage of console statements
+    "no-unused-vars": "warn", // Warns on unused variables
+    "no-underscore-dangle": "off",
+    "class-methods-use-this": "off",
+    "semi": ["error", "always"], // Enforces semicolon usage
+    "quotes": ["error", "single"], // Enforces single quotes
+    "indent": ["error", 2], // Enforces 2-space indentation
+    "comma-dangle": ["error", "always-multiline"] // Enforces trailing commas in multiline statements
+    // "@typescript-eslint/no-unused-vars": ["warn"], // Warns on unused variables in TypeScript
+    // "@typescript-eslint/no-explicit-any": "off" // Allows usage of the `any` type in TypeScript
+  }
+}
