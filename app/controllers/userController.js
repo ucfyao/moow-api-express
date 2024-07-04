@@ -11,17 +11,17 @@ class UserController {
   //   const newUser = await userService.createUser(req.body);
   //   res.success(res, newUser, STATUS_TYPE.http.created, STATUS_TYPE.success);
   // };
-  async getAllUsers(req, res) {
+  async index(req, res) {
     const users = await UserService.getAllUsers();
     return ResponseHandler.success(res, users);
   }
 
-  async getUserById(req, res) {
+  async show(req, res) {
     const user = await UserService.getUserById(req.params.id, req.query);
     return ResponseHandler.success(res, user);
   }
 
-  async updateUser(req, res) {
+  async patch(req, res) {
     const user = await UserService.updateUser(req.params.id, req.body);
     return ResponseHandler.success(res, user);
   }
