@@ -45,7 +45,10 @@ const StartegySchema = new mongoose.Schema(
     end_at: { type: Date }, // End time
   },
   {
-    timestamps: true, // Automatically adds createdAt and updatedAt fields
+    timestamps: {
+      createdAt: 'created_at',
+      updatedAt: 'updated_at'
+    }, // Automatically adds createdAt and updatedAt fields
     collection: 'aip_strategies',
   },
 );
