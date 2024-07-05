@@ -23,6 +23,13 @@ const sendActivateEmailValidatorSchema = {
   },
 };
 
+const retrievePasswordValidatorSchema = {
+  email: {
+    notEmpty: { errorMessage: 'Email is required' },
+    isEmail: { errorMessage: 'Invalid email format' },
+  },
+};
+
 const createUserValidatorSchema = {
   name: {
     notEmpty: { errorMessage: 'Name is required' },
@@ -41,5 +48,6 @@ module.exports = {
   signinValidatorSchema,
   signoutValidatorSchema,
   sendActivateEmailValidatorSchema,
+  retrievePasswordValidatorSchema,
   createUserValidatorSchema,
 };

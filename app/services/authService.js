@@ -75,12 +75,17 @@ class AuthService {
   }
 
   // user login
-  async signin(loginInfo, userIp) {
+  async signin(loginInfo, userIp, inputCaptcha, sessionCaptcha) {
+    // verify captcha
+    const captchaValid = await this.captchaIsValid(inputCaptcha, sessionCaptcha, config.env);
+    if (!captchaValid) {
+      throw new CustomError(STATUS_TYPE.PORTAL_CAPTCHA_INVAILD);
+    }
     const start = Date.now();
     const objectUser = await User.findOne({ email: loginInfo.email }).lean();
 
     if (!objectUser) {
-      throw new Error('User does not exist');
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
     }
 
     const isPasswordCorrect = await this._verifyPassword(
@@ -139,7 +144,12 @@ class AuthService {
     return loginInfoObj;
   }
 
-  async sendRetrievePasswordEmail(userEmail, userIp) {
+  async sendRetrieveEmail(userEmail, userIp, inputCaptcha, sessionCaptcha) {
+    // verify captcha
+    const captchaValid = await this.captchaIsValid(inputCaptcha, sessionCaptcha, config.env);
+    if (!captchaValid) {
+      throw new CustomError(STATUS_TYPE.PORTAL_CAPTCHA_INVAILD);
+    }
     const objectUser = await PortalUserModel.findOne({ email: userEmail }).lean();
     if (!objectUser) {
       throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
@@ -197,6 +207,10 @@ class AuthService {
 
     // update password
     const user = await PortalUserModel.findById(tokenDoc.user_id);
+    if (!user) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
+
     const pwdObj = await UserService.generatePassword(newPassword);
     user.password = pwdObj.password;
     user.salt = pwdObj.salt;
