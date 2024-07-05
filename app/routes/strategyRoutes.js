@@ -10,23 +10,23 @@ const {
 const router = express.Router();
 
 // view all strategies
-router.get('/api/v1/strategies', asyncHandler(StrategyController.getAllStrategies));
+router.get('/api/v1/strategies', asyncHandler(StrategyController.index));
 
 // Create a new strategy
 router.post(
   '/api/v1/strategies',
   validateParams(createStrategyValidatorSchema),
-  asyncHandler(StrategyController.createStrategy),
+  asyncHandler(StrategyController.create),
 );
 
 // view a strategy
-router.get('/api/v1/strategies/:id', asyncHandler(StrategyController.getStrategyById));
+router.get('/api/v1/strategies/:id', asyncHandler(StrategyController.show));
 
 // Stop or start a strategy
 router.patch(
   '/api/v1/strategies/:id',
   validateParams(updateStrategyValidatorSchema),
-  asyncHandler(StrategyController.updateStrategy),
+  asyncHandler(StrategyController.update),
 );
 
 /**
