@@ -6,6 +6,7 @@ const {
   signoutValidatorSchema,
   sendActivateEmailValidatorSchema,
   createUserValidatorSchema,
+  retrievePasswordValidatorSchema,
 } = require('../validators/authValidator');
 const authMiddleware = require('../middlewares/authMiddleware');
 const AuthController = require('../controllers/authController');
@@ -24,7 +25,7 @@ router.delete(
   authMiddleware,
   asyncHandler(AuthController.signout),
 );
-router.patch('/api/v1/auth/login', asyncHandler(AuthController.resetPassword));
+router.patch('/api/v1/auth/passwordReset', asyncHandler(AuthController.resetPassword));
 router.post(
   '/api/v1/auth/activation',
   validateParams(sendActivateEmailValidatorSchema),
@@ -37,8 +38,9 @@ router.post(
 );
 router.patch('/api/v1/auth/verification', asyncHandler(AuthController.activateUser));
 router.post(
-  '/api/v1/auth/retrievePassword',
-  asyncHandler(AuthController.sendRetrievePasswordEmail),
+  '/api/v1/auth/passwordRecovery',
+  validateParams(retrievePasswordValidatorSchema),
+  asyncHandler(AuthController.sendRetrieveEmail),
 );
 
 module.exports = router;
