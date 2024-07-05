@@ -38,7 +38,7 @@ class MarketService {
   async getMarketById(id) {
     const market = await Market.findById(id);
     if (!market) {
-      throw new CustomError(STATUS_TYPE.PORTAL_MARKET_NOT_FOUND.message);
+      throw new CustomError(STATUS_TYPE.PORTAL_MARKET_NOT_FOUND);
     }
     return market;
   }
