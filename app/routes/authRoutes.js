@@ -13,6 +13,7 @@ const AuthController = require('../controllers/authController');
 
 const router = express.Router();
 
+
 router.get('/api/v1/captcha', asyncHandler(AuthController.getCaptcha));
 router.post(
   '/api/v1/auth/login',
@@ -31,6 +32,32 @@ router.post(
   validateParams(sendActivateEmailValidatorSchema),
   asyncHandler(AuthController.sendActivateEmail),
 );
+/**
+ * @swagger
+ * /api/v1/auth/signup:
+ *   post:
+ *     summary: User signup
+ *     description: Register a new user.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: 'user1'
+ *               email:
+ *                 type: string
+ *                 example: 'kelseywong@gmail.com'
+ *               password:
+ *                 type: string
+ *                 example: 'password123'
+ *     responses:
+ *       201:
+ *         description: User created
+ */
 router.post(
   '/api/v1/auth/signup',
   validateParams(createUserValidatorSchema),
