@@ -22,11 +22,16 @@ router.post(
 // view a strategy
 router.get('/api/v1/strategies/:id', asyncHandler(StrategyController.show));
 
-// Stop or start a strategy
+// update a strategy
+router.patch('/api/v1/strategies/:id',
+  validateParams(updateStrategyValidatorSchema),
+  asyncHandler(StrategyController.patch),
+);
+
+// Delete a strategy
 router.patch(
   '/api/v1/strategies/:id',
-  validateParams(updateStrategyValidatorSchema),
-  asyncHandler(StrategyController.update),
+  asyncHandler(StrategyController.destroy),
 );
 
 /**

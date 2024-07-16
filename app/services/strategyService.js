@@ -1,33 +1,110 @@
 const ccxt = require('ccxt');
 const Strategy = require('../models/strategyModel');
-// const { decrypt, encrypt } = require('../utils/cryptoUtils');
 const { STRATEGY_TYPE } = require('../utils/strategyStateEnum');
 const logger = require('../utils/logger');
 const orderService = require('./orderService');
+const DataExchangeSymbolService = require('./dataExchangeSymbolService');
 
 class StrategyService {
-  async getAllStrategies() {
-    return Strategy.find();
+  /**
+   * Get all strategies meet the criteria
+   * @param params - The criteria
+   * @returns {list} - Strategies list and page number
+   */
+  async getAllStrategies(params) {
+    const start = Date.now();
+
+    // Do not query strategies with soft-deleted status(3) by default
+    let conditions = {
+      user: params.userId,
+      status: { $lt: 2 },
+    };
+    const { status } = params;
+    if (typeof status !== 'undefined') {
+      conditions.status = status;
+    }
+
+    const pageNumber = params.pageNumber || 1;
+    const pageSize = params.pageSize || 9999;
+
+    const list = await Strategy.find(conditions).sort({ createdAt: -1 }).skip((pageNumber - 1) * pageSize).limit(pageSize).lean();
+
+    // Calculate the profit rate accroding to the exchange symbol for every strategy
+    for (let i = 0, len = list.length; i < len; i++) {
+      const exSymConditions = {
+        exchange: list[i].exchange,
+        symbol: list[i].symbol,
+      };
+
+      const symbolPrice = DataExchangeSymbolService.getSymbol(exSymConditions);
+      if (!symbolPrice) {
+        list[i].price_native = '-';
+        list[i].profit = '-';
+        list[i].profit_percentage = '-';
+        continue;
+      }
+      list[i].price_native = parseFloat(symbolPrice.price_native);
+      list[i].profit = list[i].quote_total * symbolPrice.price_native - list[i].base_total;
+      list[i].profit_percentage = parseInt(list[i].base_total, 10) !== 0 ? list[i].profit / list[i].base_total * 100 : 0;
+    }
+  
+    const total = await Strategy.countDocuments(conditions);
+    logger.info(`\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${list.length}\n  Response Time: \t${Date.now() - start} ms\n`);
+
+    return {
+      list,
+      pageNumber,
+      pageSize,
+      total,
+    };
   }
 
-  async getStrategyById(strategy_id) {
-    const info = await Strategy.findById(strategy_id);
-    return { info };
+  /**
+   * Get detailed info of a specific strategy
+   * @param {string} id- The strategy id
+   * @returns {list} - Strategy detailed info list and symbol price
+   */
+  async getStrategyById(id) {
+    const start = Date.now();
+    const info = await Strategy.findById(id);
+
+    const exSymConditions = {
+      exchange: info.exchange,
+      symbol: info.symbol,
+    };
+    
+    let symbolPrice = DataExchangeSymbolService.getSymbol(exSymConditions);
+    if(symbolPrice) {
+      symbolPrice.total_price = info.quote_total * symbolPrice.price_usd;
+    } else {
+      symbolPrice = {};
+    }
+    logger.info(`\nQuery Details\n  Strategy Id: \t${id}\n  Info Details: \t${info}\n   Response Time: \t${Date.now() - start} ms\n`);
+
+    return { info, symbolPrice };
   }
 
+  /**
+   * Create a new strategy
+   * @param strategy - The strategy info
+   * @returns {list} - Strategy detailed info list and symbol price
+   */
   async createStrategy(strategy) {
-    strategy.minute = `${parseInt(60 * Math.random())}`;
-    strategy.hour = `${parseInt(24 * Math.random())}`;
+    const start = Date.now();
+    const processedStrategy = { ...strategy, minute:`${parseInt(60 * Math.random(),10)}`, hour:`${parseInt(24 * Math.random(),10)}`};
 
-    const doc = new Strategy(strategy);
-    // const secret = await encrypt(strategy.secret);  // for testing
-    // doc.secret = secret;
+    const doc = new Strategy(processedStrategy);
     await doc.save();
     const strategyId = doc ? doc._id : '';
+
+    logger.info(`\nNew Strategy\n  Strategy Id: \t${strategyId}\n  Strategy Info: \t${JSON.stringify(processedStrategy)}\n  Response Time: \t${Date.now() - start} ms\n`);
 
     return { _id: strategyId };
   }
 
+  async partiallyUpdate(strategy){
+    return {info};
+  }
   /**
    * Execute buy operations for all strategies
    * @returns {Array} List of results for each strategy execution

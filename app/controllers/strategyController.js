@@ -3,28 +3,56 @@ const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class StrategyController {
+  /**
+   * Get a list of all strategies by params
+   * @param {Request} req
+   * @param {Response} res
+   */
   async index(req, res) {
-    const strategies = await StrategyService.getAllStrategies();
+    const params = req.body;
+    params.userId = req.userId;
+    const strategies = await StrategyService.getAllStrategies(params);
     return ResponseHandler.success(res, strategies);
   }
 
+  /**
+   * Get a specific strategy
+   * @param {Request} req
+   * @param {Response} res
+   */
   async show(req, res) {
-    const strategy = await StrategyService.getStrategyById(req.params.id);
+    const strategyId = req.params.id;
+    const strategy = await StrategyService.getStrategyById(strategyId);
     return ResponseHandler.success(res, strategy);
   }
 
-  // create a strategy
+  /**
+   * Create a new strategy
+   * @param {Request} req
+   * @param {Response} res
+   */
   async create(req, res) {
-    // TODO Parameter verification and conversion
     const strategyData = req.body;
-    const strategy = await StrategyService.createStrategy(strategyData);
-    return ResponseHandler.success(res, strategy, STATUS_TYPE.created);
+    strategyData.user = req.userId;
+
+    try {
+      const strategy = await StrategyService.createStrategy(strategyData);
+      return ResponseHandler.success(res, strategy, STATUS_TYPE.created);
+    } catch (error) {
+      return ResponseHandler.fail(res, { message: 'Create failed', error: error.message });
+    }
   }
 
-  // update a strategt
-  async update(req, res) {
+  // partially update a strategt
+  async patch(req, res) {
     const updateData = req.body;
-    const strategy = await StrategyService.updateStrategy(req.params.id, updateData);
+    const strategy = await StrategyService.partiallyUpdateStrategy(req.params.id, updateData);
+    return ResponseHandler.success(res, strategy);
+  }
+
+  // delete a strategt
+  async destroy(req, res) {
+    const strategy = await StrategyService.getStrategyById(req.params.id);
     return ResponseHandler.success(res, strategy);
   }
 

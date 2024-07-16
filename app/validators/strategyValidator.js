@@ -1,4 +1,36 @@
 const createStrategyValidatorSchema = {
+  user_market_id: {
+    notEmpty: { errorMessage: 'user_market_id is required and cannot be empty' },
+    isString: { errorMessage: 'user_market_id must be a string' },
+  },
+  exchange: {
+    notEmpty: { errorMessage: 'exchange is required and cannot be empty' },
+    isString: { errorMessage: 'exchange must be a string' },
+  },
+  key: {
+    notEmpty: { errorMessage: 'key is required and cannot be empty' },
+    isString: { errorMessage: 'key must be a string' },
+  },
+  secret: {
+    notEmpty: { errorMessage: 'secret is required and cannot be empty' },
+    isString: { errorMessage: 'secret must be a string' },
+  },
+  symbol: {
+    notEmpty: { errorMessage: 'symbol is required and cannot be empty' },
+    isString: { errorMessage: 'symbol must be a string' },
+  },
+  base: {
+    notEmpty: { errorMessage: 'base is required and cannot be empty' },
+    isString: { errorMessage: 'base must be a string' },
+  },
+  base_limit: {
+    notEmpty: { errorMessage: 'base_limit is required and cannot be empty' },
+    isNumeric: { errorMessage: 'base_limit must be a number' },
+  },
+  quote: {
+    notEmpty: { errorMessage: 'quote is required and cannot be empty' },
+    isString: { errorMessage: 'quote must be a string' },
+  },
   type: {
     notEmpty: { errorMessage: 'type is required and cannot be empty' },
     isString: { errorMessage: 'type must be a string' },
@@ -8,7 +40,7 @@ const createStrategyValidatorSchema = {
     isString: { errorMessage: 'period must be a string' },
   }, // Period type. 1: month, 2: day,3: week
   period_value: {
-    optional: { nullable: true }, // Allow empty and optional
+    notEmpty: { errorMessage: 'period_value is required and cannot be empty' },
     isArray: { errorMessage: 'period_value must be an array' },
     custom: {
       options: (value) => {
@@ -20,57 +52,37 @@ const createStrategyValidatorSchema = {
       errorMessage: 'All items in period_value must be numbers',
     },
   }, // investment period
-  user_market_id: {
-    notEmpty: { errorMessage: 'user_market_id is required and cannot be empty' },
-    isString: { errorMessage: 'user_market_id must be a string' },
-  },
-  key: {
+  stop_profit_percentage: {
     optional: true,
-    isString: { errorMessage: 'key must be a string' },
-  },
-  secret: {
+    custom: {
+      options: (value) => value === undefined || typeof value === 'number',
+      errorMessage: 'stop_profit_percentage must be a number if provided',
+    },
+  }, // can be empty
+  drawdown: {
     optional: true,
-    isString: { errorMessage: 'secret must be a string' },
-  },
-
-  symbol: {
-    notEmpty: { errorMessage: 'symbol is required and cannot be empty' },
-    isString: { errorMessage: 'symbol must be a string' },
-  },
-  exchange: {
-    optional: true,
-    isString: { errorMessage: 'exchange must be a string' },
-  },
-
-  status: {
-    optional: true,
-    isString: { errorMessage: 'status must be a string' },
-  },
-  stop_reason: {
-    optional: { nullable: true }, // allow empty and optional
-    isString: { errorMessage: 'stop reason must be a string' },
-  },
-  start_at: {
-    optional: { nullable: true },
-    isString: { errorMessage: 'start time must be a string' },
-  },
-  end_at: {
-    optional: { nullable: true },
-    isString: { errorMessage: 'end time must be a string' },
-  },
+    custom: {
+      options: (value) => value === undefined || typeof value === 'number',
+      errorMessage: 'drawdown must be a number if provided',
+    },
+  }, // can be empty
 };
 
 const updateStrategyValidatorSchema = {
-  type: {
-    optional: true,
-    isString: { errorMessage: 'type must be s string' },
+  _id: {
+    notEmpty: { errorMessage: '_id is required and cannot be empty' },
+    isString: { errorMessage: '_id must be a string' },
+  },
+  base_limit: {
+    notEmpty: { errorMessage: 'base_limit is required and cannot be empty' },
+    isNumeric: { errorMessage: 'base_limit must be a number' },
   },
   period: {
-    optional: true,
+    notEmpty: { errorMessage: 'period is required and cannot be empty' },
     isString: { errorMessage: 'period must be s string' },
-  },
+  }, // Period type. 1: month, 2: day,3: week
   period_value: {
-    optional: { nullable: true }, // allow empty and optional
+    notEmpty: { errorMessage: 'period_value is required and cannot be empty' },
     isArray: { errorMessage: 'period_value must be an array' },
     custom: {
       options: (value) => {
@@ -81,43 +93,21 @@ const updateStrategyValidatorSchema = {
       },
       errorMessage: 'All items in period_value must be numbers',
     },
-  },
-  user_market_id: {
+  }, // investment period, can be empty
+  stop_profit_percentage: {
     optional: true,
-    isString: { errorMessage: 'user_market_id must be s string' },
-  },
-  key: {
+    custom: {
+      options: (value) => value === undefined || typeof value === 'number',
+      errorMessage: 'stop_profit_percentage must be a number if provided',
+    },
+  }, // can be empty
+  drawdown: {
     optional: true,
-    isString: { errorMessage: 'key must be s string' },
-  },
-  secret: {
-    optional: true,
-    isString: { errorMessage: 'secret must be s string' },
-  },
-  symbol: {
-    optional: true,
-    isString: { errorMessage: 'symbol must be s string' },
-  },
-  exchange: {
-    optional: true,
-    isString: { errorMessage: 'exchange must be s string' },
-  },
-  status: {
-    optional: true,
-    isString: { errorMessage: 'status must be s string' },
-  },
-  stop_reason: {
-    optional: { nullable: true },
-    isString: { errorMessage: 'stop reason must be s string' },
-  },
-  start_at: {
-    optional: { nullable: true },
-    isString: { errorMessage: 'start time must be s string' },
-  },
-  end_at: {
-    optional: { nullable: true },
-    isString: { errorMessage: 'end time must be s string' },
-  },
+    custom: {
+      options: (value) => value === undefined || typeof value === 'number',
+      errorMessage: 'drawdown must be a number if provided',
+    },
+  }, // can be empty
 };
 
 module.exports = { createStrategyValidatorSchema, updateStrategyValidatorSchema };
