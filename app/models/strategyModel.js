@@ -47,7 +47,7 @@ const StartegySchema = new mongoose.Schema(
   {
     timestamps: {
       createdAt: 'created_at',
-      updatedAt: 'updated_at'
+      updatedAt: 'updated_at',
     }, // Automatically adds createdAt and updatedAt fields
     collection: 'aip_strategies',
   },
