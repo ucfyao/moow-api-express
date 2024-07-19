@@ -3,7 +3,7 @@ const Strategy = require('../models/strategyModel');
 const { STRATEGY_TYPE } = require('../utils/strategyStateEnum');
 const logger = require('../utils/logger');
 const orderService = require('./orderService');
-const DataExchangeSymbolService = require('./dataExchangeSymbolService');
+const SymbolService = require('./symbolService');
 
 class StrategyService {
   /**
@@ -36,7 +36,8 @@ class StrategyService {
         symbol: list[i].symbol,
       };
 
-      const symbolPrice = DataExchangeSymbolService.getSymbol(exSymConditions);
+      const symbolList = await SymbolService.getAllSymbols(exSymConditions);
+      const symbolPrice = symbolList.list[0];
       if (!symbolPrice) {
         list[i].price_native = '-';
         list[i].profit = '-';
@@ -72,8 +73,9 @@ class StrategyService {
       exchange: info.exchange,
       symbol: info.symbol,
     };
-    
-    let symbolPrice = DataExchangeSymbolService.getSymbol(exSymConditions);
+
+    const symbolList = await SymbolService.getAllSymbols(exSymConditions);
+    let symbolPrice = symbolList.list[0];
     if(symbolPrice) {
       symbolPrice.total_price = info.quote_total * symbolPrice.price_usd;
     } else {
