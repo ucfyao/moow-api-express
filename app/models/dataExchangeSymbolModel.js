@@ -22,7 +22,6 @@ const DataExchangeSymbolSchema = new mongoose.Schema(
     exchange_url: { type: String, unique: true, trim: true },  // Exchange url
     on_time: { type: Date },  // Listing Time
     status: { type: String,trim: true, default: '' },  // Status. 1: Normal, 2: Closed
-    created_at: { type: Date}, 
   },
   {
     timestamps: {
