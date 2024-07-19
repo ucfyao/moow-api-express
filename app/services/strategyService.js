@@ -4,6 +4,8 @@ const { STRATEGY_TYPE } = require('../utils/strategyStateEnum');
 const logger = require('../utils/logger');
 const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
+const CustomError = require('../utils/customError');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class StrategyService {
   /**
@@ -208,25 +210,26 @@ class StrategyService {
 
     let amount = 0;
     // Fetch the current price, calculate purchase amount this time by type
-    if (strategy.type === STRATEGY_TYPE.NORMAL) {
+    if (strategy.type === Strategy.InvestmentType.REGULAR) {
       amount = (strategy.base_limit / price).toFixed(6);
     } else {
-      const fundsToInvest = await this._valueAveraging(strategy, price);
-      amount = fundsToInvest.toFixed(6);
-      if (amount <= 0) {
-        logger.info(`== the purchase amount is too low: ${amount}`);
-        // return false;
-      }
+      amount = this._valueAveraging(strategy, price).toFixed(6);
     }
+
+    if (amount <= 0) {
+      logger.info(`== the purchase amount is too low: ${amount}`);
+      // return false;
+    }
+
     logger.info(`== buy amount: ${amount}`);
 
     const balance = await exchange.fetchBalance();
-    const valueTotal = strategy.amount * price;
+    const valueTotal = amount * price;
 
     // TODO Determine if the balance is sufficient.
-    if (balance[strategy.base] < valueTotal) {
-      logger.info(`== balance is not enough: ${balance[strategy.base]}`);
-      // throw CustomError('');
+    if (balance[strategy.base].free < valueTotal) {
+      logger.info(`== balance is not enough: ${balance[strategy.base].free}`);
+      throw new CustomError(STATUS_TYPE.AIP_INSUFFICIENT_BALANCE);
     }
 
     const inParams = {};
@@ -243,6 +246,7 @@ class StrategyService {
     // TODO The total price per transaction cannot be less than 5 USDT, and the lowest price cannot be less than 20% of the current price
     // const orderRes = exchange.createOrder(strategy.symbol, type, side, amount, price, inParams);
     const orderRes = await exchange.createOrder('EOS/USDT', 'limit', 'buy', 50, 0.15, inParams);
+    console.log(orderRes);
 
     logger.info(`== exchange res order id: ${orderRes.id}`);
 
