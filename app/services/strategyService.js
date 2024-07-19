@@ -135,17 +135,17 @@ class StrategyService {
       }
       switch (strategy.period * 1) {
       case 1:
-        logger.info('按照日购买: %j, cur hour:', strategy.period_value, now.get('hour'));
+        logger.info('Daily purchase: %j, cur hour:', strategy.period_value, now.get('hour'));
         if (strategy.period_value.indexOf(now.get('hour').toString()) !== -1) {
           const result = await this.executeBuy(strategy);
           results.push(result);
         }
         break;
       case 2:
-        logger.info('按照周购买: %j, cur hour:', strategy, now.get('hour'));
+        logger.info('Weekly purchase: %j, cur hour:', strategy.period_value, now.get('hour'));
         if (
           strategy.period_value.indexOf(now.get('day').toString()) !== -1 &&
-            strategy.hour === now.get('hour')
+            strategy.hour === now.get('hour').toString()
         ) {
           const result = await this.executeBuy(strategy);
           results.push(result);
@@ -153,17 +153,17 @@ class StrategyService {
         break;
 
       case 3:
-        logger.info('按照月购买: %j,cur hour:', strategy, now.get('hour'));
+        logger.info('Monthly purchase: %j,cur hour:', strategy.period_value, now.get('hour'));
         if (
           strategy.period_value.indexOf(now.get('date').toString()) !== -1 &&
-            strategy.hour === now.get('hour')
+            strategy.hour === now.get('hour').toString()
         ) {
           const result = await this.executeBuy(strategy);
           results.push(result);
         }
         break;
       default:
-        logger.info('未寻到交易周期');
+        logger.info('Trading period not found');
       }
     }
     logger.info('### Round time: %j', Date.now() - start);
