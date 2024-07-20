@@ -68,18 +68,16 @@ const createStrategyValidatorSchema = {
   }, // can be empty
 };
 
+// Only allow these fields to be updated
+const allowedUpdateFields = ['base_limit', 'period', 'period_value', 'stop_profit_percentage', 'drawdown'];
 const updateStrategyValidatorSchema = {
-  _id: {
-    notEmpty: { errorMessage: '_id is required and cannot be empty' },
-    isString: { errorMessage: '_id must be a string' },
-  },
   base_limit: {
     notEmpty: { errorMessage: 'base_limit is required and cannot be empty' },
     isNumeric: { errorMessage: 'base_limit must be a number' },
   },
   period: {
     notEmpty: { errorMessage: 'period is required and cannot be empty' },
-    isString: { errorMessage: 'period must be s string' },
+    isString: { errorMessage: 'period must be a string' },
   }, // Period type. 1: month, 2: day,3: week
   period_value: {
     notEmpty: { errorMessage: 'period_value is required and cannot be empty' },
@@ -93,7 +91,7 @@ const updateStrategyValidatorSchema = {
       },
       errorMessage: 'All items in period_value must be numbers',
     },
-  }, // investment period, can be empty
+  }, // investment period
   stop_profit_percentage: {
     optional: true,
     custom: {
@@ -108,6 +106,19 @@ const updateStrategyValidatorSchema = {
       errorMessage: 'drawdown must be a number if provided',
     },
   }, // can be empty
+  customValidation: {
+    custom: {
+      options: (value, { req }) => {
+        const keys = Object.keys(req.body);
+        for (const key of keys) {
+          if (!allowedUpdateFields.includes(key)) {
+            throw new Error(`Field ${key} is not allowed to be updated`);
+          }
+        }
+        return true;
+      },
+    },
+  },
 };
 
 module.exports = { createStrategyValidatorSchema, updateStrategyValidatorSchema };

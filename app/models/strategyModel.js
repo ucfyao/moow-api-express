@@ -4,9 +4,6 @@ const mongoose = require('mongoose');
 
 const StartegySchema = new mongoose.Schema(
   {
-    // id: { type: String, unique: true, trim: true }, // Auto-increment id
-    // created_by: { type: String, unique: true, trim: true }, // Creator
-
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'PortalUser' }, // Creator
     period: { type: String, trim: true }, // Period type. 1: Month, 2: Day, 3: Week
     period_value: { type: [Number] }, // Investment period

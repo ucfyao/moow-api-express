@@ -28,10 +28,9 @@ router.patch('/api/v1/strategies/:id',
   asyncHandler(StrategyController.patch),
 );
 
-// Delete a strategy
-router.patch(
-  '/api/v1/strategies/:id',
-  asyncHandler(StrategyController.destroy),
+// soft delete a strategy
+router.delete('/api/v1/strategies/:id',
+  asyncHandler(StrategyController.destory),
 );
 
 /**

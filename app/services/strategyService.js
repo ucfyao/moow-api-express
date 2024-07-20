@@ -1,9 +1,12 @@
 const ccxt = require('ccxt');
 const Strategy = require('../models/strategyModel');
+// TODO use create await service instead of Await model
+const Await = require('../models/awaitModel');
 const { STRATEGY_TYPE } = require('../utils/strategyStateEnum');
 const logger = require('../utils/logger');
 const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
+const CustomError = require('../utils/customError');
 
 class StrategyService {
   /**
@@ -104,9 +107,83 @@ class StrategyService {
     return { _id: strategyId };
   }
 
-  async partiallyUpdate(strategy){
-    return {info};
+  /**
+   * Partially update the strategy
+   * @param params - The strategy data needs to be updated
+   * @returns id - Strategies _id
+   */
+  async partiallyUpdateStrategy(params){
+    const start = Date.now();
+    const doc = await Strategy.findById(params._id);
+
+    if (!doc) {
+      throw new CustomError('Strategy Not Found');
+    }
+    // TODO test with portal user module
+    // if (doc.user.toString() !== params.user) {
+    //   throw  new CustomError('Not Authorized User');
+    // }
+
+    if (params.period !== undefined) doc.period = params.period;
+    if (params.period_value !== undefined) doc.period_value = params.period_value;
+    if (params.base_limit !== undefined) doc.base_limit = params.base_limit;
+    if (params.stop_profit_percentage !== undefined) doc.stop_profit_percentage = params.stop_profit_percentage;
+    if (params.drawdown !== undefined) doc.drawdown = params.drawdown;
+    if (params.base_fee !== undefined) doc.base_fee = params.base_fee;
+    if (params.quote_fee !== undefined) doc.quote_fee = params.quote_fee;
+    if (params.drawdown_status !== undefined) doc.drawdown_status = params.drawdown_status;
+    if (params.user_market_id !== undefined) doc.user_market_id = params.user_market_id;
+    if (params.key !== undefined) doc.key = params.key;
+    if (params.secret !== undefined) doc.secret = params.secret;
+    if (params.exchange !== undefined) doc.exchange = params.exchange;
+    if (params.symbol !== undefined) doc.symbol = params.symbol;
+    if (params.base !== undefined) doc.base = params.base;
+    if (params.quote !== undefined) doc.quote = params.quote;
+    if (params.sell_price !== undefined) doc.sell_price = params.sell_price;
+    if (params.stop_reason !== undefined) doc.stop_reason = params.stop_reason;
+    if (params.start_at !== undefined) doc.start_at = params.start_at;
+    if (params.end_at !== undefined) doc.end_at = params.end_at;
+    if (params.status !== undefined) doc.status = params.status;
+
+    await doc.save();
+    logger.info(`\nUpdate Strategy\n  Strategy Id: \t${params._id}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`);
+
+    return {
+      _id: params._id,
+    };
   }
+
+  /**
+   * Soft delete the strategy
+   * @param strategy - The strategy needs to be soft deleted
+   * @returns status - Strategy status
+   */
+  async deleteStrategy(id){
+    const start = Date.now();
+    const doc = await Strategy.findById(id);
+
+    if (!doc) {
+      throw new CustomError('Strategy Not Found');
+    }
+
+    const conditions = {
+      strategy_id: doc._id,
+      user: doc.user,
+      sell_type: '1',
+      await_status: '1',
+    };
+    await new Await(conditions).save();
+
+    // soft delete, update the status
+    doc.status = '3';
+    await doc.save();
+    logger.info(`\nDelete Strategy\n  Strategy Id: \t${id}\n  Response Time: \t${Date.now() - start} ms\n`);
+  
+    return {
+      status: doc.status,
+    };
+  }
+
   /**
    * Execute buy operations for all strategies
    * @returns {Array} List of results for each strategy execution
