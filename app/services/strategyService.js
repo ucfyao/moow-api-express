@@ -210,15 +210,15 @@ class StrategyService {
 
     let amount = 0;
     // Fetch the current price, calculate purchase amount this time by type
-    if (strategy.type === Strategy.InvestmentType.REGULAR) {
+    if (strategy.type === Strategy.INVESTMENT_TYPE_REGULAR) {
       amount = (strategy.base_limit / price).toFixed(6);
     } else {
-      amount = this._valueAveraging(strategy, price).toFixed(6);
+      amount = (await this._valueAveraging(strategy, price)).toFixed(6);
     }
 
     if (amount <= 0) {
       logger.info(`== the purchase amount is too low: ${amount}`);
-      // return false;
+      throw new CustomError(STATUS_TYPE.AIP_INSUFFICIENT_PURCHASE_AMOUNT);
     }
 
     logger.info(`== buy amount: ${amount}`);
@@ -246,7 +246,6 @@ class StrategyService {
     // TODO The total price per transaction cannot be less than 5 USDT, and the lowest price cannot be less than 20% of the current price
     // const orderRes = exchange.createOrder(strategy.symbol, type, side, amount, price, inParams);
     const orderRes = await exchange.createOrder('EOS/USDT', 'limit', 'buy', 50, 0.15, inParams);
-    console.log(orderRes);
 
     logger.info(`== exchange res order id: ${orderRes.id}`);
 

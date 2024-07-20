@@ -53,11 +53,8 @@ const StartegySchema = new mongoose.Schema(
   },
 );
 
-const InvestmentType = {
-  REGULAR: '1', // Regular investment
-  INTELLIGENT: '2', // Intelligent investment
-};
-StartegySchema.statics.InvestmentType = InvestmentType;
+StartegySchema.statics.INVESTMENT_TYPE_REGULAR = '1';
+StartegySchema.statics.INVESTMENT_TYPE_INTELLIGENT = '2';
 
 const Startegy = mongoose.model('Startegy', StartegySchema);
 module.exports = Startegy;

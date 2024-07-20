@@ -68,6 +68,7 @@ const STATUS_TYPE = {
   AIP_PARAMS_ERROR: 12004, // Trading module invalid parameters
   AIP_ACCESS_FORBIDDEN: 12005, // Trading module access forbidden
   AIP_INSUFFICIENT_BALANCE: 12006, // Balance is not enough
+  AIP_INSUFFICIENT_PURCHASE_AMOUNT: 12007, // the purchase amount is too low
 
   // Custom status codes for data module (13001-14000)
   DATA_SERVER_BUSY: 13001, // Data module server is busy
@@ -137,6 +138,7 @@ const STATUS_MESSAGE_ZH = {
   [STATUS_TYPE.AIP_PARAMS_ERROR]: '交易模块参数错误',
   [STATUS_TYPE.AIP_ACCESS_FORBIDDEN]: '交易模块禁止访问',
   [STATUS_TYPE.AIP_INSUFFICIENT_BALANCE]: '交易余额不足',
+  [STATUS_TYPE.AIP_INSUFFICIENT_PURCHASE_AMOUNT]: '交易数量过少',
 
   // Data module messages
   [STATUS_TYPE.DATA_SERVER_BUSY]: '数据模块服务器繁忙',
@@ -207,6 +209,7 @@ const STATUS_MESSAGE = {
   [STATUS_TYPE.AIP_PARAMS_ERROR]: 'Trading module invalid parameters',
   [STATUS_TYPE.AIP_ACCESS_FORBIDDEN]: 'Trading module access forbidden',
   [STATUS_TYPE.AIP_INSUFFICIENT_BALANCE]: 'Insufficient balance for transaction',
+  [STATUS_TYPE.AIP_INSUFFICIENT_PURCHASE_AMOUNT]: 'Insufficient purchase amount',
 
   // Data module messages
   [STATUS_TYPE.DATA_SERVER_BUSY]: 'Data module server is busy',
