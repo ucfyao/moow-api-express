@@ -34,26 +34,32 @@ class StrategyController {
   async create(req, res) {
     const strategyData = req.body;
     strategyData.user = req.userId;
-
-    try {
-      const strategy = await StrategyService.createStrategy(strategyData);
-      return ResponseHandler.success(res, strategy, STATUS_TYPE.created);
-    } catch (error) {
-      return ResponseHandler.fail(res, { message: 'Create failed', error: error.message });
-    }
+    const strategy = await StrategyService.createStrategy(strategyData);
+    return ResponseHandler.success(res, strategy, STATUS_TYPE.created);
   }
 
-  // partially update a strategt
+  /**
+   * Partially update a strategy
+   * @param {Request} req
+   * @param {Response} res
+   */
   async patch(req, res) {
+    const strategyId = req.params.id;
     const updateData = req.body;
-    const strategy = await StrategyService.partiallyUpdateStrategy(req.params.id, updateData);
+    updateData._id = strategyId;
+    const strategy = await StrategyService.partiallyUpdateStrategy(updateData);
     return ResponseHandler.success(res, strategy);
   }
 
-  // delete a strategt
-  async destroy(req, res) {
-    const strategy = await StrategyService.getStrategyById(req.params.id);
-    return ResponseHandler.success(res, strategy);
+  /**
+   * Soft delete a strategy
+   * @param {Request} req
+   * @param {Response} res
+   */
+  async destory(req, res){
+    const strategyId = req.params.id;
+    const status = await StrategyService.deleteStrategy(strategyId);
+    return ResponseHandler.success(res, status);
   }
 
   /**
