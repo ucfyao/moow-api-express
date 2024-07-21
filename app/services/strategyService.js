@@ -1,11 +1,14 @@
 const ccxt = require('ccxt');
 const Strategy = require('../models/strategyModel');
-const { STRATEGY_TYPE } = require('../utils/strategyStateEnum');
+// TODO use create await service instead of Await model
+const Await = require('../models/awaitModel');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 const logger = require('../utils/logger');
 const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
+const { STRATEGY_TYPE, AWAIT_STATUS, AWAIT_SELL_TYPE } = require('../utils/strategyStateEnum')
 
 class StrategyService {
   /**
@@ -16,10 +19,10 @@ class StrategyService {
   async getAllStrategies(params) {
     const start = Date.now();
 
-    // Do not query strategies with soft-deleted status(3) by default
+    // Do not query strategies with SOFT_DELETED status by default
     let conditions = {
       user: params.userId,
-      status: { $lt: 2 },
+      status: { $lt: STRATEGY_TYPE.SOFT_DELETED },
     };
     const { status } = params;
     if (typeof status !== 'undefined') {
@@ -106,9 +109,68 @@ class StrategyService {
     return { _id: strategyId };
   }
 
-  async partiallyUpdate(strategy){
-    return {info};
+  /**
+   * Partially update the strategy
+   * @param params - The strategy data needs to be updated
+   * @returns id - Strategies _id
+   */
+  async partiallyUpdateStrategy(params){
+    const start = Date.now();
+    const doc = await Strategy.findById(params._id);
+
+    if (!doc) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND);
+    }
+    // TODO test with portal user module
+    // if (doc.user.toString() !== params.user) {
+    //   throw  new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    // }
+
+    if (typeof params.period !== 'undefined') doc.period = params.period;
+    if (typeof params.period_value !== 'undefined') doc.period_value = params.period_value;
+    if (typeof params.base_limit !== 'undefined') doc.base_limit = params.base_limit;
+    if (typeof params.stop_profit_percentage !== 'undefined') doc.stop_profit_percentage = params.stop_profit_percentage;
+    if (typeof params.drawdown !== 'undefined') doc.drawdown = params.drawdown;
+    
+    await doc.save();
+    logger.info(`\nUpdate Strategy\n  Strategy Id: \t${params._id}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`);
+
+    return {
+      _id: params._id,
+    };
   }
+
+  /**
+   * Soft delete the strategy
+   * @param strategy - The strategy needs to be soft deleted
+   * @returns status - Strategy status
+   */
+  async deleteStrategy(id){
+    const start = Date.now();
+    const doc = await Strategy.findById(id);
+
+    if (!doc) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND);
+    }
+
+    const conditions = {
+      strategy_id: doc._id,
+      user: doc.user,
+      sell_type: AWAIT_SELL_TYPE.AUTO_SELL,
+      await_status: AWAIT_STATUS.WAITING,
+    };
+    await new Await(conditions).save();
+
+    // soft delete, update the status
+    doc.status = STRATEGY_TYPE.SOFT_DELETED;
+    await doc.save();
+    logger.info(`\nDelete Strategy\n  Strategy Id: \t${id}\n  Response Time: \t${Date.now() - start} ms\n`);
+  
+    return {
+      status: doc.status,
+    };
+  }
+
   /**
    * Execute buy operations for all strategies
    * @returns {Array} List of results for each strategy execution
