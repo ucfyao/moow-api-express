@@ -50,5 +50,8 @@ const StartegySchema = new mongoose.Schema(
   },
 );
 
+StartegySchema.statics.INVESTMENT_TYPE_REGULAR = '1';
+StartegySchema.statics.INVESTMENT_TYPE_INTELLIGENT = '2';
+
 const Startegy = mongoose.model('Startegy', StartegySchema);
 module.exports = Startegy;

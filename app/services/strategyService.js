@@ -7,6 +7,7 @@ const logger = require('../utils/logger');
 const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
 const CustomError = require('../utils/customError');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 const { STRATEGY_TYPE, AWAIT_STATUS, AWAIT_SELL_TYPE } = require('../utils/strategyStateEnum')
 
 class StrategyService {
@@ -271,25 +272,26 @@ class StrategyService {
 
     let amount = 0;
     // Fetch the current price, calculate purchase amount this time by type
-    if (strategy.type === STRATEGY_TYPE.NORMAL) {
+    if (strategy.type === Strategy.INVESTMENT_TYPE_REGULAR) {
       amount = (strategy.base_limit / price).toFixed(6);
     } else {
-      const fundsToInvest = await this._valueAveraging(strategy, price);
-      amount = fundsToInvest.toFixed(6);
-      if (amount <= 0) {
-        logger.info(`== the purchase amount is too low: ${amount}`);
-        // return false;
-      }
+      amount = (await this._valueAveraging(strategy, price)).toFixed(6);
     }
+
+    if (amount <= 0) {
+      logger.info(`== the purchase amount is too low: ${amount}`);
+      throw new CustomError(STATUS_TYPE.AIP_INSUFFICIENT_PURCHASE_AMOUNT);
+    }
+
     logger.info(`== buy amount: ${amount}`);
 
     const balance = await exchange.fetchBalance();
-    const valueTotal = strategy.amount * price;
+    const valueTotal = amount * price;
 
     // TODO Determine if the balance is sufficient.
-    if (balance[strategy.base] < valueTotal) {
-      logger.info(`== balance is not enough: ${balance[strategy.base]}`);
-      // throw CustomError('');
+    if (balance[strategy.base].free < valueTotal) {
+      logger.info(`== balance is not enough: ${balance[strategy.base].free}`);
+      throw new CustomError(STATUS_TYPE.AIP_INSUFFICIENT_BALANCE);
     }
 
     const inParams = {};
