@@ -1,7 +1,6 @@
 const express = require('express');
 const OrderController = require('../controllers/orderController');
 const asyncHandler = require('../utils/asyncHandler');
-const orderService = require('../services/orderService');
 
 const router = express.Router();
 
