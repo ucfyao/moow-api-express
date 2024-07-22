@@ -1,11 +1,10 @@
 const ccxt = require('ccxt');
 const Strategy = require('../models/strategyModel');
-// TODO use create await service instead of Await model
-const Await = require('../models/awaitModel');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 const logger = require('../utils/logger');
 const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
+const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
 const { STRATEGY_TYPE, AWAIT_STATUS, AWAIT_SELL_TYPE } = require('../utils/strategyStateEnum')
 
@@ -103,7 +102,7 @@ class StrategyService {
     await doc.save();
     const strategyId = doc ? doc._id : '';
 
-    logger.info(`\nNew Strategy\n  Strategy Id: \t${strategyId}\n  Strategy Info: \t${JSON.stringify(processedStrategy)}\n  Response Time: \t${Date.now() - start} ms\n`);
+    logger.info(`\nNew Strategy\n  Strategy Id: \t${JSON.stringify(strategyId)}\n  Strategy Info: \t${JSON.stringify(processedStrategy)}\n  Response Time: \t${Date.now() - start} ms\n`);
 
     return { _id: strategyId };
   }
@@ -132,7 +131,7 @@ class StrategyService {
     if (typeof params.drawdown !== 'undefined') doc.drawdown = params.drawdown;
     
     await doc.save();
-    logger.info(`\nUpdate Strategy\n  Strategy Id: \t${params._id}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`);
+    logger.info(`\nUpdate Strategy\n  Strategy Id: \t${JSON.stringify(params._id)}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`);
 
     return {
       _id: params._id,
@@ -158,7 +157,7 @@ class StrategyService {
       sell_type: AWAIT_SELL_TYPE.AUTO_SELL,
       await_status: AWAIT_STATUS.WAITING,
     };
-    await new Await(conditions).save();
+    await AwaitService.createAwait(conditions);
 
     // soft delete, update the status
     doc.status = STRATEGY_TYPE.SOFT_DELETED;
