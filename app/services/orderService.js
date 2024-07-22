@@ -175,7 +175,7 @@ class OrderService {
     }
   }
 
-  async cancelAllOpenOrders(exchangeName, symbol, apiKey, secret) {
+  async cancelAllOpenThirdPartyOrders(exchangeName, symbol, apiKey, secret) {
     // console.log(exchangeName);
     const exchange = new ccxt[exchangeName]({
       apiKey,

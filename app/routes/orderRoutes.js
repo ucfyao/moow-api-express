@@ -11,5 +11,5 @@ router.get('/api/v1/orders', asyncHandler(OrderController.index));
 router.post('/api/v1/orders', asyncHandler(OrderController.create));
 
 // Cancel all open orders
-router.delete('/api/v1/openOrders', asyncHandler(OrderController.cancelAllOpenOrders));
+router.delete('/api/v1/openOrders', asyncHandler(OrderController.cancelAllOpenThirdPartyOrders));
 module.exports = router;
