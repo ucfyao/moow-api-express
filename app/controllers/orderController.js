@@ -8,9 +8,9 @@ class OrderController {
     return ResponseHandler.success(res, orders);
   }
 
-  async fetchOpenOrders(req, res) {
+  async listThirdPartyOrders(req, res) {
     const { exchangeName, symbol, apiKey, secret } = req.query;
-    const oders = await OrderService.fetchOpenOrders(exchangeName, symbol, apiKey, secret);
+    const oders = await OrderService.getThirdPartyOrders(exchangeName, symbol, apiKey, secret);
     return ResponseHandler.success(res, oders);
   }
 }

@@ -176,7 +176,7 @@ class OrderService {
     }
   }
 
-  async fetchOpenOrders(exchangeName, symbol, apiKey, secret) {
+  async getThirdPartyOrders(exchangeName, symbol, apiKey, secret) {
     console.log(apiKey, secret);
     const exchange = new ccxt[exchangeName]({
       apiKey,

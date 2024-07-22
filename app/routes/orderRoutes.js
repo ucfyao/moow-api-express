@@ -11,5 +11,5 @@ router.get('/api/v1/orders', asyncHandler(OrderController.index));
 router.post('/api/v1/orders', asyncHandler(OrderController.create));
 
 // Fetch all open orders
-router.get('/api/v1/openOders', asyncHandler(OrderController.fetchOpenOrders));
+router.get('/api/v1/openOders', asyncHandler(OrderController.listThirdPartyOrders));
 module.exports = router;
