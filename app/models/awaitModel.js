@@ -3,8 +3,6 @@ const mongoose = require('mongoose');
 
 const AwaitSchema = new mongoose.Schema(
   {
-    id: { type: String, unique: true, trim: true }, // Auto-increment id
-
     strategy_id: { type: String, trim: true }, // Investment strategy id
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'PortalUser' },
     await_status: { type: String, trim: true }, // 1: Waiting 2: Completed 3: Processing

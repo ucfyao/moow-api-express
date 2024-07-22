@@ -1,7 +1,7 @@
 const ccxt = require('ccxt');
 const Order = require('../models/orderModel');
 const Strategy = require('../models/strategyModel');
-const Await = require('../models/awaitModel');
+const AwaitService = require('./awaitService');
 const { decrypt } = require('../utils/cryptoUtils');
 const {
   STRATEGY_TYPE,
@@ -130,7 +130,7 @@ class OrderService {
       await_status: AWAIT_STATUS.WAITING,
     };
 
-    const data = await new Await(conditions).save();
+    const data = await AwaitService.createAwait(conditions);
     const id = data ? data._id : '';
     const strategyId = data ? data.strategy_id : '';
 
