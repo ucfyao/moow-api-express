@@ -174,6 +174,17 @@ class OrderService {
       await item.save();
     }
   }
+
+  async cancelAllOpenOrders(exchangeName, symbol, apiKey, secret) {
+    // console.log(exchangeName);
+    const exchange = new ccxt[exchangeName]({
+      apiKey,
+      secret,
+      timeout: 60000,
+    });
+    const orders = await exchange.cancelAllOrders(symbol);
+    return orders;
+  }
 }
 
 module.exports = new OrderService();
