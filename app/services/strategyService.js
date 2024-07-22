@@ -6,7 +6,6 @@ const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
-const { STATUS_TYPE } = require('../utils/statusCodes');
 const { STRATEGY_TYPE, AWAIT_STATUS, AWAIT_SELL_TYPE } = require('../utils/strategyStateEnum')
 
 class StrategyService {

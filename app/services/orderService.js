@@ -9,6 +9,7 @@ const {
   AWAIT_STATUS,
   AWAIT_SELL_TYPE,
 } = require('../utils/strategyStateEnum');
+const logger = require('../utils/logger');
 
 class OrderService {
   async getAllOrders(strategyId) {
@@ -173,6 +174,30 @@ class OrderService {
       item.drawdown_price = sellPrice;
       await item.save();
     }
+  }
+
+  async fetchOpenOrders(exchangeName, symbol, apiKey, secret) {
+    console.log(apiKey, secret);
+    const exchange = new ccxt[exchangeName]({
+      apiKey,
+      secret,
+      timeout: 60000,
+    });
+    const openOrders = await exchange.fetchOpenOrders(symbol);
+    openOrders.forEach(order => {
+      const timestamp = new Date(order.timestamp);
+      const formattedDate = timestamp.toISOString();
+      logger.info(`Order ID: ${order.id}`);
+      logger.info(`Symbol: ${order.symbol}`);
+      logger.info(`Type: ${order.type}`);
+      logger.info(`Side: ${order.side}`);
+      logger.info(`Price: ${order.price}`);
+      logger.info(`Amount: ${order.amount}`);
+      logger.info(`Status: ${order.status}`);
+      logger.info(`Timestamp: ${formattedDate}`);
+      logger.info('-----------------------------------');
+    });
+    return openOrders;
   }
 }
 
