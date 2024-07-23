@@ -7,6 +7,12 @@ class OrderController {
     const orders = await OrderService.getAllOrders(strategy_id);
     return ResponseHandler.success(res, orders);
   }
+
+  async listThirdPartyOrders(req, res) {
+    const { exchangeName, symbol, apiKey, secret } = req.query;
+    const oders = await OrderService.getThirdPartyOrders(exchangeName, symbol, apiKey, secret);
+    return ResponseHandler.success(res, oders);
+  }
 }
 
 module.exports = new OrderController();
