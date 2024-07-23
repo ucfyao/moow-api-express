@@ -12,4 +12,7 @@ router.post('/api/v1/orders', asyncHandler(OrderController.create));
 
 // Fetch all open orders
 router.get('/api/v1/openOders', asyncHandler(OrderController.listThirdPartyOrders));
+
+// Cancel all open orders
+router.delete('/api/v1/openOrders', asyncHandler(OrderController.cancelAllOpenThirdPartyOrders));
 module.exports = router;

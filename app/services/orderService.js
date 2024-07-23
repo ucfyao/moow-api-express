@@ -10,6 +10,7 @@ const {
   AWAIT_SELL_TYPE,
 } = require('../utils/strategyStateEnum');
 const logger = require('../utils/logger');
+const config = require('../../config');
 
 class OrderService {
   async getAllOrders(strategyId) {
@@ -198,6 +199,16 @@ class OrderService {
       logger.info('-----------------------------------');
     });
     return openOrders;
+  }
+
+  async cancelAllOpenThirdPartyOrders(exchangeName, symbol, apiKey, secret) {
+    const exchange = new ccxt[exchangeName]({
+      apiKey,
+      secret,
+      timeout: config.exchangeTimeOut,
+    });
+    const orders = await exchange.cancelAllOrders(symbol);
+    return orders;
   }
 }
 

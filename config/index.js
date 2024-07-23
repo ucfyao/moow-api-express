@@ -16,6 +16,7 @@ const config = {
   // Security configuration
   sessionSecret: process.env.SESSION_SECRET || crypto.randomBytes(64).toString('hex'),
   tokenTimeOut: 1000, // Token expiration time in seconds
+  exchangeTimeOut: 6000, // Exchange connection time in ms
 
   // Key file paths
   publicKeyPath: path.resolve(process.cwd(), process.env.PUBLIC_KEY_PATH || 'keys/damoon.pem'),

@@ -13,6 +13,12 @@ class OrderController {
     const oders = await OrderService.getThirdPartyOrders(exchangeName, symbol, apiKey, secret);
     return ResponseHandler.success(res, oders);
   }
+
+  async cancelAllOpenThirdPartyOrders (req, res) {
+    const { exchangeName, symbol, apiKey, secret } = req.query;
+    const orders = await OrderService.cancelAllOpenThirdPartyOrders(exchangeName, symbol, apiKey, secret);
+    return ResponseHandler.success(res, orders);
+  }
 }
 
 module.exports = new OrderController();
