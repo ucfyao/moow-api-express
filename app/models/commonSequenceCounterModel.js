@@ -11,5 +11,5 @@ const CommonSequenceCounterSchema = new mongoose.Schema(
   },
 );
 
-const CommonSequenceCounterModel = mongoose.model('CommonSequenceCounterModel', CommonSequenceCounterSchema);
+const CommonSequenceCounterModel = mongoose.model('common_sequence_counter', CommonSequenceCounterSchema);
 module.exports = CommonSequenceCounterModel;

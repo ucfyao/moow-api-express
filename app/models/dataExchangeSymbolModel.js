@@ -32,5 +32,5 @@ const DataExchangeSymbolSchema = new mongoose.Schema(
   },
 );
 
-const DataExchangeSymbolModel = mongoose.model('DataExchangeSymbolModel', DataExchangeSymbolSchema);
+const DataExchangeSymbolModel = mongoose.model('data_exchange_symbol', DataExchangeSymbolSchema);
 module.exports = DataExchangeSymbolModel;

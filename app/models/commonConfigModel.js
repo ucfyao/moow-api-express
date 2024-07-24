@@ -17,5 +17,5 @@ const CommonConfigSchema = new mongoose.Schema(
   },
 );
 
-const CommonConfigModel = mongoose.model('CommonConfig', CommonConfigSchema);
+const CommonConfigModel = mongoose.model('common_config', CommonConfigSchema);
 module.exports = CommonConfigModel;

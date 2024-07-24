@@ -38,5 +38,5 @@ AipAwaitSchema.statics.STATUS_PROCESSING = 3;
 AipAwaitSchema.statics.SELL_TYPE_AUTO_SELL = 1;
 AipAwaitSchema.statics.SELL_TYPE_DEL_INVEST = 2;
 
-const AipAwaitModel = mongoose.model('AipAwaitModel', AipAwaitSchema);
+const AipAwaitModel = mongoose.model('aip_await', AipAwaitSchema);
 module.exports = AipAwaitModel;

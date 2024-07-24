@@ -63,5 +63,5 @@ AipStartegySchema.statics.STRATEGY_STATUS_SOFT_DELETED = 3;
 AipStartegySchema.statics.DRAWDOWN_STATUS_ENABLED = 'Y';
 AipStartegySchema.statics.DRAWDOWN_STATUS_DISABLED = 'N';
 
-const AipStartegyModel = mongoose.model('AipStartegyModel', AipStartegySchema);
+const AipStartegyModel = mongoose.model('aip_strategy', AipStartegySchema);
 module.exports = AipStartegyModel;
