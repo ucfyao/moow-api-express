@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const ConfigSchema = new mongoose.Schema(
+const CommonConfigSchema = new mongoose.Schema(
   {
     name: { type: String, trim: true }, // config name
     content: { type: Object, trim: true }, // config content
@@ -17,5 +17,5 @@ const ConfigSchema = new mongoose.Schema(
   },
 );
 
-const CommonConfig = mongoose.model('CommonConfig', ConfigSchema);
-module.exports = CommonConfig;
+const CommonConfigModel = mongoose.model('CommonConfig', CommonConfigSchema);
+module.exports = CommonConfigModel;

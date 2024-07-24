@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const PortalEmailSchema = new mongoose.Schema(
+const PortalEmailInfoSchema = new mongoose.Schema(
   {
     send_mark: { type: Number }, // send mark: 0-already sent, 1-wait to send
     email_detail: {
@@ -35,9 +35,16 @@ const PortalEmailSchema = new mongoose.Schema(
       createdAt: 'created_at',
       updatedAt: 'updated_at',
     }, // auto create created_at and updated_at
-    collection: 'portal_email_info',
+    collection: 'portal_email_infos',
   },
 );
 
-const PortalEmailModel = mongoose.model('PortalEmailModel', PortalEmailSchema);
-module.exports = PortalEmailModel;
+// Email send mark
+PortalEmailInfoSchema.statics.SEND_MARK_ALREADY_SENT = 0;
+PortalEmailInfoSchema.statics.SEND_MARK_WAIT_TO_SEND = 1;
+// Email status
+PortalEmailInfoSchema.statics.STATUS_FAILED = 0;
+PortalEmailInfoSchema.statics.STATUS_SUCCESS = 1;
+
+const PortalEmailInfoModel = mongoose.model('PortalEmailInfoModel', PortalEmailInfoSchema);
+module.exports = PortalEmailInfoModel;

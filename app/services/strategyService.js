@@ -1,12 +1,12 @@
 const ccxt = require('ccxt');
-const Strategy = require('../models/strategyModel');
+const AipStrategyModel = require('../models/aipStrategyModel');
+const AipAwaitModel = require('../models/aipAwaitModel');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 const logger = require('../utils/logger');
 const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
-const { STRATEGY_TYPE, AWAIT_STATUS, AWAIT_SELL_TYPE } = require('../utils/strategyStateEnum')
 
 class StrategyService {
   /**
@@ -20,7 +20,7 @@ class StrategyService {
     // Do not query strategies with SOFT_DELETED status by default
     let conditions = {
       user: params.userId,
-      status: { $lt: STRATEGY_TYPE.SOFT_DELETED },
+      status: { $lt: AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED },
     };
     const { status } = params;
     if (typeof status !== 'undefined') {
@@ -30,7 +30,7 @@ class StrategyService {
     const pageNumber = params.pageNumber || 1;
     const pageSize = params.pageSize || 9999;
 
-    const list = await Strategy.find(conditions).sort({ createdAt: -1 }).skip((pageNumber - 1) * pageSize).limit(pageSize).lean();
+    const list = await AipStrategyModel.find(conditions).sort({ createdAt: -1 }).skip((pageNumber - 1) * pageSize).limit(pageSize).lean();
 
     // Calculate the profit rate accroding to the exchange symbol for every strategy
     for (let i = 0, len = list.length; i < len; i++) {
@@ -52,7 +52,7 @@ class StrategyService {
       list[i].profit_percentage = parseInt(list[i].base_total, 10) !== 0 ? list[i].profit / list[i].base_total * 100 : 0;
     }
   
-    const total = await Strategy.countDocuments(conditions);
+    const total = await AipStrategyModel.countDocuments(conditions);
     logger.info(`\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${list.length}\n  Response Time: \t${Date.now() - start} ms\n`);
 
     return {
@@ -70,7 +70,7 @@ class StrategyService {
    */
   async getStrategyById(id) {
     const start = Date.now();
-    const info = await Strategy.findById(id);
+    const info = await AipStrategyModel.findById(id);
 
     const exSymConditions = {
       exchange: info.exchange,
@@ -98,7 +98,7 @@ class StrategyService {
     const start = Date.now();
     const processedStrategy = { ...strategy, minute:`${parseInt(60 * Math.random(),10)}`, hour:`${parseInt(24 * Math.random(),10)}`};
 
-    const doc = new Strategy(processedStrategy);
+    const doc = new AipStrategyModel(processedStrategy);
     await doc.save();
     const strategyId = doc ? doc._id : '';
 
@@ -114,7 +114,7 @@ class StrategyService {
    */
   async partiallyUpdateStrategy(params){
     const start = Date.now();
-    const doc = await Strategy.findById(params._id);
+    const doc = await AipStrategyModel.findById(params._id);
 
     if (!doc) {
       throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND);
@@ -145,7 +145,7 @@ class StrategyService {
    */
   async deleteStrategy(id){
     const start = Date.now();
-    const doc = await Strategy.findById(id);
+    const doc = await AipStrategyModel.findById(id);
 
     if (!doc) {
       throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND);
@@ -154,13 +154,13 @@ class StrategyService {
     const conditions = {
       strategy_id: doc._id,
       user: doc.user,
-      sell_type: AWAIT_SELL_TYPE.AUTO_SELL,
-      await_status: AWAIT_STATUS.WAITING,
+      sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
+      await_status: AipAwaitModel.STATUS_WAITING,
     };
     await AwaitService.createAwait(conditions);
 
     // soft delete, update the status
-    doc.status = STRATEGY_TYPE.SOFT_DELETED;
+    doc.status = AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED;
     await doc.save();
     logger.info(`\nDelete Strategy\n  Strategy Id: \t${id}\n  Response Time: \t${Date.now() - start} ms\n`);
   
@@ -180,7 +180,7 @@ class StrategyService {
       status: '1',
       minute: now.get('minute').toString(),
     };
-    const strategiesArr = await Strategy.find(conditions);
+    const strategiesArr = await AipStrategyModel.find(conditions);
     logger.info(
       'cur day: %j, hour: %j, minite: %j',
       now.get('day'),
@@ -238,7 +238,7 @@ class StrategyService {
    * @returns {Object} Result of the buy operation
    */
   async executeBuy(strategyId) {
-    const strategy = await Strategy.findById(strategyId);
+    const strategy = await AipStrategyModel.findById(strategyId);
     const result = await this.processBuy(strategy);
     return result;
   }
@@ -270,7 +270,7 @@ class StrategyService {
 
     let amount = 0;
     // Fetch the current price, calculate purchase amount this time by type
-    if (strategy.type === Strategy.INVESTMENT_TYPE_REGULAR) {
+    if (strategy.type === AipStrategyModel.INVESTMENT_TYPE_REGULAR) {
       amount = (strategy.base_limit / price).toFixed(6);
     } else {
       amount = (await this._valueAveraging(strategy, price)).toFixed(6);

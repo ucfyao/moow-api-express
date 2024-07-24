@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const MarketSchema = new mongoose.Schema(
+const PortalMarketSchema = new mongoose.Schema(
   {
     name: { type: String }, // The name of the exchange platform
     exchange: { type: String, unique: true, trim: true }, // The exchange's ccxt name
@@ -14,5 +14,5 @@ const MarketSchema = new mongoose.Schema(
   },
 );
 
-const Market = mongoose.model('Market', MarketSchema);
-module.exports = Market;
+const PortalMarketModel = mongoose.model('PoratalMarketModel', PortalMarketSchema);
+module.exports = PortalMarketModel;
