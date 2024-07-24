@@ -36,6 +36,15 @@ class SymbolController {
     const symbol = await SymbolService.createSymbol(symbolData);
     return ResponseHandler.success(res, symbol, STATUS_TYPE.created);
   }
+
+  /**
+  * scheduler to obtain the price of bitcoin on each day
+  */
+  async getPrice(req, res) {
+    const symbolData = await SymbolService.getPrice();
+    return ResponseHandler.success(res, symbolData, STATUS_TYPE.created);
+  }
+
 }
   
 module.exports = new SymbolController();

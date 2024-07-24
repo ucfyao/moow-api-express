@@ -1,5 +1,6 @@
 const DataExchangeSymbol = require('../models/dataExchangeSymbolModel');
 const logger = require('../utils/logger');
+const axios = require('axios');
 
 class SymbolService {
   /**
@@ -98,7 +99,63 @@ class SymbolService {
     const newDataExchangeSymbol = await new DataExchangeSymbol(processedSymbol).save();
     return { newDataExchangeSymbol };
   }
+
+  async getPrice() {
+    const API_KEY = '926537eb-218a-43a3-b170-726e96cf1e50';
+    const url = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest';
+    const SYMBOL = 'BTC';
+    const EXCHANGE = 'coinmarketcap';
+    const CURRENCIES = ['USD'];
+    try {
+      // get bitcoin price
+      const responseUSD = await axios.get(url, {
+        headers: { 'X-CMC_PRO_API_KEY': API_KEY },
+        params: { slug: 'bitcoin', convert: 'USD' }
+      });
+
+      const dataUSD = responseUSD.data.data['1'];
+      const price_usd = dataUSD['quote']['USD']['price'];
+      const volume_usd = dataUSD['quote']['USD']['volume_24h'];
+      const percent_change_24h = dataUSD['quote']['USD']['percent_change_24h'];
+
+      const responseCNY = await axios.get(url, {
+        headers: { 'X-CMC_PRO_API_KEY': API_KEY },
+        params: { slug: 'bitcoin', convert: 'CNY' }
+      });
+
+      const dataCNY = responseCNY.data.data['1'];
+      const price_cny = dataCNY['quote']['CNY']['price'];
+      const volume_cny = dataCNY['quote']['CNY']['volume_24h'];
+
+      const newSymbolData = new DataExchangeSymbol({
+        key: `${EXCHANGE}_${SYMBOL}`,
+        exchange: EXCHANGE,
+        symbol: SYMBOL,
+        price_usd: price_usd.toString(),
+        price_cny: price_cny.toString(),
+        price_btc: '', // This will remain empty as we are not converting to BTC in this example
+        price_native: price_usd.toString(), // Assuming USD is the native price here
+        vol_usd: volume_usd.toString(),
+        vol_cny: volume_cny.toString(),
+        vol_btc: '', // This will remain empty as we are not converting to BTC in this example
+        vol_native: volume_usd.toString(), // Assuming USD is the native volume here
+        trade_vol: (volume_usd / price_usd).toString(), // Volume in terms of amount of BTC
+        percent: percent_change_24h.toString(),
+        base: 'USD',
+        quote: SYMBOL,
+        exchange_url: 'https://coinmarketcap.com/currencies/bitcoin/',
+        on_time: new Date(),
+        status: '1',
+      });
+
+      await newSymbolData.save();
+      logger.info(`Successfully saved Bitcoin data: ${price_usd} USD, ${price_cny} CNY`);
+      return newSymbolData
+    } catch (error) {
+      logger.error('Error fetching Bitcoin data', error);
+    }
+  }
 }
-  
+
 module.exports = new SymbolService();
   

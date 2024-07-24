@@ -14,4 +14,6 @@ router.get('/api/v1/symbols/:id', asyncHandler(SymbolController.show));
 // Create a new data exchange symbol
 router.post('/api/v1/symbols', asyncHandler(SymbolController.create));
 
+router.post('/api/v1/symbols/priceScheduler', asyncHandler(SymbolController.getPrice));
+
 module.exports = router;
