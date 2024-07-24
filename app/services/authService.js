@@ -4,16 +4,15 @@ const { v1: uuidv1 } = require('uuid');
 const ejs = require('ejs');
 const path = require('path');
 const moment = require('moment');
-const User = require('../models/userModel');
-const PortalTokenModel = require('../models/tokenModel');
-const PortalUserModel = require('../models/userModel');
+const PortalTokenModel = require('../models/portalTokenModel');
+const PortalUserModel = require('../models/portalUserModel');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 const UserService = require('./userService');
 const SequenceService = require('./sequenceService');
 const config = require('../../config');
 const EmailService = require('./emailService');
-const { EMAIL_STATUS } = require('../utils/authStateEnum');
+const PortalEmailInfoModel = require('../models/portalEmailInfoModel');
 const { hashidsEncode, hashidsDecode } = require('../utils/hashidsHandler');
 
 class AuthService {
@@ -49,9 +48,9 @@ class AuthService {
       }
     }
 
-    const pwdObj = await UserService.generatePassword(user.password);
-    user.salt = pwdObj.salt;
-    user.password = pwdObj.password;
+    const pwd = await UserService.generatePassword(user.password);
+    user.salt = pwd.salt;
+    user.password = pwd.password;
     user.nick_name = name;
     user.seq_id = await SequenceService.getNextSequenceValue('portal_user');
     user.invitation_code = hashidsEncode(user.seq_id);
@@ -82,26 +81,26 @@ class AuthService {
       throw new CustomError(STATUS_TYPE.PORTAL_CAPTCHA_INVAILD);
     }
     const start = Date.now();
-    const objectUser = await User.findOne({ email: loginInfo.email }).lean();
+    const user = await PortalUserModel.findOne({ email: loginInfo.email }).lean();
 
-    if (!objectUser) {
+    if (!user) {
       throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
     }
 
     const isPasswordCorrect = await this._verifyPassword(
       loginInfo.password,
-      objectUser.salt,
-      objectUser.password,
+      user.salt,
+      user.password,
     );
 
     if (!isPasswordCorrect) {
       throw new Error('Incorrect password');
     }
 
-    await PortalTokenModel.deleteMany({ user_id: objectUser._id, type: 'session' });
+    await PortalTokenModel.deleteMany({ user_id: user._id, type: 'session' });
 
-    const token = await this._getToken(objectUser, userIp);
-    const userInfo = _.pick(objectUser, [
+    const token = await this._getToken(user, userIp);
+    const userInfo = _.pick(user, [
       '_id',
       'real_name',
       'nick_name',
@@ -133,15 +132,15 @@ class AuthService {
     return tokenObj;
   }
 
-  async deleteToken(loginInfoObj) {
-    await loginInfoObj.findOneAndDelete();
-    return loginInfoObj;
+  async deleteToken(loginInfo) {
+    await loginInfo.findOneAndDelete();
+    return loginInfo;
   }
 
-  async modifyAccessTime(loginInfoObj) {
-    loginInfoObj.last_access_time = Date.now();
-    await loginInfoObj.save();
-    return loginInfoObj;
+  async modifyAccessTime(loginInfo) {
+    loginInfo.last_access_time = Date.now();
+    await loginInfo.save();
+    return loginInfo;
   }
 
   async sendRetrieveEmail(userEmail, userIp, inputCaptcha, sessionCaptcha) {
@@ -150,17 +149,17 @@ class AuthService {
     if (!captchaValid) {
       throw new CustomError(STATUS_TYPE.PORTAL_CAPTCHA_INVAILD);
     }
-    const objectUser = await PortalUserModel.findOne({ email: userEmail }).lean();
-    if (!objectUser) {
+    const user = await PortalUserModel.findOne({ email: userEmail }).lean();
+    if (!user) {
       throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
     }
 
     // generate token
-    const code = await this._getCode(objectUser, userIp);
+    const code = await this._getCode(user, userIp);
     const { siteName } = config;
     const { siteUrl } = config;
     const resetPasswordUrl = `${siteUrl}/reset-password/${code}`;
-    const displayName = objectUser.nick_name;
+    const displayName = user.nick_name;
     const resetPasswordMailPath = path.resolve(__dirname, '../views/forget_password_mail.html');
 
     const html = await ejs.renderFile(resetPasswordMailPath, {
@@ -171,7 +170,7 @@ class AuthService {
     });
     const resetPasswordEmail = {
       async: false,
-      to: [objectUser.email],
+      to: [user.email],
       subject: `[${siteName}]retrieve password`,
       text: `Hello, ${displayName}, to reset your password, please click the link: ${resetPasswordUrl}`,
       html,
@@ -179,7 +178,7 @@ class AuthService {
     console.log(html);
     const sendEmailRes = await EmailService.sendEmail(resetPasswordEmail);
 
-    if (sendEmailRes.emailStatus === EMAIL_STATUS.FAILED) {
+    if (sendEmailRes.emailStatus === PortalEmailInfoModel.STATUS_FAILED) {
       // TODO error log
       console.error('Error sending activation email:', sendEmailRes.desc);
     }
@@ -211,9 +210,9 @@ class AuthService {
       throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
     }
 
-    const pwdObj = await UserService.generatePassword(newPassword);
-    user.password = pwdObj.password;
-    user.salt = pwdObj.salt;
+    const pwd = await UserService.generatePassword(newPassword);
+    user.password = pwd.password;
+    user.salt = pwd.salt;
     await user.save();
 
     // remove token
@@ -225,16 +224,16 @@ class AuthService {
   }
 
   async sendActivateEmail(userEmail, userIp) {
-    const objectUser = await PortalUserModel.findOne({ email: userEmail }).lean();
-    if (!objectUser) {
+    const user = await PortalUserModel.findOne({ email: userEmail }).lean();
+    if (!user) {
       throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
     }
-    if (objectUser.is_activated) {
+    if (user.is_activated) {
       throw new CustomError(STATUS_TYPE.PORTAL_USER_ALREADY_ACTIVATED);
     }
 
     // check whether already sent email in 5 mins（all the 'code' type tokens are used to verify, so check the generate time of the token）
-    const existToken = await PortalTokenModel.findOne({ user_id: objectUser._id, type: 'code' });
+    const existToken = await PortalTokenModel.findOne({ user_id: user._id, type: 'code' });
     if (existToken) {
       if ((+new Date() - existToken.last_access_time) / 1000 < config.minEmailSendInterval) {
         throw new CustomError(STATUS_TYPE.PORTAL_EMAIL_SEND_LIMIT);
@@ -244,11 +243,11 @@ class AuthService {
     }
 
     // generate Token
-    const code = await this._getCode(objectUser, userIp);
+    const code = await this._getCode(user, userIp);
     const { siteName } = config;
     const { siteUrl } = config;
     const activateUrl = `${siteUrl}/active-confirm/${code}`;
-    const displayName = objectUser.nick_name;
+    const displayName = user.nick_name;
     const welcomMailPath = path.resolve(__dirname, '../views/welcome_mail.html');
 
     const html = await ejs.renderFile(welcomMailPath, {
@@ -259,14 +258,14 @@ class AuthService {
     });
     const activeEmail = {
       async: false,
-      to: [objectUser.email],
+      to: [user.email],
       subject: `Welcome to Register at ${siteName}`,
       text: `Hello ${displayName}, welcome to register. Please click the following link to activate your account: ${activateUrl}`,
       html,
     };
 
     const sendEmailRes = await EmailService.sendEmail(activeEmail);
-    if (sendEmailRes.emailStatus === EMAIL_STATUS.FAILED) {
+    if (sendEmailRes.emailStatus === PortalEmailInfoModel.STATUS_FAILED) {
       // TODO error log
       console.error('Error sending activation email:', sendEmailRes.desc);
     }
@@ -287,21 +286,21 @@ class AuthService {
       throw new CustomError(STATUS_TYPE.PORTAL_ACTIVATE_CODE_EXPIRED);
     }
 
-    const objectUser = await PortalUserModel.findById(existToken.user_id);
-    if (!objectUser) {
+    const user = await PortalUserModel.findById(existToken.user_id);
+    if (!user) {
       throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
     }
-    if (objectUser.is_activated) {
+    if (user.is_activated) {
       throw new CustomError(STATUS_TYPE.PORTAL_USER_ALREADY_ACTIVATED);
     }
 
-    objectUser.is_activated = true;
+    user.is_activated = true;
     // Number of free membership days for new users
-    objectUser.vip_time_out_at = moment().add(10, 'days').toDate();
+    user.vip_time_out_at = moment().add(10, 'days').toDate();
 
     // Increase the inviter's membership by one day
-    if (objectUser.inviter && /^[a-f\d]{24}$/i.test(objectUser.inviter)) {
-      const refUser = await PortalUserModel.findById(objectUser.inviter);
+    if (user.inviter && /^[a-f\d]{24}$/i.test(user.inviter)) {
+      const refUser = await PortalUserModel.findById(user.inviter);
       if (refUser) {
         const timeOutAt = new Date(refUser.vip_time_out_at).getTime();
         const now = new Date().getTime();
@@ -323,14 +322,14 @@ class AuthService {
         //   amount: invitation,
         //   describe: 'invitation',
         //   invitee: tokenDoc.userId,
-        //   invitee_email: objectUser.email,
+        //   invitee_email: user.email,
         // });
 
         await refUser.save();
       }
     }
 
-    await objectUser.save();
+    await user.save();
     await PortalTokenModel.deleteOne({ _id: existToken._id });
     return {
       message: 'Account activation successful.',

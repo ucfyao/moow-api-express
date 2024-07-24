@@ -1,4 +1,4 @@
-const Await = require('../models/awaitModel');
+const AipAwaitModel = require('../models/aipAwaitModel');
 const logger = require('../utils/logger');
 
 class AwaitService {
@@ -15,7 +15,7 @@ class AwaitService {
     if (typeof params.sell_type !== 'undefined') conditions.sell_type = params.sell_type;
     if (typeof params.await_status !== 'undefined') conditions.await_status = params.await_status;
     
-    const newAwait = await new Await(conditions).save();
+    const newAwait = await new AipAwaitModel(conditions).save();
 
     logger.info(`\nNew Await\n  Strategy Id: \t${conditions.strategy_id}\n  User: \t${conditions.user}\n  Response Time: \t${Date.now() - start} ms\n`);
     

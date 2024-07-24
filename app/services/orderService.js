@@ -1,14 +1,10 @@
 const ccxt = require('ccxt');
-const Order = require('../models/orderModel');
-const Strategy = require('../models/strategyModel');
+const AipOrderModel = require('../models/aipOrderModel');
+const AipStrategyModel = require('../models/aipStrategyModel');
+const AipAwaitModel = require('../models/aipAwaitModel');
+const StrategyService = require('./strategyService');
 const AwaitService = require('./awaitService');
 const { decrypt } = require('../utils/cryptoUtils');
-const {
-  STRATEGY_TYPE,
-  DRAWDOWN_STATUS,
-  AWAIT_STATUS,
-  AWAIT_SELL_TYPE,
-} = require('../utils/strategyStateEnum');
 const logger = require('../utils/logger');
 const config = require('../../config');
 
@@ -16,7 +12,7 @@ class OrderService {
   async getAllOrders(strategyId) {
     const pageNumber = 1;
     const pageSize = 9999;
-    const list = await Order.find({ strategy_id: strategyId })
+    const list = await AipOrderModel.find({ strategy_id: strategyId })
       .sort({ createdAt: 1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
@@ -25,7 +21,7 @@ class OrderService {
   }
 
   async create(order) {
-    const doc = new Order(order);
+    const doc = new AipOrderModel(order);
     // const secret = await encrypt(strategy.secret);  // for testing
     // doc.secret = secret;
     await doc.save();
@@ -35,7 +31,7 @@ class OrderService {
   }
 
   async place(strategyId) {
-    const strategy = await Strategy.findById(strategyId);
+    const strategy = await StrategyService.getStrategyById(strategyId).info;
     const secret = await decrypt(strategy.secret);
     const exchange = new ccxt[strategy.exchange]({
       apiKey: strategy.key,
@@ -52,7 +48,7 @@ class OrderService {
 
     let amount = 0;
     // Fetch the current price, calculate purchase amount this time by type
-    if (strategy.type === STRATEGY_TYPE.NORMAL) {
+    if (strategy.type === AipStrategyModel.STRATEGY_STATUS_NORMAL) {
       amount = (strategy.base_limit / price).toFixed(6);
     } else {
       amount = _valueAveraging(strategy).toFixed(6);
@@ -96,7 +92,7 @@ class OrderService {
       created_at: Date.now(),
     };
 
-    await new Order(inOrder).save();
+    await new AipOrderModel(inOrder).save();
     strategy.buy_times = buyTimes;
     strategy.now_buy_times = nowBuyTimes;
     await strategy.save();
@@ -105,7 +101,7 @@ class OrderService {
   }
 
   async sell(strategyId) {
-    const item = await Strategy.findById(strategyId);
+    const item = await StrategyService.getStrategyById(strategyId).info;;
     // Access the current price
     const exchange = new ccxt[item.exchange]({
       apiKey: item.key,
@@ -128,8 +124,8 @@ class OrderService {
     const conditions = {
       strategy_id: doc._id,
       user: doc.user,
-      sell_type: AWAIT_SELL_TYPE.AUTO_SELL,
-      await_status: AWAIT_STATUS.WAITING,
+      sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
+      await_status: AipAwaitModel.STATUS_WAITING,
     };
 
     const data = await AwaitService.createAwait(conditions);

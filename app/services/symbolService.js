@@ -1,4 +1,4 @@
-const DataExchangeSymbol = require('../models/dataExchangeSymbolModel');
+const DataExchangeSymbolModel = require('../models/dataExchangeSymbolModel');
 const logger = require('../utils/logger');
 
 class SymbolService {
@@ -41,9 +41,9 @@ class SymbolService {
       }];
     }
 
-    const query = DataExchangeSymbol.find(conditions);
+    const query = DataExchangeSymbolModel.find(conditions);
     const symbolList = await query.collation({ locale: 'zh', numericOrdering: true }).sort({ percent: -1 }).skip((pageNumber - 1) * pageSize).limit(pageSize).lean();
-    const total = await DataExchangeSymbol.find(conditions).count();
+    const total = await DataExchangeSymbolModel.find(conditions).count();
 
     logger.info(`\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${symbolList.length}\n  Response Time: \t${Date.now() - start} ms\n`);
 
@@ -62,7 +62,7 @@ class SymbolService {
   */
   async getSymbolById(id) {
     const start = Date.now();
-    const info = await DataExchangeSymbol.findById(id);
+    const info = await DataExchangeSymbolModel.findById(id);
 
     logger.info(`\nQuery Details\n  Symbol Id: \t${id}\n  Info Details: \t${JSON.stringify(info)}\n    Response Time: \t${Date.now() - start} ms\n`);
     
@@ -95,8 +95,8 @@ class SymbolService {
     if (params.on_time !== undefined) processedSymbol.on_time = params.on_time;
     if (params.status !== undefined) processedSymbol.status = params.status;
 
-    const newDataExchangeSymbol = await new DataExchangeSymbol(processedSymbol).save();
-    return { newDataExchangeSymbol };
+    const newExchangeSymbol = await new DataExchangeSymbolModel(processedSymbol).save();
+    return { newExchangeSymbol };
   }
 }
   

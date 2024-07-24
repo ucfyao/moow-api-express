@@ -1,7 +1,6 @@
-// models/keyModel.js
 const mongoose = require('mongoose');
 
-const KeySchema = new mongoose.Schema(
+const AipExchangeKeySchema = new mongoose.Schema(
   {
     uid: { type: mongoose.Schema.Types.ObjectId }, // User Id, ref: 'PortalUser'
     exchange: { type: String, required: true }, // Exchange code
@@ -14,10 +13,9 @@ const KeySchema = new mongoose.Schema(
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
-    collection: 'aip_keys',
+    collection: 'aip_exchange_keys',
   },
 );
 
-const AipExchangeKey = mongoose.model('aip_keys', KeySchema);
-
-module.exports = AipExchangeKey;
+const AipExchangeKeyModel = mongoose.model('AipExchangeKeyModel', AipExchangeKeySchema);
+module.exports = AipExchangeKeyModel;

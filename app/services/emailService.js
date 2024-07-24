@@ -1,7 +1,6 @@
 const nodemailer = require('nodemailer');
 const config = require('../../config');
-const PortalEmailModel = require('../models/emailModel');
-const { SEND_MARK, EMAIL_STATUS } = require('../utils/authStateEnum');
+const PortalEmailInfoModel = require('../models/portalEmailInfoModel');
 
 class EmailService {
   constructor() {
@@ -25,7 +24,7 @@ class EmailService {
   // send email
   async sendEmail(params) {
     const response = {
-      emailStatus: EMAIL_STATUS.FAILED,
+      emailStatus: PortalEmailInfoModel.STATUS_FAILED,
       async: params.async,
       desc: '',
     };
@@ -43,8 +42,8 @@ class EmailService {
   }
 
   async _saveEmailInfor(params) {
-    const sendMark = params.async ? SEND_MARK.ALREADY_SENT : SEND_MARK.WAIT_TO_SEND;
-    const emailInfo = new PortalEmailModel({
+    const sendMark = params.async ? PortalEmailInfoModel.SEND_MARK_ALREADY_SENT : PortalEmailInfoModel.SEND_MARK_WAIT_TO_SEND;
+    const emailInfo = new PortalEmailInfoModel({
       send_mark: sendMark,
       email_detail: {
         async: params.async,
@@ -87,7 +86,7 @@ class EmailService {
     try {
       response = await this.transporter.sendMail(mailOptions);
       if (params._emailId) {
-        await PortalEmailModel.findByIdAndUpdate(params._emailId, {
+        await PortalEmailInfoModel.findByIdAndUpdate(params._emailId, {
           $set: {
             email_status: {
               accepted: response.accepted,
@@ -100,12 +99,12 @@ class EmailService {
         }).exec();
       }
       return {
-        emailStatus: EMAIL_STATUS.SUCCESS,
+        emailStatus: PortalEmailInfoModel.STATUS_SUCCESS,
         desc: response,
       };
     } catch (error) {
       return {
-        emailStatus: EMAIL_STATUS.FAILED,
+        emailStatus: PortalEmailInfoModel.STATUS_FAILED,
         desc: error,
       };
     }

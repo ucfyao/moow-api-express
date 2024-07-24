@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 // After selecting the period, perform normal distribution to different days and times to prevent concurrency issues.
 
-const AwaitSchema = new mongoose.Schema(
+const AipAwaitSchema = new mongoose.Schema(
   {
     strategy_id: { type: String, trim: true }, // Investment strategy id
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'PortalUser' },
@@ -22,7 +22,7 @@ const AwaitSchema = new mongoose.Schema(
     quote_total: { type: Number, default: 0 }, // Total acquired tokens
   },
   {
-    timestamps: true,
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'aip_awaits',
   },
 );
@@ -30,5 +30,13 @@ const AwaitSchema = new mongoose.Schema(
 //   return this.collection.findAndModify(query, sort, doc, options, callback);
 // };
 
-const Await = mongoose.model('Await', AwaitSchema);
-module.exports = Await;
+// Await status
+AipAwaitSchema.statics.STATUS_WAITING = 1;
+AipAwaitSchema.statics.STATUS_COMPLETED = 2;
+AipAwaitSchema.statics.STATUS_PROCESSING = 3;
+// Sell type
+AipAwaitSchema.statics.SELL_TYPE_AUTO_SELL = 1;
+AipAwaitSchema.statics.SELL_TYPE_DEL_INVEST = 2;
+
+const AipAwaitModel = mongoose.model('AipAwaitModel', AipAwaitSchema);
+module.exports = AipAwaitModel;

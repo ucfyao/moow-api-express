@@ -28,9 +28,9 @@ const DataExchangeSymbolSchema = new mongoose.Schema(
       createdAt: 'created_at',
       updatedAt: 'updated_at',
     }, 
-    collection: 'aip_data_exchange_symbol',
+    collection: 'data_exchange_symbols',
   },
 );
 
-const DataExchangeSymbol = mongoose.model('DataExchangeSymbol', DataExchangeSymbolSchema);
-module.exports = DataExchangeSymbol;
+const DataExchangeSymbolModel = mongoose.model('DataExchangeSymbolModel', DataExchangeSymbolSchema);
+module.exports = DataExchangeSymbolModel;

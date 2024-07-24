@@ -1,4 +1,4 @@
-const Market = require('../models/marketModel');
+const PortalMarketModel = require('../models/portalMarketModel');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 
@@ -19,13 +19,13 @@ class MarketService {
     const pageNumber = params.pageNumber || 1;
     const pageSize = params.pageSize || 9999;
 
-    const query = Market.find(conditions);
+    const query = PortalMarketModel.find(conditions);
     const markets = await query
       .sort({ created_at: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean();
-    const total = await Market.find(conditions).countDocuments();
+    const total = await PortalMarketModel.find(conditions).countDocuments();
 
     return {
       list: markets,
@@ -36,7 +36,7 @@ class MarketService {
   }
 
   async getMarketById(id) {
-    const market = await Market.findById(id);
+    const market = await PortalMarketModel.findById(id);
     if (!market) {
       throw new CustomError(STATUS_TYPE.PORTAL_MARKET_NOT_FOUND);
     }
@@ -44,14 +44,14 @@ class MarketService {
   }
 
   async createMarket(market) {
-    const newMarket = await new Market(market).save();
+    const newMarket = await new PortalMarketModel(market).save();
     const marketId = newMarket ? newMarket._id : '';
 
     return { _id: marketId };
   }
 
   async updateMarket(id, market) {
-    const existingMarket = await Market.findById(id);
+    const existingMarket = await PortalMarketModel.findById(id);
 
     if (!existingMarket) {
       throw new CustomError(STATUS_TYPE.PORTAL_MARKET_NOT_FOUND);
@@ -68,7 +68,7 @@ class MarketService {
 
   // soft delete
   async deleteMarket(id) {
-    const market = await Market.findById(id);
+    const market = await PortalMarketModel.findById(id);
     if (!market) {
       throw new CustomError(STATUS_TYPE.PORTAL_MARKET_NOT_FOUND);
     }

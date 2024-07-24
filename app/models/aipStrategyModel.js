@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 // After selecting the period, perform normal distribution to different days and
 // times to prevent concurrency issues.
 
-const StartegySchema = new mongoose.Schema(
+const AipStartegySchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'PortalUser' }, // Creator
     period: { type: String, trim: true }, // Period type. 1: Month, 2: Day, 3: Week
@@ -50,8 +50,18 @@ const StartegySchema = new mongoose.Schema(
   },
 );
 
-StartegySchema.statics.INVESTMENT_TYPE_REGULAR = '1';
-StartegySchema.statics.INVESTMENT_TYPE_INTELLIGENT = '2';
+// Investment type
+AipStartegySchema.statics.INVESTMENT_TYPE_REGULAR = 1;
+AipStartegySchema.statics.INVESTMENT_TYPE_INTELLIGENT = 2;
 
-const Startegy = mongoose.model('Startegy', StartegySchema);
-module.exports = Startegy;
+// Strategy status
+AipStartegySchema.statics.STRATEGY_STATUS_NORMAL = 1;
+AipStartegySchema.statics.STRATEGY_STATUS_CLOSED = 2;
+AipStartegySchema.statics.STRATEGY_STATUS_SOFT_DELETED = 3;
+
+// Drawdown status
+AipStartegySchema.statics.DRAWDOWN_STATUS_ENABLED = 'Y';
+AipStartegySchema.statics.DRAWDOWN_STATUS_DISABLED = 'N';
+
+const AipStartegyModel = mongoose.model('AipStartegyModel', AipStartegySchema);
+module.exports = AipStartegyModel;

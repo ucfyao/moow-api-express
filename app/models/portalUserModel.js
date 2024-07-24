@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const UserSchema = new mongoose.Schema(
+const PortalUserSchema = new mongoose.Schema(
   {
     seq_id: { type: Number, unique: true }, // unique Id
     nick_name: { type: String, required: true, trim: true },
@@ -31,5 +31,5 @@ const UserSchema = new mongoose.Schema(
   },
 );
 
-const PortalUserModel = mongoose.model('PortalUser', UserSchema);
+const PortalUserModel = mongoose.model('PortalUserModel', PortalUserSchema);
 module.exports = PortalUserModel;

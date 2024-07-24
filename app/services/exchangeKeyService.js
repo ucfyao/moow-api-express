@@ -1,6 +1,5 @@
-// services/keyService.js
 const ccxt = require('ccxt');
-const AipExchangeKey = require('../models/exchangeKeyModel');
+const AipExchangeKeyModel = require('../models/aipExchangeKeyModel');
 const { decrypt, encrypt } = require('../utils/cryptoUtils');
 
 class KeyService {
@@ -21,13 +20,13 @@ class KeyService {
       });
     }
 
-    const query = AipExchangeKey.find(conditions);
+    const query = AipExchangeKeyModel.find(conditions);
     const exchangeKeys = await query
       .sort({ created_at: -1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean();
-    const total = await AipExchangeKey.find(conditions).countDocuments();
+    const total = await AipExchangeKeyModel.find(conditions).countDocuments();
 
     exchangeKeys.forEach((exchangeKey) => {
       if (exchangeKey.access_key && exchangeKey.secret_key) {
@@ -46,7 +45,7 @@ class KeyService {
   }
 
   async getKeyById(id) {
-    const exchangeKey = await AipExchangeKey.findById(id).lean();
+    const exchangeKey = await AipExchangeKeyModel.findById(id).lean();
     if (exchangeKey && exchangeKey.access_key && exchangeKey.secret_key) {
       const decryptedaccess_key = decrypt(exchangeKey.access_key);
       const decryptedsecret_key = decrypt(exchangeKey.secret_key);
@@ -68,13 +67,13 @@ class KeyService {
 
     keyData.access_key = encrypt(keyData.access_key);
     keyData.secret_key = encrypt(keyData.secret_key);
-    const exchangeKey = new AipExchangeKey(keyData);
+    const exchangeKey = new AipExchangeKeyModel(keyData);
     await exchangeKey.save();
     return { exchangeKey, validation };
   }
 
   async deleteKey(id) {
-    return AipExchangeKey.findByIdAndUpdate(id, { status: '3' });
+    return AipExchangeKeyModel.findByIdAndUpdate(id, { status: '3' });
   }
 }
 

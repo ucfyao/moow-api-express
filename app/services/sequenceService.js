@@ -1,8 +1,8 @@
-const SequenceCounter = require('../models/sequenceCounterModel');
+const CommonSequenceCounterModel = require('../models/commonSequenceCounterModel');
 
 class SequenceService {
   static async getNextSequenceValue(sequenceName) {
-    const sequenceDocument = await SequenceCounter.findOneAndUpdate(
+    const sequenceDocument = await CommonSequenceCounterModel.findOneAndUpdate(
       {
         sequence_name: sequenceName,
       },

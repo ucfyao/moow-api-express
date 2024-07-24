@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const PortalUserModel = require('../models/userModel');
+const PortalUserModel = require('../models/portalUserModel');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 

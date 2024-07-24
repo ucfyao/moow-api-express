@@ -13,7 +13,7 @@ const PortalTokenSchema = new mongoose.Schema(
     last_access_time: { type: Date, default: Date.now }, // Last Access Time (most recent token verification time)
   },
   {
-    timestamps: true, // Automatically adds createdAt and updatedAt fields
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'portal_tokens', // Explicit collection name
   },
 );

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const OrderSchema = new mongoose.Schema(
+const AipOrderSchema = new mongoose.Schema(
   {
     strategy_id: { type: String, trim: true }, // Strategy id
     order_id: { type: String, trim: true }, // Order id
@@ -31,10 +31,10 @@ const OrderSchema = new mongoose.Schema(
     profit_percentage: { type: Number, default: 0 }, // Current profit percentage after purchase
   },
   {
-    timestamps: true, // Automatically adds createdAt and updatedAt fields
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'aip_orders',
   },
 );
 
-const Order = mongoose.model('Order', OrderSchema);
-module.exports = Order;
+const AipOrderModel = mongoose.model('AipOrderModel', AipOrderSchema);
+module.exports = AipOrderModel;
