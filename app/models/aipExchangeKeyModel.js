@@ -17,5 +17,5 @@ const AipExchangeKeySchema = new mongoose.Schema(
   },
 );
 
-const AipExchangeKeyModel = mongoose.model('AipExchangeKeyModel', AipExchangeKeySchema);
+const AipExchangeKeyModel = mongoose.model('aip_exchange_key', AipExchangeKeySchema);
 module.exports = AipExchangeKeyModel;

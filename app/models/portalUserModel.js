@@ -31,5 +31,5 @@ const PortalUserSchema = new mongoose.Schema(
   },
 );
 
-const PortalUserModel = mongoose.model('PortalUserModel', PortalUserSchema);
+const PortalUserModel = mongoose.model('portal_user', PortalUserSchema);
 module.exports = PortalUserModel;

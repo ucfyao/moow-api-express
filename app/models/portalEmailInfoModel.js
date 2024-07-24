@@ -46,5 +46,5 @@ PortalEmailInfoSchema.statics.SEND_MARK_WAIT_TO_SEND = 1;
 PortalEmailInfoSchema.statics.STATUS_FAILED = 0;
 PortalEmailInfoSchema.statics.STATUS_SUCCESS = 1;
 
-const PortalEmailInfoModel = mongoose.model('PortalEmailInfoModel', PortalEmailInfoSchema);
+const PortalEmailInfoModel = mongoose.model('portal_email_info', PortalEmailInfoSchema);
 module.exports = PortalEmailInfoModel;

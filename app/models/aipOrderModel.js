@@ -36,5 +36,5 @@ const AipOrderSchema = new mongoose.Schema(
   },
 );
 
-const AipOrderModel = mongoose.model('AipOrderModel', AipOrderSchema);
+const AipOrderModel = mongoose.model('aip_order', AipOrderSchema);
 module.exports = AipOrderModel;

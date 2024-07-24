@@ -18,5 +18,5 @@ const PortalTokenSchema = new mongoose.Schema(
   },
 );
 
-const PortalTokenModel = mongoose.model('PortalTokenModel', PortalTokenSchema);
+const PortalTokenModel = mongoose.model('portal_token', PortalTokenSchema);
 module.exports = PortalTokenModel;
