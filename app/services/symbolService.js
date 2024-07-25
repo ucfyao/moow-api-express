@@ -1,5 +1,6 @@
 const DataExchangeSymbolModel = require('../models/dataExchangeSymbolModel');
 const logger = require('../utils/logger');
+const axios = require('axios');
 
 class SymbolService {
   /**
@@ -98,6 +99,80 @@ class SymbolService {
     const newExchangeSymbol = await new DataExchangeSymbolModel(processedSymbol).save();
     return { newExchangeSymbol };
   }
+
+  async getPriceHist(startDate, endDate) {
+    const url = 'https://api.binance.com/api/v3/klines';
+    const SYMBOL = 'BTCUSDT';
+    const EXCHANGE = 'binance';
+
+    // Convert the dates to Unix timestamps (in milliseconds)
+    const startTime = new Date(startDate).setHours(0, 0, 0, 0);
+    const endTime = new Date(endDate).setHours(23, 59, 59, 999);
+
+    try {
+      // 获取比特币价格（以美元计价）
+      const responseUSD = await axios.get(url, {
+        params: {
+          symbol: SYMBOL,
+          interval: '1d',
+          startTime: startTime,
+          endTime: endTime        
+        }
+      });
+
+      const prices = responseUSD.data;
+      const usdToCnyRate = await this.getUsdToCnyRate();
+
+      //const results = [];
+
+      for (const dataUSD of prices) {
+        const price_usd = parseFloat(dataUSD[4]);
+        const volume_usd = parseFloat(dataUSD[5]);
+        const price_cny = price_usd * usdToCnyRate;
+        const volume_cny = volume_usd * usdToCnyRate;
+        const on_time = new Date(dataUSD[0]);
+
+        const newSymbolData = new DataExchangeSymbolModel({
+          key: `${EXCHANGE}_${SYMBOL}`,
+          exchange: EXCHANGE,
+          symbol: 'BTC',
+          price_usd: price_usd.toString(),
+          price_cny: price_cny.toString(),
+          price_btc: '', // This will remain empty as we are not converting to BTC in this example
+          price_native: price_usd.toString(), // Assuming USD is the native price here
+          vol_usd: volume_usd.toString(),
+          vol_cny: volume_cny.toString(),
+          vol_btc: '', // This will remain empty as we are not converting to BTC in this example
+          vol_native: volume_usd.toString(), // Assuming USD is the native volume here
+          trade_vol: (volume_usd / price_usd).toString(), // Volume in terms of amount of BTC
+          percent: '',
+          base: 'USD',
+          quote: 'BTC',
+          exchange_url: 'https://www.binance.com/en/trade/BTC_USDT',
+          on_time: on_time,
+          status: '1',
+        });
+
+        await newSymbolData.save();
+        //results.push(newSymbolData);
+        logger.info(`Successfully saved Bitcoin data for ${on_time}: ${price_usd} USD, ${price_cny} CNY`);
+      }
+
+      return true;
+    } catch (error) {
+      logger.error('Error fetching Bitcoin data', error);
+    }
+  }
+
+  async getUsdToCnyRate() {
+    try {
+      const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+      return response.data.rates.CNY;
+    } catch (error) {
+      logger.error('Error fetching USD to CNY exchange rate', error);
+    }
+  }
+
 }
   
 module.exports = new SymbolService();
