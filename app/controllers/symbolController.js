@@ -36,6 +36,12 @@ class SymbolController {
     const symbol = await SymbolService.createSymbol(symbolData);
     return ResponseHandler.success(res, symbol, STATUS_TYPE.created);
   }
+
+  async getPriceHist(req, res) {
+    const {start, end} = req.body;
+    const symbol = await SymbolService.getPriceHist(start, end);
+    return ResponseHandler.success(res, symbol, STATUS_TYPE.created);
+  }
 }
   
 module.exports = new SymbolController();
