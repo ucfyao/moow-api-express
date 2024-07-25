@@ -7,6 +7,8 @@ const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
+const config = require('../../config');
+const awaitService = require('./awaitService');
 
 class StrategyService {
   /**
@@ -347,9 +349,116 @@ class StrategyService {
     return true;
   }
 
-  // Method to detect sell signal and execute corresponding operation
+  /**
+   * Execute sell operations for all strategies
+   * @returns {Array} List of results for each strategy execution
+   */
+  async executeAllSells() {
+    const start = Date.now();
+    const conditions = {
+      status: '1',
+    };
+    const results = [];
+    const strategiesArr = await AipStrategyModel.find(conditions).lean();
+    for (const strategy of strategiesArr) {
+      if (strategy.exchange === undefined) {
+        logger.info('[' + strategy._id + '] - exchange is null , call user !');
+        continue;
+      }
+      const result = await this.executeSell(strategy._id);
+      results.push(result)
+    }
+    logger.info('### Round time: %j', Date.now() - start);
+    logger.info('The future has arrived, it just hasn\'t become mainstream yet. Let us lead you into the world of blockchain ahead of time.');
+    return results;
+  }
+
+  /**
+   * Method to detect sell signal and execute corresponding operation
+   * @param {strategyId} - The id of the strategy  
+   * @returns {Object} Result of the sell operation
+   */
   async executeSell(strategyId) {
-    return true;
+    const strategy = await AipStrategyModel.findById(strategyId);
+    const result = await this.processSell(strategy);
+    return result;
+  }
+
+  /**
+   * Execute sell operation for a single strategy
+   * @param {Object} strategy - The Information of the strategy
+   * @returns {Object} Result of the sell operation
+   */
+  async processSell(strategy) {
+    const exchange = new ccxt[strategy.exchange]({
+      apiKey: strategy.key,
+      secret: strategy.secret,
+      timeout: config.exchangeTimeOut
+    });
+    const tickerRes = await exchange.fetchTicker(strategy.symbol);
+    const sell_price = tickerRes.bid;
+    logger.info('[price] - ' + sell_price);
+
+    // check whether profit reaches the stop profit
+    const profit = strategy.quote_total * sell_price - strategy.base_total;
+    const profit_percentage = profit / strategy.base_total * 100;
+
+    if(!strategy.stop_profit_percentage) {
+      return;
+    }
+
+    // Did not reach the stop profit point, exiting
+    if (profit_percentage < strategy.stop_profit_percentage) {
+      logger.info(`[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`);
+      return {
+        strategyId: strategy._id,
+        result: `[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`
+      };
+    }
+    if(!strategy.drawdown) {
+      return;
+    }
+    // Reached the stop profit point, peak not set, proceeding to sell.
+    if (strategy.drawdown_status === 'N' || strategy.drawdown <= 0) {
+      logger.info('[sell] - Reached the stop profit point, selling');
+      strategy.sell_price = sell_price;
+      return await this.sellout(strategy);
+    }
+
+    // Checking for peak drawdown
+    if (strategy.drawdown_status === 'Y' && strategy.drawdown > 0) {
+      // If a drawdown is set, compare the current price with the last locked price as a percentage
+      // Below the previous price, breaching the drawdown, selling off completely
+      if (strategy.drawdown_price !== 'undefined' && sell_price <= strategy.drawdown_price * (1 - strategy.drawdown / 100)) {
+        logger.info('[drawdown] - Triggering drawdown, selling');
+        strategy.sell_price = sell_price;
+        return await this.sellout(strategy);
+      } else {
+        // Price is higher than the previous price, resetting the locked price
+        logger.info('[drawdown_price] - Did not trigger peak drawdown, resetting the drawdown price');
+        strategy.drawdown_price = sell_price;
+        await strategy.save();
+        return {
+          strategyId: strategy._id,
+          result: `Did not trigger peak drawdown, resetting the drawdown price. New drawdown price is ${strategy.drawdown_price}.`
+        };
+      }
+    }
+  }
+
+  async sellout(strategy) {
+    const conditions = {
+      strategy_id: strategy._id,
+      user: strategy.user,
+      sell_type: '1',
+      await_status: '1'
+    };
+  
+    const awaitOrder = await awaitService.createAwait(conditions);
+    const id = awaitOrder ? awaitOrder._id : '';
+    const strategyId = awaitOrder ? awaitOrder.strategy_id : '';
+    logger.info(`New sell order:\n Sell Order ID: \t${id}\n Strategy ID: \t${strategyId}\n `);
+    return awaitOrder;
   }
 
   /**

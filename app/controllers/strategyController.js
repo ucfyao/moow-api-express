@@ -91,12 +91,26 @@ class StrategyController {
     }
   }
 
-  // Method to detect sell signal and execute corresponding operation
+  /**
+   * Execute sell operations for all strategies
+   * @param {Request} req
+   * @param {Response} res
+   */
+  async executeAllSells(req, res) {
+    const results = await StrategyService.executeAllSells();
+    return ResponseHandler.success(res, results);
+  }
+
+  /**
+   * Method to detect sell signal and execute corresponding operation
+   * @param {request} req
+   * @param {response} res
+   */
   async executeSell(req, res) {
     const { strategyId } = req.params;
-
     const result = await StrategyService.executeSell(strategyId);
-    res.json({ sell: result });
+    const message = `Strategy ${strategyId} executed successfully`
+    return ResponseHandler.success(res, result, 200, 0, message);
   }
 }
 
