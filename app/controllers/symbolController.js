@@ -37,11 +37,22 @@ class SymbolController {
     return ResponseHandler.success(res, symbol, STATUS_TYPE.created);
   }
 
+<<<<<<< HEAD
   async getPriceHist(req, res) {
     const {start, end} = req.body;
     const symbol = await SymbolService.getPriceHist(start, end);
     return ResponseHandler.success(res, symbol, STATUS_TYPE.created);
   }
+=======
+  /**
+  * scheduler to obtain the price of bitcoin on each day
+  */
+  async getPrice(req, res) {
+    const symbolData = await SymbolService.getPrice();
+    return ResponseHandler.success(res, symbolData, STATUS_TYPE.created);
+  }
+
+>>>>>>> def503d (feat: #610 add schedule to obtain BTC price every day)
 }
   
 module.exports = new SymbolController();

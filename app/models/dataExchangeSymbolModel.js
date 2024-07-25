@@ -19,8 +19,8 @@ const DataExchangeSymbolSchema = new mongoose.Schema(
 
     base: { type: String, trim: true },  //  Base currency. Example: CNY
     quote: { type: String, trim: true },  // Quote currency. Example: LMC
-    exchange_url: { type: String, unique: true, trim: true },  // Exchange url
-    on_time: { type: Date },  // Listing Time
+    exchange_url: { type: String, trim: true },  // Exchange url
+    on_time: { type: Date, unique: true },  // Listing Time
     status: { type: String,trim: true, default: '' },  // Status. 1: Normal, 2: Closed
   },
   {

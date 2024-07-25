@@ -21,4 +21,6 @@ router.post(
   validateParams(dateValidatorSchema),
   asyncHandler(SymbolController.getPriceHist));
 
+router.post('/api/v1/symbols/priceScheduler', asyncHandler(SymbolController.getPrice));
+
 module.exports = router;
