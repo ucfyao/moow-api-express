@@ -7,6 +7,8 @@ const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
+const { STRATEGY_TYPE, AWAIT_STATUS, AWAIT_SELL_TYPE } = require('../utils/strategyStateEnum')
+const config = require('../../config');
 
 class StrategyService {
   /**
@@ -349,7 +351,59 @@ class StrategyService {
 
   // Method to detect sell signal and execute corresponding operation
   async executeSell(strategyId) {
-    return true;
+    const strategy = await Strategy.findById(strategyId);
+    const result = await this.processSell(strategy);
+    return result;
+  }
+
+  async processSell(strategy) {
+    const exchange = new ccxt[strategy.exchange]({
+      apiKey: strategy.key,
+      secret: strategy.secret,
+      timeout: config.exchangeTimeOut
+    });
+    const tickerRes = await exchange.fetchTicker(strategy.symbol);
+    const sell_price = tickerRes.bid;
+    logger.info('[price] - ' + sell_price);
+
+    // 查看利润率是否到设定好的止盈率
+    const profit = strategy.quote_total * sell_price - strategy.base_total;
+    const profit_percentage = profit / strategy.base_total * 100;
+
+    if(!strategy.stop_profit_percentage) {
+      return;
+    }
+
+    // 未达到止盈，退出
+    if (profit_percentage < strategy.stop_profit_percentage) {
+      logger.info('[profit_percentage] - \n 盈利率:\t%j\n  止盈率:\t%j\n  未达到止盈率，退出', profit_percentage, strategy.stop_profit_percentage);
+      return false;
+    }
+    if(!strategy.drawdown) {
+      return;
+    }
+    // 达到止盈，未设置波峰，进行卖出。
+    if (strategy.drawdown_status === 'N' || strategy.drawdown <= 0) {
+      logger.info('[sell] - 达到止盈,卖出');
+      strategy.sell_price = sell_price;
+      sellout(strategy);
+    }
+
+    // 检测波峰回撤
+    if (strategy.drawdown_status === 'Y' && strategy.drawdown > 0) {
+      // 如果设置了回撤，判断本次价格和上次触发锁定价格的百分比。
+      // 低于上次价格，跌破回撤，清仓卖出。
+      if (strategy.drawdown_price !== 'undefined' && sell_price <= strategy.drawdown_price * (1 - strategy.drawdown / 100)) {
+        logger.info('[drawdown] - 触发回撤,卖出');
+        strategy.sell_price = sell_price;
+        sellout(strategy);
+      } else {
+        // 价格高于上次价格，重置锁定价格。
+        logger.info('[drawdown_price] - 未触发回撤波峰回撤，重置回撤价格');
+        strategy.drawdown_price = sell_price;
+        await strategy.save();
+      }
+    }
   }
 
   /**
