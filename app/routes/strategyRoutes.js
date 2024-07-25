@@ -47,9 +47,17 @@ router.post(
   asyncHandler(StrategyController.executeBuy),
 );
 
-// Route for detecting sell signal and executing the corresponding operation
+/**
+ * Route for detecting sell signal of all strategies and executing the corresponding operation
+ */
+router.post('/api/v1/strategies/execute-all-sells', asyncHandler(StrategyController.executeAllSells));
+
+/**
+ * Route for detecting sell signal of a single srategy and executing the corresponding operation
+ * @param {string} strategyId - The ID of the strategy to execute
+ */
 router.post(
-  '/api/v1/strategies/:strategyId/sell-signal',
+  '/api/v1/strategies/:strategyId/execute-sell',
   asyncHandler(StrategyController.executeSell),
 );
 

@@ -7,8 +7,8 @@ const orderService = require('./orderService');
 const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
-const { STRATEGY_TYPE, AWAIT_STATUS, AWAIT_SELL_TYPE } = require('../utils/strategyStateEnum')
 const config = require('../../config');
+const awaitService = require('./awaitService');
 
 class StrategyService {
   /**
@@ -349,13 +349,46 @@ class StrategyService {
     return true;
   }
 
-  // Method to detect sell signal and execute corresponding operation
+  /**
+   * Execute sell operations for all strategies
+   * @returns {Array} List of results for each strategy execution
+   */
+  async executeAllSells() {
+    const start = Date.now();
+    const conditions = {
+      status: '1',
+    };
+    const results = [];
+    const strategiesArr = await AipStrategyModel.find(conditions).lean();
+    for (const strategy of strategiesArr) {
+      if (strategy.exchange === undefined) {
+        logger.info('[' + strategy._id + '] - exchange is null , call user !');
+        continue;
+      }
+      const result = await this.executeSell(strategy._id);
+      results.push(result)
+    }
+    logger.info('### Round time: %j', Date.now() - start);
+    logger.info('The future has arrived, it just hasn\'t become mainstream yet. Let us lead you into the world of blockchain ahead of time.');
+    return results;
+  }
+
+  /**
+   * Method to detect sell signal and execute corresponding operation
+   * @param {strategyId} - The id of the strategy  
+   * @returns {Object} Result of the sell operation
+   */
   async executeSell(strategyId) {
-    const strategy = await Strategy.findById(strategyId);
+    const strategy = await AipStrategyModel.findById(strategyId);
     const result = await this.processSell(strategy);
     return result;
   }
 
+  /**
+   * Execute sell operation for a single strategy
+   * @param {Object} strategy - The Information of the strategy
+   * @returns {Object} Result of the sell operation
+   */
   async processSell(strategy) {
     const exchange = new ccxt[strategy.exchange]({
       apiKey: strategy.key,
@@ -366,7 +399,7 @@ class StrategyService {
     const sell_price = tickerRes.bid;
     logger.info('[price] - ' + sell_price);
 
-    // 查看利润率是否到设定好的止盈率
+    // check whether profit reaches the stop profit
     const profit = strategy.quote_total * sell_price - strategy.base_total;
     const profit_percentage = profit / strategy.base_total * 100;
 
@@ -374,36 +407,58 @@ class StrategyService {
       return;
     }
 
-    // 未达到止盈，退出
+    // Did not reach the stop profit point, exiting
     if (profit_percentage < strategy.stop_profit_percentage) {
-      logger.info('[profit_percentage] - \n 盈利率:\t%j\n  止盈率:\t%j\n  未达到止盈率，退出', profit_percentage, strategy.stop_profit_percentage);
-      return false;
+      logger.info(`[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`);
+      return {
+        strategyId: strategy._id,
+        result: `[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`
+      };
     }
     if(!strategy.drawdown) {
       return;
     }
-    // 达到止盈，未设置波峰，进行卖出。
+    // Reached the stop profit point, peak not set, proceeding to sell.
     if (strategy.drawdown_status === 'N' || strategy.drawdown <= 0) {
-      logger.info('[sell] - 达到止盈,卖出');
+      logger.info('[sell] - Reached the stop profit point, selling');
       strategy.sell_price = sell_price;
-      sellout(strategy);
+      return await this.sellout(strategy);
     }
 
-    // 检测波峰回撤
+    // Checking for peak drawdown
     if (strategy.drawdown_status === 'Y' && strategy.drawdown > 0) {
-      // 如果设置了回撤，判断本次价格和上次触发锁定价格的百分比。
-      // 低于上次价格，跌破回撤，清仓卖出。
+      // If a drawdown is set, compare the current price with the last locked price as a percentage
+      // Below the previous price, breaching the drawdown, selling off completely
       if (strategy.drawdown_price !== 'undefined' && sell_price <= strategy.drawdown_price * (1 - strategy.drawdown / 100)) {
-        logger.info('[drawdown] - 触发回撤,卖出');
+        logger.info('[drawdown] - Triggering drawdown, selling');
         strategy.sell_price = sell_price;
-        sellout(strategy);
+        return await this.sellout(strategy);
       } else {
-        // 价格高于上次价格，重置锁定价格。
-        logger.info('[drawdown_price] - 未触发回撤波峰回撤，重置回撤价格');
+        // Price is higher than the previous price, resetting the locked price
+        logger.info('[drawdown_price] - Did not trigger peak drawdown, resetting the drawdown price');
         strategy.drawdown_price = sell_price;
         await strategy.save();
+        return {
+          strategyId: strategy._id,
+          result: `Did not trigger peak drawdown, resetting the drawdown price. New drawdown price is ${strategy.drawdown_price}.`
+        };
       }
     }
+  }
+
+  async sellout(strategy) {
+    const conditions = {
+      strategy_id: strategy._id,
+      user: strategy.user,
+      sell_type: '1',
+      await_status: '1'
+    };
+  
+    const awaitOrder = await awaitService.createAwait(conditions);
+    const id = awaitOrder ? awaitOrder._id : '';
+    const strategyId = awaitOrder ? awaitOrder.strategy_id : '';
+    logger.info(`New sell order:\n Sell Order ID: \t${id}\n Strategy ID: \t${strategyId}\n `);
+    return awaitOrder;
   }
 
   /**
