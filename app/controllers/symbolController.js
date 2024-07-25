@@ -37,10 +37,21 @@ class SymbolController {
     return ResponseHandler.success(res, symbol, STATUS_TYPE.created);
   }
 
-  async getPriceHist(req, res) {
-    const {start, end} = req.body;
-    const symbol = await SymbolService.getPriceHist(start, end);
-    return ResponseHandler.success(res, symbol, STATUS_TYPE.created);
+  /**
+  * Obtain the price of any symbol from any exchang you want
+  */
+  async getPrice(req, res) {
+    const { exchangeId, symbol, startDate, endDate, interval , limit, currency } = req.body
+    const symbolData = await SymbolService.getPrice(exchangeId, symbol, startDate, endDate, interval , limit, currency);
+    return ResponseHandler.success(res, symbolData, STATUS_TYPE.created);
+  }
+  /**
+  * load price data from csv file
+  */
+  async loadPrice(req, res) {
+    const { path, exchangeId, symbol, currency } = req.body
+    const priceData = await SymbolService.loadPriceData(path, exchangeId, symbol, currency);
+    return ResponseHandler.success(res, priceData, STATUS_TYPE.created);
   }
 }
   

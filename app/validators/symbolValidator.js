@@ -32,5 +32,12 @@ const dateValidatorSchema = {
       }
     }
   };
+
+  const loaderValidatorSchema = {
+    path: {
+      notEmpty: { errorMessage: 'filepath is required and cannot be empty' },
+      isString: { errorMessage: 'filepath must be a string' },
+    }
+  };
   
-  module.exports = { dateValidatorSchema };
+  module.exports = { dateValidatorSchema, loaderValidatorSchema };

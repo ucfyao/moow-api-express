@@ -2,7 +2,7 @@ const express = require('express');
 const SymbolController = require('../controllers/symbolController');
 const asyncHandler = require('../utils/asyncHandler');
 const validateParams = require('../middlewares/validateMiddleware');
-const { dateValidatorSchema } = require('../validators/symbolValidator');
+const { dateValidatorSchema, loaderValidatorSchema } = require('../validators/symbolValidator');
 
 const router = express.Router();
 
@@ -17,8 +17,12 @@ router.get('/api/v1/symbols/:id', asyncHandler(SymbolController.show));
 router.post('/api/v1/symbols', asyncHandler(SymbolController.create));
 
 router.post(
-  '/api/v1/symbols/priceHist',   
+  '/api/v1/symbols/getPrice',   
   validateParams(dateValidatorSchema),
-  asyncHandler(SymbolController.getPriceHist));
+  asyncHandler(SymbolController.getPrice));
 
+router.post(
+  '/api/v1/symbols/priceLoader', 
+  validateParams(loaderValidatorSchema),
+  asyncHandler(SymbolController.loadPrice))
 module.exports = router;

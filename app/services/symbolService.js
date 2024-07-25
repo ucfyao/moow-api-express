@@ -1,6 +1,11 @@
 const DataExchangeSymbolModel = require('../models/dataExchangeSymbolModel');
+const DataExchangeRateModel = require('../models/dataExchangeRateModel');
 const logger = require('../utils/logger');
 const axios = require('axios');
+const config = require('../../config');
+const ccxt = require('ccxt');
+const csv = require('csv-parser');
+const fs = require('fs');
 
 class SymbolService {
   /**
@@ -100,80 +105,132 @@ class SymbolService {
     return { newExchangeSymbol };
   }
 
-  async getPriceHist(startDate, endDate) {
-    const url = 'https://api.binance.com/api/v3/klines';
-    const SYMBOL = 'BTCUSDT';
-    const EXCHANGE = 'binance';
+  async getPrice(exchangeId = 'binance', symbol = 'BTC/USDT', startDate, endDate, interval = '1d', limit = 1, otherCurrency = 'CNY') {
+    const exchange = new ccxt[exchangeId]();
+    const exchangeUrl = exchange.urls.www || exchange.urls.api;
+    // Convert dates to timestamps
+    const startTimestamp = new Date(`${startDate}T08:00:00Z`).getTime();
+    const endTimestamp = new Date(`${endDate}T08:00:00Z`).getTime();
 
-    // Convert the dates to Unix timestamps (in milliseconds)
-    const startTime = new Date(startDate).setHours(0, 0, 0, 0);
-    const endTime = new Date(endDate).setHours(23, 59, 59, 999);
+    let allOHLCV = [];
+    let currentTimestamp = startTimestamp;
 
-    try {
-      // 获取比特币价格（以美元计价）
-      const responseUSD = await axios.get(url, {
-        params: {
-          symbol: SYMBOL,
-          interval: '1d',
-          startTime: startTime,
-          endTime: endTime        
-        }
-      });
-
-      const prices = responseUSD.data;
-      const usdToCnyRate = await this.getUsdToCnyRate();
-
-      //const results = [];
-
-      for (const dataUSD of prices) {
-        const price_usd = parseFloat(dataUSD[4]);
-        const volume_usd = parseFloat(dataUSD[5]);
-        const price_cny = price_usd * usdToCnyRate;
-        const volume_cny = volume_usd * usdToCnyRate;
-        const on_time = new Date(dataUSD[0]);
-
-        const newSymbolData = new DataExchangeSymbolModel({
-          key: `${EXCHANGE}_${SYMBOL}`,
-          exchange: EXCHANGE,
-          symbol: 'BTC',
-          price_usd: price_usd.toString(),
-          price_cny: price_cny.toString(),
-          price_btc: '', // This will remain empty as we are not converting to BTC in this example
-          price_native: price_usd.toString(), // Assuming USD is the native price here
-          vol_usd: volume_usd.toString(),
-          vol_cny: volume_cny.toString(),
-          vol_btc: '', // This will remain empty as we are not converting to BTC in this example
-          vol_native: volume_usd.toString(), // Assuming USD is the native volume here
-          trade_vol: (volume_usd / price_usd).toString(), // Volume in terms of amount of BTC
-          percent: '',
-          base: 'USD',
-          quote: 'BTC',
-          exchange_url: 'https://www.binance.com/en/trade/BTC_USDT',
-          on_time: on_time,
-          status: '1',
-        });
-
-        await newSymbolData.save();
-        //results.push(newSymbolData);
-        logger.info(`Successfully saved Bitcoin data for ${on_time}: ${price_usd} USD, ${price_cny} CNY`);
-      }
-
-      return true;
-    } catch (error) {
-      logger.error('Error fetching Bitcoin data', error);
+    while (currentTimestamp < endTimestamp) {
+        const ohlcv = await exchange.fetchOHLCV(symbol, interval, currentTimestamp, limit);
+        // Adjust currentTimestamp for the next day (8 AM)
+        currentTimestamp += 24 * 60 * 60 * 1000;
+        allOHLCV = allOHLCV.concat(ohlcv);
     }
+    // Process the price data
+    const newSymbolData = await this.processPriceData(allOHLCV, exchangeId, symbol, otherCurrency, exchangeUrl);
+    return allOHLCV;
   }
 
-  async getUsdToCnyRate() {
+  async processPriceData(allOHLCV, exchange, symbol, otherCurrency, exchangeUrl){
+    const [base, quote] = symbol.split('/');
+    
+    let usdtRate = 1; 
+    if (quote !== 'USDT') {
+      const ticker = await exchange.fetchTicker(symbol + '/USDT');
+      usdtRate = ticker.last;
+    }   
+
+    const usdToOtherRate = await this.getUSDToOtherRate(otherCurrency);
+    const records = allOHLCV.map(candle => {
+      const [timestamp, open, high, low, close, volume] = candle;
+      return {
+          key: `${exchange}_${symbol}`,
+          exchange: exchange,
+          symbol: symbol,
+          open: open.toFixed(2).toString(),
+          high: high.toFixed(2).toString(),
+          low: low.toFixed(2).toString(),
+          close: close.toFixed(2).toString(),
+          volume: volume.toFixed(2).toString(),
+          price_usd: (close * usdtRate).toFixed(2).toString(),
+          price_cny: (close * usdtRate * usdToOtherRate).toFixed(2).toString(),
+          price_btc: '', // This will remain empty as we are not converting to BTC in this example
+          price_native: close.toFixed(2).toString(), // Assuming USD is the native price here
+          vol_usd: (volume * usdtRate).toFixed(2).toString(),
+          vol_cny: (volume * usdtRate * usdToOtherRate).toFixed(2).toString(),
+          vol_btc: '', // This will remain empty as we are not converting to BTC in this example
+          vol_native: '', // Assuming USD is the native volume here
+          trade_vol: (volume / close).toFixed(4).toString(), // Volume in terms of amount of BTC
+          percent: '',
+          base: base,
+          quote: quote,
+          exchange_url: exchangeUrl,
+          on_time: new Date(timestamp + 8 * 60 * 60 * 1000),
+          status: '1',
+      };
+    });
+    // Use bulkWrite with upsert option
+    const bulkOps = records.map(record => ({
+    updateOne: {
+      filter: { key: record.key, on_time: record.on_time },
+      update: { $setOnInsert: record },
+      upsert: true
+    }
+    }));
+
+    await DataExchangeSymbolModel.bulkWrite(bulkOps);
+    logger.info(`Successfully inserted ${records.length} records for ${symbol}`);
+    return true
+  }
+
+  async getUSDToOtherRate(otherCurrency) {
+    const { apiUrl } = config.currencyRate;
     try {
-      const response = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
-      return response.data.rates.CNY;
+      let exchangeRate = await DataExchangeRateModel.findOne({ from_currency: 'USD', to_currency: otherCurrency });
+      if (exchangeRate) {
+        return exchangeRate.rate;
+      } else {
+        const response = await axios.get(apiUrl);
+        const rate = response.data.rates[otherCurrency];
+  
+        exchangeRate = new DataExchangeRateModel({
+          from_currency: 'USD',
+          to_currency: otherCurrency,
+          rate: rate
+        });
+  
+        await exchangeRate.save();
+        return rate;
+      }
     } catch (error) {
+      // todo: we need a status code for this
       logger.error('Error fetching USD to CNY exchange rate', error);
     }
   }
 
+  // Function to import CSV data
+async loadPriceData(filePath, exchangeId = 'binance', symbol = 'BTC/USDT', otherCurrency = 'CNY') {
+  const records = [];
+  const exchange = new ccxt[exchangeId]();
+  const exchangeUrl = exchange.urls.www || exchange.urls.api;
+
+  fs.createReadStream(filePath)
+    .pipe(csv())
+    .on('data', (row) => {
+      const [day, month, yearAndTime] = row.candle_time.split('/');
+      const [year, time] = yearAndTime.split(' ');
+      const timestamp = new Date(`${year}-${month}-${day}T${time}+00:00`).getTime();
+      if (row.candle_time && row.open && row.close && row.high && row.low && row.volume) {
+        const record = [
+          timestamp, // timestamp
+          parseFloat(row.open), // open
+          parseFloat(row.high), // high
+          parseFloat(row.low), // low
+          parseFloat(row.close), // close
+          parseFloat(row.volume) // volume
+        ];
+        records.push(record);
+      }
+    })
+    .on('end', async () => {
+      const newSymbolData = await this.processPriceData(records, exchangeId, symbol, otherCurrency, exchangeUrl);
+    });
+  }
 }
-  
+
 module.exports = new SymbolService();
-  
