@@ -8,7 +8,6 @@ const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
 const config = require('../../config');
-const awaitService = require('./awaitService');
 
 class StrategyService {
   /**
@@ -89,6 +88,19 @@ class StrategyService {
     logger.info(`\nQuery Details\n  Strategy Id: \t${id}\n  Info Details: \t${info}\n   Response Time: \t${Date.now() - start} ms\n`);
 
     return { info, symbolPrice };
+  }
+
+  /**
+   * Get one strategy information from the database
+   * @param strategyId - The strategy ID stored in the database
+   * @returns {list} - Strategy information
+   */
+  async getSingleStrategy(strategyId) {
+    const strategy = await AipStrategyModel.findById(strategyId);
+    if (!strategy) {
+      throw new CustomError(STATUS_TYPE.AIP_STRATEGY_NOT_FOUND);
+    }
+    return strategy;
   }
 
   /**
@@ -454,7 +466,7 @@ class StrategyService {
       await_status: '1'
     };
   
-    const awaitOrder = await awaitService.createAwait(conditions);
+    const awaitOrder = await AwaitService.createAwait(conditions);
     const id = awaitOrder ? awaitOrder._id : '';
     const strategyId = awaitOrder ? awaitOrder.strategy_id : '';
     logger.info(`New sell order:\n Sell Order ID: \t${id}\n Strategy ID: \t${strategyId}\n `);
