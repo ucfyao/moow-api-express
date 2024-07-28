@@ -1,3 +1,5 @@
+const AipStrategyModel = require('../models/aipStrategyModel');
+
 const createStrategyValidatorSchema = {
   user_market_id: {
     notEmpty: { errorMessage: 'user_market_id is required and cannot be empty' },
@@ -69,7 +71,7 @@ const createStrategyValidatorSchema = {
 };
 
 // Only allow these fields to be updated
-const allowedUpdateFields = ['base_limit', 'period', 'period_value', 'stop_profit_percentage', 'drawdown'];
+const allowedUpdateFields = ['base_limit', 'period', 'period_value', 'stop_profit_percentage', 'drawdown', 'status'];
 const updateStrategyValidatorSchema = {
   base_limit: {
     notEmpty: { errorMessage: 'base_limit is required and cannot be empty' },
@@ -106,15 +108,22 @@ const updateStrategyValidatorSchema = {
       errorMessage: 'drawdown must be a number if provided',
     },
   }, // can be empty
+  status: {
+    optional: true,
+    isIn: {
+      options: [[AipStrategyModel.STRATEGY_STATUS_NORMAL,  AipStrategyModel.STRATEGY_STATUS_CLOSED]],
+      errorMessage: `status must be ${AipStrategyModel.STRATEGY_STATUS_NORMAL} or ${AipStrategyModel.STRATEGY_STATUS_CLOSED} if provided`,
+    },
+  },
   customValidation: {
     custom: {
       options: (value, { req }) => {
         const keys = Object.keys(req.body);
-        for (const key of keys) {
+        keys.forEach(key => {
           if (!allowedUpdateFields.includes(key)) {
             throw new Error(`Field ${key} is not allowed to be updated`);
           }
-        }
+        });
         return true;
       },
     },

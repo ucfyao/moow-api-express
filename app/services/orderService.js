@@ -13,7 +13,7 @@ class OrderService {
     const pageNumber = 1;
     const pageSize = 9999;
     const list = await AipOrderModel.find({ strategy_id: strategyId })
-      .sort({ createdAt: 1 })
+      .sort({ created_at: 1 })
       .skip((pageNumber - 1) * pageSize)
       .limit(pageSize)
       .lean();

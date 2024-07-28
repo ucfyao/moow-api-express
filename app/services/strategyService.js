@@ -32,7 +32,7 @@ class StrategyService {
     const pageNumber = params.pageNumber || 1;
     const pageSize = params.pageSize || 9999;
 
-    const list = await AipStrategyModel.find(conditions).sort({ createdAt: -1 }).skip((pageNumber - 1) * pageSize).limit(pageSize).lean();
+    const list = await AipStrategyModel.find(conditions).sort({ created_at: -1 }).skip((pageNumber - 1) * pageSize).limit(pageSize).lean();
 
     // Calculate the profit rate accroding to the exchange symbol for every strategy
     for (let i = 0, len = list.length; i < len; i++) {
@@ -131,7 +131,15 @@ class StrategyService {
     if (typeof params.base_limit !== 'undefined') doc.base_limit = params.base_limit;
     if (typeof params.stop_profit_percentage !== 'undefined') doc.stop_profit_percentage = params.stop_profit_percentage;
     if (typeof params.drawdown !== 'undefined') doc.drawdown = params.drawdown;
-    
+    // For status switching
+    if (typeof params.status !== 'undefined'){
+      if (AipStrategyModel.STRATEGY_STATUS_NORMAL === parseInt(params.status, 10)) {
+        doc.status = AipStrategyModel.STRATEGY_STATUS_CLOSED;
+      } else if (AipStrategyModel.STRATEGY_STATUS_CLOSED === parseInt(params.status, 10)) {
+        doc.status = AipStrategyModel.STRATEGY_STATUS_NORMAL;
+      }
+    }
+
     await doc.save();
     logger.info(`\nUpdate Strategy\n  Strategy Id: \t${JSON.stringify(params._id)}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`);
 

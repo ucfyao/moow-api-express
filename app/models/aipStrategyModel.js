@@ -35,8 +35,8 @@ const AipStartegySchema = new mongoose.Schema(
     sell_price: { type: Number, default: 0 }, // Sale price
     profit_percentage: { type: Number, default: 0 }, // Profit percentage
     profit: { type: Number, default: 0 }, // Profit
-    type: { type: String, trim: true }, // Investment type. 1: Regular investment. 2: Intelligent investment
-    status: { type: String, default: '1' }, // Strategy status. 1: Normal. 2: Closed 3: Soft deleted
+    type: { type: Number, trim: true }, // Investment type. 1: Regular investment. 2: Intelligent investment
+    status: { type: Number, default: 1 }, // Strategy status. 1: Normal. 2: Closed 3: Soft deleted
     stop_reason: { type: String, trim: true }, // Stop reason
     start_at: { type: Date }, // Start time
     end_at: { type: Date }, // End time
