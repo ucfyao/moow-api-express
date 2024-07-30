@@ -35,11 +35,19 @@ const createStrategyValidatorSchema = {
   },
   type: {
     notEmpty: { errorMessage: 'type is required and cannot be empty' },
-    isString: { errorMessage: 'type must be a string' },
+    isIn: {
+      options: [[AipStrategyModel.INVESTMENT_TYPE_REGULAR,  AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT]],
+      errorMessage: `type must be ${AipStrategyModel.INVESTMENT_TYPE_REGULAR} or ${AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT} if provided`,
+    },
+    toInt: true,
   },
   period: {
     notEmpty: { errorMessage: 'period is required and cannot be empty' },
-    isString: { errorMessage: 'period must be a string' },
+    isIn: {
+      options: [[AipStrategyModel.PERIOD_MONTHLY, AipStrategyModel.PERIOD_WEEKLY, AipStrategyModel.PERIOD_DAILY]],
+      errorMessage: `period must be ${AipStrategyModel.PERIOD_MONTHLY}, ${AipStrategyModel.PERIOD_WEEKLY} or ${AipStrategyModel.PERIOD_DAILY} if provided`,
+    },
+    toInt: true,
   }, // Period type. 1: month, 2: day,3: week
   period_value: {
     notEmpty: { errorMessage: 'period_value is required and cannot be empty' },
@@ -70,18 +78,23 @@ const createStrategyValidatorSchema = {
   }, // can be empty
 };
 
-// Only allow these fields to be updated
-const allowedUpdateFields = ['base_limit', 'period', 'period_value', 'stop_profit_percentage', 'drawdown', 'status'];
 const updateStrategyValidatorSchema = {
   base_limit: {
+    optional: true,
     notEmpty: { errorMessage: 'base_limit is required and cannot be empty' },
     isNumeric: { errorMessage: 'base_limit must be a number' },
   },
   period: {
+    optional: true,
     notEmpty: { errorMessage: 'period is required and cannot be empty' },
-    isString: { errorMessage: 'period must be a string' },
+    isIn: {
+      options: [[AipStrategyModel.PERIOD_MONTHLY, AipStrategyModel.PERIOD_WEEKLY, AipStrategyModel.PERIOD_DAILY]],
+      errorMessage: `period must be ${AipStrategyModel.PERIOD_MONTHLY}, ${AipStrategyModel.PERIOD_WEEKLY} or ${AipStrategyModel.PERIOD_DAILY} if provided`,
+    },
+    toInt: true,
   }, // Period type. 1: month, 2: day,3: week
   period_value: {
+    optional: true,
     notEmpty: { errorMessage: 'period_value is required and cannot be empty' },
     isArray: { errorMessage: 'period_value must be an array' },
     custom: {
@@ -114,19 +127,7 @@ const updateStrategyValidatorSchema = {
       options: [[AipStrategyModel.STRATEGY_STATUS_NORMAL,  AipStrategyModel.STRATEGY_STATUS_CLOSED]],
       errorMessage: `status must be ${AipStrategyModel.STRATEGY_STATUS_NORMAL} or ${AipStrategyModel.STRATEGY_STATUS_CLOSED} if provided`,
     },
-  },
-  customValidation: {
-    custom: {
-      options: (value, { req }) => {
-        const keys = Object.keys(req.body);
-        keys.forEach(key => {
-          if (!allowedUpdateFields.includes(key)) {
-            throw new Error(`Field ${key} is not allowed to be updated`);
-          }
-        });
-        return true;
-      },
-    },
+    toInt: true,
   },
 };
 
