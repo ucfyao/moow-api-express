@@ -68,12 +68,9 @@ class StrategyController {
    * @param {Response} res
    */
   async executeAllBuys(req, res) {
-    try {
-      const result = await StrategyService.executeAllBuys();
-      res.status(200).json({ message: 'All strategies executed successfully', result });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
+    const results = await StrategyService.executeAllBuys();
+    const message = 'All strategies executed successfully';
+    return ResponseHandler.success(res, results, 200, 0, message);
   }
 
   /**

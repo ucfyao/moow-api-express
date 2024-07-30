@@ -9,6 +9,7 @@ const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
 const config = require('../../config');
 const awaitService = require('./awaitService');
+const moment = require('moment');
 
 class StrategyService {
   /**
@@ -190,13 +191,8 @@ class StrategyService {
       status: '1',
       minute: now.get('minute').toString(),
     };
-    const strategiesArr = await AipStrategyModel.find(conditions);
-    logger.info(
-      'cur day: %j, hour: %j, minite: %j',
-      now.get('day'),
-      now.get('hour'),
-      now.get('minute'),
-    );
+    const strategiesArr = await AipStrategyModel.find(conditions).lean();
+    logger.info(`cur day: ${now.get('day')}, hour: ${now.get('hour')}, minite: ${now.get('minute')}`);
 
     const results = [];
 
@@ -207,16 +203,16 @@ class StrategyService {
       }
       switch (strategy.period * 1) {
       case 1:
-        logger.info('Daily purchase: %j, cur hour:', strategy.period_value, now.get('hour'));
-        if (strategy.period_value.indexOf(now.get('hour').toString()) !== -1) {
+        logger.info(`Daily purchase: ${strategy.period_value}, cur hour: ${now.get('hour')}`);
+        if (strategy.period_value.indexOf(now.get('hour')) !== -1) {
           const result = await this.executeBuy(strategy);
           results.push(result);
         }
         break;
       case 2:
-        logger.info('Weekly purchase: %j, cur hour:', strategy.period_value, now.get('hour'));
+        logger.info(`Weekly purchase: ${strategy.period_value}, cur hour: ${now.get('hour')}`);
         if (
-          strategy.period_value.indexOf(now.get('day').toString()) !== -1 &&
+          strategy.period_value.indexOf(now.get('day')) !== -1 &&
             strategy.hour === now.get('hour').toString()
         ) {
           const result = await this.executeBuy(strategy);
@@ -225,9 +221,9 @@ class StrategyService {
         break;
 
       case 3:
-        logger.info('Monthly purchase: %j,cur hour:', strategy.period_value, now.get('hour'));
+        logger.info(`Monthly purchase: ${strategy.period_value},cur hour: ${now.get('hour')}`);
         if (
-          strategy.period_value.indexOf(now.get('date').toString()) !== -1 &&
+          strategy.period_value.indexOf(now.get('date')) !== -1 &&
             strategy.hour === now.get('hour').toString()
         ) {
           const result = await this.executeBuy(strategy);
@@ -238,7 +234,7 @@ class StrategyService {
         logger.info('Trading period not found');
       }
     }
-    logger.info('### Round time: %j', Date.now() - start);
+    logger.info(`### Round time: ${Date.now() - start}ms`);
     return results;
   }
 
@@ -269,7 +265,7 @@ class StrategyService {
     const exchange = new ccxt[strategy.exchange]({
       apiKey,
       secret,
-      timeout: 60000,
+      timeout: config.exchangeTimeOut,
     });
 
     const ticker = await exchange.fetchTicker(strategy.symbol);

@@ -36,7 +36,7 @@ router.delete('/api/v1/strategies/:id',
 /**
  * Route to execute all buy strategies
  */
-router.get('/api/v1/strategies/execute-all-buys', asyncHandler(StrategyController.executeAllBuys));
+router.post('/api/v1/strategies/execute-all-buys', asyncHandler(StrategyController.executeAllBuys));
 
 /**
  * Route to execute a single buy strategy
