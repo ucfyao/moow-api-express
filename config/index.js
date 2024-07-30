@@ -48,6 +48,11 @@ const config = {
     maxFiles: process.env.LOG_MAX_FILES || '14d',
     datePattern: 'YYYY-MM-DD',
   },
+
+  // Currency exchange from USD to others
+  currencyRate:{
+    apiUrl: 'https://api.exchangerate-api.com/v4/latest/USD',
+  }
 };
 
 module.exports = config;
