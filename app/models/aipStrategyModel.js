@@ -29,14 +29,22 @@ const AipStartegySchema = new mongoose.Schema(
     now_base_total: { type: Number, default: 0 }, // Current total fiat amount
     now_quote_total: { type: Number, default: 0 }, // Current total token amount
     stop_profit_percentage: { type: Number }, // Take-profit percentage (%)
-    drawdown_status: { type: String, default: 'N' }, //  Whether to enable maximum drawdown. Y: Enabled, N: Disabled
+    drawdown_status: { type: String,
+      default() {
+        return this.constructor.DRAWDOWN_STATUS_DISABLED;
+      },
+    }, //  Whether to enable maximum drawdown. Y: Enabled, N: Disabled
     drawdown: { type: Number }, // Maximum drawdown (%)
     drawdown_price: { type: Number }, // Lock-in price after take-profit is triggered
     sell_price: { type: Number, default: 0 }, // Sale price
     profit_percentage: { type: Number, default: 0 }, // Profit percentage
     profit: { type: Number, default: 0 }, // Profit
-    type: { type: Number, trim: true }, // Investment type. 1: Regular investment. 2: Intelligent investment
-    status: { type: Number, default: 1 }, // Strategy status. 1: Normal. 2: Closed 3: Soft deleted
+    type: {type: Number, trim: true}, // Investment type. 1: Regular investment. 2: Intelligent investment
+    status: { type: Number,
+      default() {
+        return this.constructor.STRATEGY_STATUS_NORMAL;
+      },
+    }, // Strategy status. 1: Normal. 2: Closed 3: Soft deleted
     stop_reason: { type: String, trim: true }, // Stop reason
     start_at: { type: Date }, // Start time
     end_at: { type: Date }, // End time
@@ -49,6 +57,11 @@ const AipStartegySchema = new mongoose.Schema(
     collection: 'aip_strategies',
   },
 );
+
+// Period status
+AipStartegySchema.statics.PERIOD_MONTHLY = 1;
+AipStartegySchema.statics.PERIOD_WEEKLY = 2;
+AipStartegySchema.statics.PERIOD_DAILY = 3;
 
 // Investment type
 AipStartegySchema.statics.INVESTMENT_TYPE_REGULAR = 1;

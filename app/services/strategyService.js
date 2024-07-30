@@ -131,12 +131,13 @@ class StrategyService {
     if (typeof params.base_limit !== 'undefined') doc.base_limit = params.base_limit;
     if (typeof params.stop_profit_percentage !== 'undefined') doc.stop_profit_percentage = params.stop_profit_percentage;
     if (typeof params.drawdown !== 'undefined') doc.drawdown = params.drawdown;
+    
     // For status switching
     if (typeof params.status !== 'undefined'){
       if (AipStrategyModel.STRATEGY_STATUS_NORMAL === parseInt(params.status, 10)) {
-        doc.status = AipStrategyModel.STRATEGY_STATUS_CLOSED;
-      } else if (AipStrategyModel.STRATEGY_STATUS_CLOSED === parseInt(params.status, 10)) {
         doc.status = AipStrategyModel.STRATEGY_STATUS_NORMAL;
+      } else if (AipStrategyModel.STRATEGY_STATUS_CLOSED === parseInt(params.status, 10)) {
+        doc.status = AipStrategyModel.STRATEGY_STATUS_CLOSED;
       }
     }
 
