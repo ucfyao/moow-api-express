@@ -42,7 +42,7 @@ class SymbolController {
   */
   async getPrice(req, res) {
     const { exchangeId, symbol, startDate, endDate, interval , limit, currency } = req.body
-    const symbolData = await SymbolService.getPrice(exchangeId, symbol, startDate, endDate, interval , limit, currency);
+    const symbolData = await SymbolService.getPrice(startDate, endDate, exchangeId, symbol, interval , limit, currency);
     return ResponseHandler.success(res, symbolData, STATUS_TYPE.created);
   }
   /**

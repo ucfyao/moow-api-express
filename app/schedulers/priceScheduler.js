@@ -13,7 +13,7 @@ const priceScheduler = () => {
     logger.info(`PriceScheduler for ${startDate}`);
     // todo: add status code for schedulers
     try {
-      await SymbolService.getPrice('binance', 'BTC/USDT', startDate, endDate);
+      await SymbolService.getPrice(startDate, endDate, 'binance', 'BTC/USDT');
     } catch (error) {
       logger.error(`Error running PriceScheduler: ${error.message}`);
     }
