@@ -105,7 +105,7 @@ class SymbolService {
     return { newExchangeSymbol };
   }
 
-  async getPrice(exchangeId = 'binance', symbol = 'BTC/USDT', startDate, endDate, interval = '1d', limit = 1, otherCurrency = 'CNY') {
+  async getPrice(startDate, endDate, exchangeId = 'binance', symbol = 'BTC/USDT', interval = '1d', limit = 1, otherCurrency = 'CNY') {
     const exchange = new ccxt[exchangeId]();
     const exchangeUrl = exchange.urls.www || exchange.urls.api;
     // Convert dates to timestamps
