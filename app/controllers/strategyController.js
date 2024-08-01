@@ -68,12 +68,9 @@ class StrategyController {
    * @param {Response} res
    */
   async executeAllBuys(req, res) {
-    try {
-      const result = await StrategyService.executeAllBuys();
-      res.status(200).json({ message: 'All strategies executed successfully', result });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
+    const results = await StrategyService.executeAllBuys();
+    const message = 'All strategies executed successfully';
+    return ResponseHandler.success(res, results, 200, 0, message);
   }
 
   /**
@@ -82,13 +79,10 @@ class StrategyController {
    * @param {Response} res
    */
   async executeBuy(req, res) {
-    try {
-      const { strategyId } = req.params;
-      const result = await StrategyService.executeBuy(strategyId);
-      res.status(200).json({ message: `Strategy ${strategyId} executed successfully`, result });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
+    const { strategyId } = req.params;
+    const result = await StrategyService.executeBuy(strategyId);
+    const message = `Strategy ${strategyId} executed successfully`;
+    return ResponseHandler.success(res, result, 200, 0, message);
   }
 
   /**
