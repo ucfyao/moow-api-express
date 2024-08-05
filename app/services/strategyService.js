@@ -3,12 +3,11 @@ const AipStrategyModel = require('../models/aipStrategyModel');
 const AipAwaitModel = require('../models/aipAwaitModel');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 const logger = require('../utils/logger');
-const orderService = require('./orderService');
+const OrderService = require('./orderService');
 const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
 const config = require('../../config');
-const awaitService = require('./awaitService');
 const moment = require('moment');
 
 class StrategyService {
@@ -344,7 +343,7 @@ class StrategyService {
       pl_created_at: Date.now(),
       created_at: Date.now(),
     };
-    await orderService.create(inOrder);
+    await OrderService.create(inOrder);
 
     strategy.buy_times = buyTimes;
     strategy.now_buy_times = nowBuyTimes;
@@ -360,7 +359,7 @@ class StrategyService {
   async executeAllSells() {
     const start = Date.now();
     const conditions = {
-      status: '1',
+      status: AipStrategyModel.STRATEGY_STATUS_NORMAL,
     };
     const results = [];
     const strategiesArr = await AipStrategyModel.find(conditions).lean();
@@ -372,7 +371,7 @@ class StrategyService {
       const result = await this.executeSell(strategy._id);
       results.push(result)
     }
-    logger.info('### Round time: %j', Date.now() - start);
+    logger.info(`### Round time: ${Date.now() - start}ms`);
     logger.info('The future has arrived, it just hasn\'t become mainstream yet. Let us lead you into the world of blockchain ahead of time.');
     return results;
   }
@@ -454,15 +453,36 @@ class StrategyService {
     const conditions = {
       strategy_id: strategy._id,
       user: strategy.user,
-      sell_type: '1',
-      await_status: '1'
+      sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
+      await_status: AipAwaitModel.STATUS_WAITING
     };
-  
-    const awaitOrder = await awaitService.createAwait(conditions);
+    const awaitOrder = await AwaitService.createAwait(conditions);
     const id = awaitOrder ? awaitOrder._id : '';
     const strategyId = awaitOrder ? awaitOrder.strategy_id : '';
     logger.info(`New sell order:\n Sell Order ID: \t${id}\n Strategy ID: \t${strategyId}\n `);
     return awaitOrder;
+  }
+
+  /**
+   * Execute the sale operation on a third-party platform for all pending orders and add the order information to the order database.
+   */
+  async sellAllOrders() {
+    const start = Date.now();
+    const conditions = {
+      await_status: AipAwaitModel.STATUS_WAITING,
+    };
+    const awaitOrders = await AwaitService.index(conditions); 
+    logger.info(`### Round time: ${awaitOrders}`);
+    if (awaitOrders.length > 0){
+      const updateResult = await AwaitService.update(conditions);
+      logger.info(`### Round time: ${JSON.stringify(updateResult)}`);
+      for (const awaitorder of awaitOrders) {
+        const strategy = await AipStrategyModel.findById(awaitorder.strategy_id);
+        await AwaitService.sellOnThirdParty(strategy, awaitorder);
+      }
+    }
+
+    logger.info(`### Round time: ${Date.now() - start}ms`);
   }
 
   /**
