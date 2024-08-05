@@ -3,10 +3,11 @@ const mongoose = require('mongoose');
 
 const AipAwaitSchema = new mongoose.Schema(
   {
+    //id: { type: String, unique: true, trim: true }, // 自增id
     strategy_id: { type: String, trim: true }, // Investment strategy id
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'PortalUser' },
-    await_status: { type: String, trim: true }, // 1: Waiting 2: Completed 3: Processing
-    sell_type: { type: String, trim: true }, // 1: Automatic sell 2: Delete investment
+    user: { type: mongoose.Schema.Types.ObjectId, unique: false, ref: 'PortalUser' },
+    await_status: { type: Number, trim: true }, // 1: Waiting 2: Completed 3: Processing
+    sell_type: { type: Number, trim: true }, // 1: Automatic sell 2: Delete investment
     sell_price: { type: Number, default: 0 }, // Sell price
 
     user_market_id: { type: String, trim: true }, // ID of the market key set by the user
