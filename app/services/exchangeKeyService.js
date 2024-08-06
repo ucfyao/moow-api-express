@@ -28,7 +28,9 @@ class KeyService {
       .lean();
     const total = await AipExchangeKeyModel.find(conditions).countDocuments();
 
+    console.log(exchangeKeys);
     exchangeKeys.forEach((exchangeKey) => {
+      console.log(exchangeKey);
       if (exchangeKey.access_key && exchangeKey.secret_key) {
         const decryptedAccessKey = decrypt(exchangeKey.access_key);
         const decryptedSecretKey = decrypt(exchangeKey.secret_key);
@@ -61,8 +63,8 @@ class KeyService {
       secret: keyData.secret_key,
     });
     let validation;
-    const response = await newExchange.fetchBalance();
-    validation = response.info.balances;
+    // const response = await newExchange.fetchBalance();
+    // validation = response.info.balances;
     keyData.secret_show = `${keyData.secret_key.slice(0, 3)}******${keyData.secret_key.slice(-3)}`;
 
     keyData.access_key = encrypt(keyData.access_key);
