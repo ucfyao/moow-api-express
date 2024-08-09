@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const SymbolService = require('../services/symbolService');
 const logger = require('../utils/logger');
 
+// obtain daily price automatically
 const priceScheduler = () => {
   cron.schedule('0 0 * * *', async () => {
     const today = new Date();
@@ -13,7 +14,7 @@ const priceScheduler = () => {
     logger.info(`PriceScheduler for ${startDate}`);
     // todo: add status code for schedulers
     try {
-      await SymbolService.getPrice(startDate, endDate, 'binance', 'BTC/USDT');
+      await SymbolService.retrievePrice(startDate, endDate, 'binance', 'BTC/USDT');
     } catch (error) {
       logger.error(`Error running PriceScheduler: ${error.message}`);
     }

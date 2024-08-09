@@ -38,11 +38,11 @@ class SymbolController {
   }
 
   /**
-  * Obtain the price of any symbol from any exchang you want
+  * Obtain the price of any symbol from any exchang you want and save them to database for future use
   */
-  async getPrice(req, res) {
+  async retrievePrice(req, res) {
     const { exchangeId, symbol, startDate, endDate, interval , limit, currency } = req.body
-    const symbolData = await SymbolService.getPrice(startDate, endDate, exchangeId, symbol, interval , limit, currency);
+    const symbolData = await SymbolService.retrievePrice(startDate, endDate, exchangeId, symbol, interval , limit, currency);
     return ResponseHandler.success(res, symbolData, STATUS_TYPE.created);
   }
   /**
@@ -53,6 +53,14 @@ class SymbolController {
     const priceData = await SymbolService.loadPriceData(path, exchangeId, symbol, currency);
     return ResponseHandler.success(res, priceData, STATUS_TYPE.created);
   }
+  /**
+  * load price data from csv file
+  */
+    async fetchPrice(req, res) {
+      const { startDate, endDate, exchangeId, symbol, priceType } = req.body
+      const priceData = await SymbolService.fetchPriceByDate(startDate, endDate, exchangeId, symbol, priceType);
+      return ResponseHandler.success(res, priceData, STATUS_TYPE.created);
+    }
 }
   
 module.exports = new SymbolController();
