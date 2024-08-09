@@ -7,7 +7,7 @@ class KeyService {
     const start = Date.now();
 
     let conditions = {
-      // is_deleted: false
+      is_deleted: false,
     };
 
     const pageNumber = params.pageNumber || 1;
@@ -73,7 +73,10 @@ class KeyService {
   }
 
   async deleteKey(id) {
-    return AipExchangeKeyModel.findByIdAndUpdate(id, { status: '3' });
+    return AipExchangeKeyModel.findByIdAndUpdate(id, {
+      is_deleted: true,
+      status: '3',
+    });
   }
 }
 
