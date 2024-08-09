@@ -19,8 +19,8 @@ const config = {
   exchangeTimeOut: 6000, // Exchange connection time in ms
 
   // Key file paths
-  publicKeyPath: path.resolve(process.cwd(), process.env.PUBLIC_KEY_PATH || 'keys/damoon.pem'),
-  privateKeyPath: path.resolve(process.cwd(), process.env.PRIVATE_KEY_PATH || 'keys/damoon.pub'),
+  publicKeyPath: path.resolve(process.cwd(), process.env.PUBLIC_KEY_PATH || 'keys/damoon.pub'),
+  privateKeyPath: path.resolve(process.cwd(), process.env.PRIVATE_KEY_PATH || 'keys/damoon.pem'),
 
   // Email configuration
   minEmailSendInterval: 300, // Minimum interval between email sends in seconds
