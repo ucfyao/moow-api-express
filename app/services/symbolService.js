@@ -105,7 +105,7 @@ class SymbolService {
     return { newExchangeSymbol };
   }
 
-  async getPrice(startDate, endDate, exchangeId = 'binance', symbol = 'BTC/USDT', interval = '1d', limit = 1, otherCurrency = 'CNY') {
+  async retrievePrice(startDate, endDate, exchangeId = 'binance', symbol = 'BTC/USDT', interval = '1d', limit = 1, otherCurrency = 'CNY') {
     const exchange = new ccxt[exchangeId]();
     const exchangeUrl = exchange.urls.www || exchange.urls.api;
     // Convert dates to timestamps
@@ -119,22 +119,23 @@ class SymbolService {
       const ohlcv = await exchange.fetchOHLCV(symbol, interval, currentTimestamp, limit);
       // Adjust currentTimestamp for the next day (8 AM)
       currentTimestamp += 24 * 60 * 60 * 1000;
-      allOHLCV = allOHLCV.concat(ohlcv);
+      allOHLCV.push(...ohlcv);
     }
     // Process the price data
-    await this.processPriceData(allOHLCV, exchangeId, symbol, otherCurrency, exchangeUrl);
+    await this.savePriceData(allOHLCV, exchangeId, symbol, otherCurrency, exchangeUrl);
 
     return allOHLCV;
   }
 
-  async processPriceData(allOHLCV, exchange, symbol, otherCurrency, exchangeUrl){
+  // save the data we obtain from ccxt to database for future use
+  async savePriceData(allOHLCV, exchange, symbol, otherCurrency, exchangeUrl){
     const [base, quote] = symbol.split('/');
     
     let usdtRate = 1; 
     if (quote !== 'USDT') {
       const ticker = await exchange.fetchTicker(`${symbol}/USDT`);
       usdtRate = ticker.last;
-    }   
+    }  
 
     const usdToOtherRate = await this.getUSDToOtherRate(otherCurrency);
     const records = allOHLCV.map(candle => {
@@ -173,11 +174,26 @@ class SymbolService {
         upsert: true,
       },
     }));
-
+    console.log('records', records)
     await DataExchangeSymbolModel.bulkWrite(bulkOps);
     logger.info(`Successfully inserted ${records.length} records for ${symbol}`);
-    
     return true;
+  }
+
+  async fetchPriceByDate(startDate, endDate, exchangeId = 'binance', symbol = 'BTC/USDT', priceType = 'open') {
+    // the time for each bitcoin price is recorded at 8am, so start and end time will need to cover this timestamp.
+    const start = new Date(`${startDate}T08:00:00.000Z`);
+    const end = new Date(`${endDate}T08:30:59.999Z`);
+
+    const query = {
+      exchange: exchangeId,
+      symbol: symbol,
+      on_time: { $gte: start, $lt: end }
+    };
+
+    const records = await DataExchangeSymbolModel.find(query).select(priceType).lean();
+    const openPrices = records.map(record => parseFloat(record.open));
+    return openPrices;
   }
 
   async getUSDToOtherRate(otherCurrency) {
@@ -203,7 +219,7 @@ class SymbolService {
       logger.error('Error fetching USD to CNY exchange rate', error);
     }
   }
-
+  
   // Function to import CSV data
   async loadPriceData(filePath, exchangeId = 'binance', symbol = 'BTC/USDT', otherCurrency = 'CNY') {
     const records = [];
@@ -229,7 +245,7 @@ class SymbolService {
         }
       })
       .on('end', async () => {
-        const newSymbolData = await this.processPriceData(records, exchangeId, symbol, otherCurrency, exchangeUrl);
+        const newSymbolData = await this.savePriceData(records, exchangeId, symbol, otherCurrency, exchangeUrl);
       });
   }
 }

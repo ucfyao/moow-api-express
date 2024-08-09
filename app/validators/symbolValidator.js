@@ -1,5 +1,5 @@
 const dateValidatorSchema = {
-    start: {
+    startDate: {
       notEmpty: {
         errorMessage: 'Start Date is required'
       },
@@ -8,7 +8,7 @@ const dateValidatorSchema = {
         errorMessage: 'Start Date must be in YYYY-MM-DD format'
       }
     },
-    end: {
+    endDate: {
       notEmpty: {
         errorMessage: 'End Date is required'
       },
@@ -18,7 +18,7 @@ const dateValidatorSchema = {
       },
       custom: {
         options: (value, { req }) => {
-          const startDate = new Date(req.body.start);
+          const startDate = new Date(req.body.startDate);
           const endDate = new Date(value);
           if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
             throw new Error('Invalid date format');
