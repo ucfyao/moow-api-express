@@ -5,7 +5,8 @@ const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class ExchangeKeyController {
   async index(req, res) {
-    const params = req.body;
+    // const params = req.body;
+    const params = req.query;
     const exchangeKeys = await ExchangeKeyService.getAllKeys(params);
     return ResponseHandler.success(res, exchangeKeys, STATUS_TYPE.HTTP_OK);
   }

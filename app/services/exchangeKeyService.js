@@ -7,8 +7,18 @@ class KeyService {
     const start = Date.now();
 
     let conditions = {
-      is_deleted: false,
+      // is_deleted: false,
     };
+
+    console.log('showDeleted 参数:', params.showDeleted);
+
+    if (params.showDeleted === true || params.showDeleted === 'true') {
+      conditions.is_deleted = true;
+    } else {
+      conditions.is_deleted = false;
+    }
+
+    console.log('查询条件:', conditions);
 
     const pageNumber = params.pageNumber || 1;
     const pageSize = params.pageSize || 9999;
@@ -61,8 +71,8 @@ class KeyService {
       secret: keyData.secret_key,
     });
     let validation;
-    const response = await newExchange.fetchBalance();
-    validation = response.info.balances;
+    // const response = await newExchange.fetchBalance();
+    // validation = response.info.balances;
     keyData.secret_show = `${keyData.secret_key.slice(0, 3)}******${keyData.secret_key.slice(-3)}`;
 
     keyData.access_key = encrypt(keyData.access_key);
@@ -75,7 +85,7 @@ class KeyService {
   async deleteKey(id) {
     return AipExchangeKeyModel.findByIdAndUpdate(id, {
       is_deleted: true,
-      status: '3',
+      status: AipExchangeKeyModel.KEY_STATUS_SOFT_DELETED,
     });
   }
 }
