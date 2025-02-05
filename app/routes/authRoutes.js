@@ -18,6 +18,8 @@ const router = express.Router();
  * /api/v1/captcha:
  *   get:
  *     summary: Get captcha
+ *     tags:
+ *       - Authentication
  *     description: Retrieve a captcha for verification.
  *     responses:
  *       200:
@@ -30,6 +32,8 @@ router.get('/api/v1/captcha', asyncHandler(AuthController.getCaptcha));
  * /api/v1/auth/login:
  *   post:
  *     summary: User login
+ *     tags:
+ *       - Authentication
  *     description: Login a user with email and password.
  *     requestBody:
  *       required: true
@@ -59,6 +63,8 @@ router.post(
  * /api/v1/auth/logout:
  *   delete:
  *     summary: User logout
+ *     tags:
+ *       - Authentication
  *     description: Logout the current user.
  *     responses:
  *       200:
@@ -76,6 +82,8 @@ router.delete(
  * /api/v1/auth/passwordReset:
  *   patch:
  *     summary: Reset password
+ *     tags:
+ *       - Authentication
  *     description: Reset the user's password.
  *     requestBody:
  *       required: true
@@ -101,6 +109,8 @@ router.patch('/api/v1/auth/passwordReset', asyncHandler(AuthController.resetPass
  * /api/v1/auth/activation:
  *   post:
  *     summary: Activate account
+ *     tags:
+ *       - Authentication
  *     description: Send activation email to the user.
  *     requestBody:
  *       required: true
@@ -126,6 +136,8 @@ router.post(
  * /api/v1/auth/signup:
  *   post:
  *     summary: User signup
+ *     tags:
+ *       - Authentication
  *     description: Register a new user.
  *     requestBody:
  *       required: true
@@ -158,6 +170,8 @@ router.post(
  * /api/v1/auth/verification:
  *   patch:
  *     summary: Account verification
+ *     tags:
+ *       - Authentication
  *     description: Verify the user's account.
  *     requestBody:
  *       required: true
@@ -183,6 +197,8 @@ router.patch('/api/v1/auth/verification', asyncHandler(AuthController.activateUs
  * /api/v1/auth/passwordRecovery:
  *   post:
  *     summary: Password recovery
+ *     tags:
+ *       - Authentication
  *     description: Send password recovery email to the user.
  *     requestBody:
  *       required: true
