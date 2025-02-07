@@ -7,8 +7,14 @@ class KeyService {
     const start = Date.now();
 
     let conditions = {
-      // is_deleted: false
+      // is_deleted: false,
     };
+
+    if (params.showDeleted === true || params.showDeleted === 'true') {
+      conditions.is_deleted = true;
+    } else {
+      conditions.is_deleted = false;
+    }
 
     const pageNumber = params.pageNumber || 1;
     const pageSize = params.pageSize || 9999;
@@ -73,7 +79,10 @@ class KeyService {
   }
 
   async deleteKey(id) {
-    return AipExchangeKeyModel.findByIdAndUpdate(id, { status: '3' });
+    return AipExchangeKeyModel.findByIdAndUpdate(id, {
+      is_deleted: true,
+      status: AipExchangeKeyModel.KEY_STATUS_SOFT_DELETED,
+    });
   }
 }
 
