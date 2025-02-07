@@ -9,7 +9,8 @@ const logger = require('./app/utils/logger');
 const CustomError = require('./app/utils/customError');
 const config = require('./config');
 const initializeSchedulers = require('./app/schedulers');
-const swaggerInitialise = require("./app/utils/swagger");
+const swaggerInitialise = require('./app/utils/swagger');
+
 const app = express();
 
 // Connect to MongoDB
