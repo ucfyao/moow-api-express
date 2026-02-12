@@ -1,5 +1,5 @@
 const morgan = require('morgan');
-const bodyParser = require('body-parser');
+const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const session = require('./session');
@@ -8,7 +8,7 @@ const logger = require('../app/utils/logger');
 
 const setupMiddleware = (app) => {
   app.use(helmet());
-  app.use(bodyParser.json());
+  app.use(express.json());
   app.use(cors());
   app.use(session);
 

@@ -5,10 +5,8 @@
   "main": "app.js",
   "dependencies": {
     "axios": "^1.6.8",
-    "body-parser": "^1.20.2",
     "ccxt": "^4.3.55",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "csv-parser": "^3.0.0",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
@@ -27,7 +25,6 @@
     "svg-captcha": "^1.4.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
-    "thread-sleep": "^2.2.0",
     "uuid": "^9.0.1",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0"
