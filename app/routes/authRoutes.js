@@ -1,5 +1,4 @@
 const express = require('express');
-const asyncHandler = require('../utils/asyncHandler');
 const validateParams = require('../middlewares/validateMiddleware');
 const {
   signinValidatorSchema,
@@ -25,7 +24,7 @@ const router = express.Router();
  *       200:
  *         description: Captcha retrieved successfully
  */
-router.get('/api/v1/captcha', asyncHandler(AuthController.getCaptcha));
+router.get('/api/v1/captcha', AuthController.getCaptcha);
 
 /**
  * @swagger
@@ -55,7 +54,7 @@ router.get('/api/v1/captcha', asyncHandler(AuthController.getCaptcha));
 router.post(
   '/api/v1/auth/login',
   validateParams(signinValidatorSchema),
-  asyncHandler(AuthController.signin),
+  AuthController.signin,
 );
 
 /**
@@ -74,7 +73,7 @@ router.delete(
   '/api/v1/auth/logout',
   validateParams(signoutValidatorSchema),
   authMiddleware,
-  asyncHandler(AuthController.signout),
+  AuthController.signout,
 );
 
 /**
@@ -102,7 +101,7 @@ router.delete(
  *       200:
  *         description: Password reset successfully
  */
-router.patch('/api/v1/auth/passwordReset', asyncHandler(AuthController.resetPassword));
+router.patch('/api/v1/auth/passwordReset', AuthController.resetPassword);
 
 /**
  * @swagger
@@ -129,7 +128,7 @@ router.patch('/api/v1/auth/passwordReset', asyncHandler(AuthController.resetPass
 router.post(
   '/api/v1/auth/activation',
   validateParams(sendActivateEmailValidatorSchema),
-  asyncHandler(AuthController.sendActivateEmail),
+  AuthController.sendActivateEmail,
 );
 /**
  * @swagger
@@ -162,7 +161,7 @@ router.post(
 router.post(
   '/api/v1/auth/signup',
   validateParams(createUserValidatorSchema),
-  asyncHandler(AuthController.signUp),
+  AuthController.signUp,
 );
 
 /**
@@ -190,7 +189,7 @@ router.post(
  *       200:
  *         description: Account verified successfully
  */
-router.patch('/api/v1/auth/verification', asyncHandler(AuthController.activateUser));
+router.patch('/api/v1/auth/verification', AuthController.activateUser);
 
 /**
  * @swagger
@@ -217,7 +216,7 @@ router.patch('/api/v1/auth/verification', asyncHandler(AuthController.activateUs
 router.post(
   '/api/v1/auth/passwordRecovery',
   validateParams(retrievePasswordValidatorSchema),
-  asyncHandler(AuthController.sendRetrieveEmail),
+  AuthController.sendRetrieveEmail,
 );
 
 module.exports = router;

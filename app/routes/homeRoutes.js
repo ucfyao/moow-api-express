@@ -1,7 +1,5 @@
 const express = require('express');
 const HomeController = require('../controllers/homeController');
-const asyncHandler = require('../utils/asyncHandler');
-
 const router = express.Router();
 
 /**
@@ -24,7 +22,7 @@ const router = express.Router();
  *                   type: string
  *                   example: "Welcome to the API!"
  */
-router.get('/', asyncHandler(HomeController.index));
+router.get('/', HomeController.index);
 
 /**
  * @swagger
@@ -46,7 +44,7 @@ router.get('/', asyncHandler(HomeController.index));
  *                   type: string
  *                   example: "success"
  */
-router.get('/test', asyncHandler(HomeController.test));
+router.get('/test', HomeController.test);
 
 /**
  * @swagger
@@ -68,6 +66,6 @@ router.get('/test', asyncHandler(HomeController.test));
  *                   type: boolean
  *                   example: true
  */
-router.get('/check-task', asyncHandler(HomeController.checkTask));
+router.get('/check-task', HomeController.checkTask);
 
 module.exports = router;

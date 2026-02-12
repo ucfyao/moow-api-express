@@ -1,7 +1,5 @@
 const express = require('express');
 const OrderController = require('../controllers/orderController');
-const asyncHandler = require('../utils/asyncHandler');
-
 const router = express.Router();
 
 // View all orders of a strategy
@@ -39,7 +37,7 @@ const router = express.Router();
  *                     type: number
  *                     example: 2
  */
-router.get('/api/v1/orders', asyncHandler(OrderController.index));
+router.get('/api/v1/orders', OrderController.index);
 
 // Fetch all open orders
 /**
@@ -76,7 +74,7 @@ router.get('/api/v1/orders', asyncHandler(OrderController.index));
  *                     type: number
  *                     example: 1.5
  */
-router.get('/api/v1/openOders', asyncHandler(OrderController.listThirdPartyOrders));
+router.get('/api/v1/openOders', OrderController.listThirdPartyOrders);
 
 // Cancel all open orders
 /**
@@ -102,6 +100,6 @@ router.get('/api/v1/openOders', asyncHandler(OrderController.listThirdPartyOrder
  *                   type: string
  *                   example: "All open orders have been cancelled successfully"
  */
-router.delete('/api/v1/openOrders', asyncHandler(OrderController.cancelAllOpenThirdPartyOrders));
+router.delete('/api/v1/openOrders', OrderController.cancelAllOpenThirdPartyOrders);
 
 module.exports = router;

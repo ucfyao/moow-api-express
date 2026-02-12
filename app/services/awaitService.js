@@ -3,7 +3,7 @@ const AipStrategyModel = require('../models/aipStrategyModel');
 const logger = require('../utils/logger');
 const OrderService = require('./orderService');
 const config = require('../../config');
-const sleep = require('thread-sleep');
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const ccxt = require('ccxt');
 
 class AwaitService {
@@ -68,7 +68,7 @@ class AwaitService {
 
     logger.info(`[order id ] - ${orderRes.id}`);
 
-    sleep(5000);
+    await sleep(5000);
 
     const orderInfo = await exchange.fetchOrder(orderRes.id, strategy.symbol);
     logger.info(`[order info] - ${JSON.stringify(orderInfo.info)}`);
