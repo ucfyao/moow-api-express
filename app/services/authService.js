@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const { v1: uuidv1 } = require('uuid');
 const ejs = require('ejs');
 const path = require('path');
-const moment = require('moment');
+const dayjs = require('dayjs');
 const PortalTokenModel = require('../models/portalTokenModel');
 const PortalUserModel = require('../models/portalUserModel');
 const CustomError = require('../utils/customError');
@@ -56,7 +56,7 @@ class AuthService {
     user.invitation_code = hashidsEncode(user.seq_id);
 
     // Number of free membership days for new users
-    user.vip_time_out_at = moment().add(10, 'days').toDate();
+    user.vip_time_out_at = dayjs().add(10, 'day').toDate();
 
     const doc = await user.save();
 
@@ -296,7 +296,7 @@ class AuthService {
 
     user.is_activated = true;
     // Number of free membership days for new users
-    user.vip_time_out_at = moment().add(10, 'days').toDate();
+    user.vip_time_out_at = dayjs().add(10, 'day').toDate();
 
     // Increase the inviter's membership by one day
     if (user.inviter && /^[a-f\d]{24}$/i.test(user.inviter)) {
