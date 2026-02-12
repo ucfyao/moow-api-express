@@ -8,7 +8,7 @@ const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
 const config = require('../../config');
-const moment = require('moment');
+const dayjs = require('dayjs');
 
 class StrategyService {
   /**
@@ -186,7 +186,7 @@ class StrategyService {
    */
   async executeAllBuys() {
     const start = Date.now();
-    const now = moment();
+    const now = dayjs();
     const conditions = {
       status: AipStrategyModel.STRATEGY_STATUS_NORMAL,
       minute: now.get('minute').toString(),

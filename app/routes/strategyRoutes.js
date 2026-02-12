@@ -1,7 +1,6 @@
 const express = require('express');
 const StrategyController = require('../controllers/strategyController');
 const validateParams = require('../middlewares/validateMiddleware');
-const asyncHandler = require('../utils/asyncHandler');
 const {
   createStrategyValidatorSchema,
   updateStrategyValidatorSchema,
@@ -38,7 +37,7 @@ const router = express.Router();
  *                     type: string
  *                     example: "active"
  */
-router.get('/api/v1/strategies', asyncHandler(StrategyController.index));
+router.get('/api/v1/strategies', StrategyController.index);
 
 // Create a new strategy
 /**
@@ -69,7 +68,7 @@ router.get('/api/v1/strategies', asyncHandler(StrategyController.index));
 router.post(
   '/api/v1/strategies',
   validateParams(createStrategyValidatorSchema),
-  asyncHandler(StrategyController.create),
+  StrategyController.create,
 );
 
 // view a strategy
@@ -92,7 +91,7 @@ router.post(
  *       200:
  *         description: Successfully returned policy details
  */
-router.get('/api/v1/strategies/:id', asyncHandler(StrategyController.show));
+router.get('/api/v1/strategies/:id', StrategyController.show);
 
 // update a strategy
 /**
@@ -129,7 +128,7 @@ router.get('/api/v1/strategies/:id', asyncHandler(StrategyController.show));
  */
 router.patch('/api/v1/strategies/:id',
   validateParams(updateStrategyValidatorSchema),
-  asyncHandler(StrategyController.patch),
+  StrategyController.patch,
 );
 
 // soft delete a strategy
@@ -153,7 +152,7 @@ router.patch('/api/v1/strategies/:id',
  *         description: Policy deleted successfully
  */
 router.delete('/api/v1/strategies/:id',
-  asyncHandler(StrategyController.destory),
+  StrategyController.destory,
 );
 
 /**
@@ -168,7 +167,7 @@ router.delete('/api/v1/strategies/:id',
  *       200:
  *         description: All buy strategies were executed successfully
  */
-router.post('/api/v1/strategies/execute-all-buys', asyncHandler(StrategyController.executeAllBuys));
+router.post('/api/v1/strategies/execute-all-buys', StrategyController.executeAllBuys);
 
 /**
  * @swagger
@@ -191,7 +190,7 @@ router.post('/api/v1/strategies/execute-all-buys', asyncHandler(StrategyControll
  */
 router.post(
   '/api/v1/strategies/:strategyId/execute-buy',
-  asyncHandler(StrategyController.executeBuy),
+  StrategyController.executeBuy,
 );
 
 /**
@@ -206,7 +205,7 @@ router.post(
  *       200:
  *         description: All selling strategies were executed successfully
  */
-router.post('/api/v1/strategies/execute-all-sells', asyncHandler(StrategyController.executeAllSells));
+router.post('/api/v1/strategies/execute-all-sells', StrategyController.executeAllSells);
 
 /**
  * @swagger
@@ -229,7 +228,7 @@ router.post('/api/v1/strategies/execute-all-sells', asyncHandler(StrategyControl
  */
 router.post(
   '/api/v1/strategies/:strategyId/execute-sell',
-  asyncHandler(StrategyController.executeSell),
+  StrategyController.executeSell,
 );
 
 module.exports = router;
