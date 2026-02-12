@@ -2,8 +2,6 @@ const express = require('express');
 const MarketController = require('../controllers/marketController');
 const validateParams = require('../middlewares/validateMiddleware');
 const { createMarketValidatorSchema, updateMarketValidatorSchema } = require('../validators/marketValidator');
-const asyncHandler = require('../utils/asyncHandler');
-
 const router = express.Router();
 
 // get all markets list
@@ -35,7 +33,7 @@ const router = express.Router();
  *                     type: string
  *                     example: "active"
  */
-router.get('/api/v1/markets', asyncHandler(MarketController.index));
+router.get('/api/v1/markets', MarketController.index);
 
 // create a new markets
 /**
@@ -66,7 +64,7 @@ router.get('/api/v1/markets', asyncHandler(MarketController.index));
 router.post(
   '/api/v1/markets',
   validateParams(createMarketValidatorSchema),
-  asyncHandler(MarketController.create),
+  MarketController.create,
 );
 
 // get a market by ID
@@ -103,7 +101,7 @@ router.post(
  *                   type: string
  *                   example: "active"
  */
-router.get('/api/v1/markets/:id', asyncHandler(MarketController.show));
+router.get('/api/v1/markets/:id', MarketController.show);
 
 // update market info updateMarket
 /**
@@ -138,7 +136,7 @@ router.get('/api/v1/markets/:id', asyncHandler(MarketController.show));
  *       200:
  *         description: Market information updated successfully
  */
-router.put('/api/v1/markets/:id', asyncHandler(MarketController.update));
+router.put('/api/v1/markets/:id', MarketController.update);
 
 // delete a market
 /**
@@ -160,6 +158,6 @@ router.put('/api/v1/markets/:id', asyncHandler(MarketController.update));
  *       200:
  *         description: Market deleted successfully
  */
-router.delete('/api/v1/markets/:id', asyncHandler(MarketController.destroy));
+router.delete('/api/v1/markets/:id', MarketController.destroy);
 
 module.exports = router;

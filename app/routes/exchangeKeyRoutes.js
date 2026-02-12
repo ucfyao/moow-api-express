@@ -2,7 +2,6 @@
 const express = require('express');
 const ExchangeKeyController = require('../controllers/exchangeKeyController');
 const validateParams = require('../middlewares/validateMiddleware');
-const asyncHandler = require('../utils/asyncHandler');
 const { createKeyValidatorSchema, updateKeyValidatorSchema } = require('../validators/exchangeKeyValidator');
 
 const router = express.Router();
@@ -36,7 +35,7 @@ const router = express.Router();
  *                     type: string
  *                     example: "your-api-key"
  */
-router.get('/api/v1/keys', asyncHandler(ExchangeKeyController.index));
+router.get('/api/v1/keys', ExchangeKeyController.index);
 
 /**
  * @swagger
@@ -69,7 +68,7 @@ router.get('/api/v1/keys', asyncHandler(ExchangeKeyController.index));
 router.post(
   '/api/v1/keys',
   validateParams(createKeyValidatorSchema),
-  asyncHandler(ExchangeKeyController.create),
+  ExchangeKeyController.create,
 );
 
 /**
@@ -103,7 +102,7 @@ router.post(
 router.put(
   '/api/v1/keys',
   validateParams(updateKeyValidatorSchema),
-  asyncHandler(ExchangeKeyController.update),
+  ExchangeKeyController.update,
 );
 
 /**
@@ -139,7 +138,7 @@ router.put(
  *                   type: string
  *                   example: "your-api-key"
  */
-router.get('/api/v1/keys/:id', asyncHandler(ExchangeKeyController.show));
+router.get('/api/v1/keys/:id', ExchangeKeyController.show);
 
 /**
  * @swagger
@@ -160,6 +159,6 @@ router.get('/api/v1/keys/:id', asyncHandler(ExchangeKeyController.show));
  *       200:
  *         description: Transaction key deleted successfullyK
  */
-router.delete('/api/v1/keys/:id', asyncHandler(ExchangeKeyController.destroy));
+router.delete('/api/v1/keys/:id', ExchangeKeyController.destroy);
 
 module.exports = router;
