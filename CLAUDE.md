@@ -197,11 +197,41 @@ module.exports = () => {
 - **Pre-commit:** lint-staged runs ESLint + Prettier on staged `.js` files
 - **Worktrees:** Use `.worktrees/` directory (gitignored)
 
+## Testing
+
+- **Framework:** Jest 30 + supertest + mongodb-memory-server
+- **Config:** `jest.config.js` (transforms ESM-only `uuid` package via babel)
+- **Structure:**
+  - `tests/unit/` — Unit tests (mock DB models, mock CCXT)
+  - `tests/integration/` — API tests (real mongodb-memory-server, mock CCXT/email)
+  - `tests/helpers/` — Fixtures, mock utilities, DB helper, test app
+
+### Test Patterns
+
+- Unit tests: `jest.mock()` Mongoose models, test service logic in isolation
+- Integration tests: Use `tests/helpers/db.js` for real MongoDB, `tests/helpers/app.js` for test Express app
+- CCXT: Always mock via `tests/helpers/mockCcxt.js` (never hit real exchanges)
+- Email: Always mock `app/services/emailService`
+- Logger: Mock in integration tests to reduce noise
+
+### Adding Tests
+
+| Layer | File pattern | Location |
+|-------|-------------|----------|
+| Service | `{service}.test.js` | `tests/unit/services/` |
+| Middleware | `{middleware}.test.js` | `tests/unit/middlewares/` |
+| Util | `{util}.test.js` | `tests/unit/utils/` |
+| API endpoint | `{module}.test.js` | `tests/integration/` |
+
 ## Commands
 
 ```bash
 npm run dev          # Start dev server (nodemon)
 npm start            # Start production server
+npm test             # Run all tests
+npm test -- --coverage                      # Run tests + coverage
+npm test -- --testPathPatterns=unit         # Only unit tests
+npm test -- --testPathPatterns=integration  # Only integration tests
 npm run lint         # Run ESLint
 npm run lint:fix     # Auto-fix ESLint issues
 npm run format       # Run Prettier

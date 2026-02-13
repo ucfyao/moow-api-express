@@ -31,13 +31,35 @@ module.exports = [
       'no-unused-vars': 'warn',
       'no-underscore-dangle': 'off',
       'class-methods-use-this': 'off',
-      semi: ['error', 'always'],
-      quotes: ['error', 'single'],
-      indent: ['error', 2],
+      'semi': ['error', 'always'],
+      'quotes': ['error', 'single'],
+      'indent': ['error', 2],
       'comma-dangle': ['error', 'always-multiline'],
     },
   },
   {
-    ignores: ['node_modules/', 'logs/', '.worktrees/'],
+    files: ['eslint.config.js', 'jest.config.js'],
+    rules: {
+      'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
+    },
+  },
+  {
+    files: ['tests/**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+      },
+    },
+    rules: {
+      'import/no-unresolved': 'off',
+      'import/order': 'off',
+      'global-require': 'off',
+      'no-unused-vars': 'off',
+      'no-plusplus': 'off',
+      'comma-dangle': 'off',
+    },
+  },
+  {
+    ignores: ['node_modules/', 'logs/', '.worktrees/', 'coverage/'],
   },
 ];
