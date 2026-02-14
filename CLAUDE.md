@@ -656,11 +656,9 @@ const order = await exchange.createOrder(
 
 ## Git Workflow
 
-- **Commits:** Conventional commits (enforced by commitlint)
-  - `feat:`, `fix:`, `refactor:`, `chore:`, `style:`, `docs:`
-- **Pre-commit:** lint-staged runs ESLint + Prettier on staged `.js` files
 - **Worktrees:** Use `.worktrees/` directory (gitignored)
-- **Branches:** Feature work on `feature/{name}` branches, PR to `main`
+- **Pre-commit:** lint-staged runs ESLint + Prettier on staged `.js` files
+- **Commitlint:** Enforced via commitlint — check `.commitlintrc` for scope format
 
 ## Testing
 
