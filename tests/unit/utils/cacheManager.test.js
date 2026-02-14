@@ -38,7 +38,9 @@ describe('cacheManager', () => {
     expect(testCache.get('temp')).toBe('value');
 
     // Wait for TTL to expire
-    await new Promise((resolve) => setTimeout(resolve, 1100));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1100);
+    });
     expect(testCache.get('temp')).toBeUndefined();
   });
 });

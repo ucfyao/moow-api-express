@@ -157,9 +157,7 @@ describe('Order API Integration', () => {
       const userId = new mongoose.Types.ObjectId(auth.user_id);
 
       // Create a strategy belonging to this user
-      const strategy = await AipStrategyModel.create(
-        createStrategyData({ user: userId }),
-      );
+      const strategy = await AipStrategyModel.create(createStrategyData({ user: userId }));
 
       // Create orders for this strategy
       await AipOrderModel.create(
@@ -168,7 +166,7 @@ describe('Order API Integration', () => {
           side: 'buy',
           base_total: 100,
           profit: 0,
-        }),
+        })
       );
       await AipOrderModel.create(
         createOrderData({
@@ -176,7 +174,7 @@ describe('Order API Integration', () => {
           side: 'buy',
           base_total: 200,
           profit: 0,
-        }),
+        })
       );
 
       const res = await request(app)

@@ -1,6 +1,7 @@
 const express = require('express');
 const authMiddleware = require('../middlewares/authMiddleware');
 const OrderController = require('../controllers/orderController');
+
 const router = express.Router();
 
 // View all orders of a strategy

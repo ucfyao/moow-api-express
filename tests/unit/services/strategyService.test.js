@@ -306,7 +306,7 @@ describe('StrategyService', () => {
         expect.objectContaining({
           apiKey: 'api-key',
           secret: 'api-secret',
-        }),
+        })
       );
       expect(mockExchange.fetchTicker).toHaveBeenCalledWith('BTC/USDT');
       expect(mockExchange.loadMarkets).toHaveBeenCalled();
@@ -317,7 +317,7 @@ describe('StrategyService', () => {
         'buy',
         expect.any(String),
         50000,
-        {},
+        {}
       );
       expect(OrderService.create).toHaveBeenCalled();
       expect(strategy.buy_times).toBe(6);
@@ -640,9 +640,7 @@ describe('StrategyService', () => {
       const strategy1 = { _id: 'strat-1', exchange: 'binance' };
       const strategy2 = { _id: 'strat-2', exchange: 'binance' };
 
-      AipStrategyModel.findById
-        .mockResolvedValueOnce(strategy1)
-        .mockResolvedValueOnce(strategy2);
+      AipStrategyModel.findById.mockResolvedValueOnce(strategy1).mockResolvedValueOnce(strategy2);
 
       // First sell fails, second succeeds
       AwaitService.sellOnThirdParty
@@ -657,9 +655,7 @@ describe('StrategyService', () => {
     });
 
     it('should skip when strategy not found for await order', async () => {
-      const awaitOrders = [
-        { _id: 'await-1', strategy_id: 'strat-missing' },
-      ];
+      const awaitOrders = [{ _id: 'await-1', strategy_id: 'strat-missing' }];
 
       AwaitService.index.mockResolvedValue(awaitOrders);
       AwaitService.update.mockResolvedValue({});

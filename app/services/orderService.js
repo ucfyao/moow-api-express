@@ -98,7 +98,7 @@ class OrderService {
       timeout: config.exchangeTimeOut,
     });
     const openOrders = await exchange.fetchOpenOrders(symbol);
-    openOrders.forEach(order => {
+    openOrders.forEach((order) => {
       const timestamp = new Date(order.timestamp);
       const formattedDate = timestamp.toISOString();
       logger.info(`Order ID: ${order.id}`);

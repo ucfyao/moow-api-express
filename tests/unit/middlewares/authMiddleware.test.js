@@ -37,7 +37,7 @@ describe('authMiddleware', () => {
     expect(ResponseHandler.fail).toHaveBeenCalledWith(
       res,
       STATUS_TYPE.HTTP_UNAUTHORIZED,
-      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL,
+      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -50,7 +50,7 @@ describe('authMiddleware', () => {
     expect(ResponseHandler.fail).toHaveBeenCalledWith(
       res,
       STATUS_TYPE.HTTP_UNAUTHORIZED,
-      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL,
+      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -64,7 +64,7 @@ describe('authMiddleware', () => {
     expect(ResponseHandler.fail).toHaveBeenCalledWith(
       res,
       STATUS_TYPE.HTTP_UNAUTHORIZED,
-      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL,
+      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -85,7 +85,7 @@ describe('authMiddleware', () => {
     expect(ResponseHandler.fail).toHaveBeenCalledWith(
       res,
       STATUS_TYPE.HTTP_UNAUTHORIZED,
-      STATUS_TYPE.PORTAL_TOKEN_EXPIRED,
+      STATUS_TYPE.PORTAL_TOKEN_EXPIRED
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -102,7 +102,7 @@ describe('authMiddleware', () => {
     expect(ResponseHandler.fail).toHaveBeenCalledWith(
       res,
       STATUS_TYPE.HTTP_UNAUTHORIZED,
-      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL,
+      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL
     );
     expect(next).not.toHaveBeenCalled();
   });

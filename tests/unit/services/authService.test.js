@@ -334,9 +334,7 @@ describe('AuthService', () => {
       expect(refUser.save).toHaveBeenCalled();
       expect(refUser.vip_time_out_at).toBeInstanceOf(Date);
       // The new date should be 1 day after 2026-03-01
-      expect(refUser.vip_time_out_at.getTime()).toBeGreaterThan(
-        new Date('2026-03-01').getTime(),
-      );
+      expect(refUser.vip_time_out_at.getTime()).toBeGreaterThan(new Date('2026-03-01').getTime());
     });
 
     it('should throw when activation token not found', async () => {
@@ -352,9 +350,7 @@ describe('AuthService', () => {
     it('should throw when token not found', async () => {
       PortalTokenModel.findOne.mockResolvedValue(null);
 
-      await expect(
-        AuthService.refreshToken('bad-token', 'user-id', '127.0.0.1'),
-      ).rejects.toThrow();
+      await expect(AuthService.refreshToken('bad-token', 'user-id', '127.0.0.1')).rejects.toThrow();
     });
 
     it('should throw when user_id does not match', async () => {
@@ -364,9 +360,7 @@ describe('AuthService', () => {
         last_access_time: Date.now(),
       });
 
-      await expect(
-        AuthService.refreshToken('token', 'user-id', '127.0.0.1'),
-      ).rejects.toThrow();
+      await expect(AuthService.refreshToken('token', 'user-id', '127.0.0.1')).rejects.toThrow();
     });
 
     it('should throw when token is expired', async () => {
@@ -378,9 +372,7 @@ describe('AuthService', () => {
       });
       PortalTokenModel.deleteOne.mockResolvedValue({});
 
-      await expect(
-        AuthService.refreshToken('token', 'user-id', '127.0.0.1'),
-      ).rejects.toThrow();
+      await expect(AuthService.refreshToken('token', 'user-id', '127.0.0.1')).rejects.toThrow();
     });
 
     it('should delete old token and return new token on success', async () => {
@@ -430,7 +422,7 @@ describe('AuthService', () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error sending activation email:',
-        'SMTP connection error',
+        'SMTP connection error'
       );
       expect(result.message).toBe('Activation email will be sent!');
     });
