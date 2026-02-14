@@ -176,6 +176,79 @@ describe('AwaitService', () => {
       expect(strategy.value_total).toBe(0);
     });
 
+    it('should use awaitOrder.sell_amount for partial sell when sell_amount > 0', async () => {
+      const strategy = {
+        _id: 'strat-1',
+        exchange: 'binance',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
+        symbol: 'BTC/USDT',
+        now_quote_total: 0.5,
+        quote_total: 0.5,
+        base_total: 20000,
+        now_base_total: 20000,
+        now_buy_times: 10,
+        buy_times: 10,
+        sell_times: 0,
+        user_market_id: 'market-1',
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      const awaitOrder = {
+        sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
+        sell_amount: 0.1, // partial sell
+        await_status: AipAwaitModel.STATUS_WAITING,
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      await AwaitService.sellOnThirdParty(strategy, awaitOrder);
+
+      // Should use sell_amount (0.1), not now_quote_total (0.5)
+      expect(mockExchange.createOrder).toHaveBeenCalledWith(
+        'BTC/USDT',
+        'market',
+        'sell',
+        0.1,
+      );
+    });
+
+    it('should keep strategy NORMAL and decrement quote_total on partial sell', async () => {
+      const strategy = {
+        _id: 'strat-1',
+        exchange: 'binance',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
+        symbol: 'BTC/USDT',
+        now_quote_total: 0.5,
+        quote_total: 0.5,
+        base_total: 20000,
+        now_base_total: 20000,
+        now_buy_times: 10,
+        buy_times: 10,
+        sell_times: 0,
+        user_market_id: 'market-1',
+        status: AipStrategyModel.STRATEGY_STATUS_NORMAL,
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      const awaitOrder = {
+        sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
+        sell_amount: 0.1,
+        await_status: AipAwaitModel.STATUS_WAITING,
+        save: jest.fn().mockResolvedValue(true),
+      };
+
+      // fetchOrder returns amount = 0.002 (from mock default)
+      await AwaitService.sellOnThirdParty(strategy, awaitOrder);
+
+      // Strategy should remain NORMAL (not CLOSED)
+      expect(strategy.status).toBe(AipStrategyModel.STRATEGY_STATUS_NORMAL);
+      // quote_total and now_quote_total should be decremented by orderInfo.amount (0.002)
+      expect(strategy.quote_total).toBe(0.5 - 0.002);
+      expect(strategy.now_quote_total).toBe(0.5 - 0.002);
+      expect(strategy.save).toHaveBeenCalled();
+    });
+
     it('should soft delete strategy on user delete sell', async () => {
       const strategy = {
         _id: 'strat-1',

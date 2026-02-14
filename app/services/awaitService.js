@@ -72,11 +72,13 @@ class AwaitService {
     });
     const type = 'market';
     const side = 'sell';
+    // Use partial sell amount if specified (intelligent strategy), otherwise sell all
+    const amount = awaitOrder.sell_amount > 0 ? awaitOrder.sell_amount : strategy.now_quote_total;
     const orderRes = await exchange.createOrder(
       strategy.symbol,
       type,
       side,
-      strategy.now_quote_total
+      amount,
     );
 
     logger.info(`[order id ] - ${orderRes.id}`);
@@ -101,7 +103,7 @@ class AwaitService {
         side,
         price: orderInfo.average,
         amount: orderInfo.amount,
-        funds: strategy.now_quote_total * orderInfo.average,
+        funds: orderInfo.amount * orderInfo.average,
         avg_price: orderInfo.average,
         deal_amount: orderInfo.amount,
         cost: orderInfo.filled,
@@ -130,19 +132,26 @@ class AwaitService {
       await awaitOrder.save();
 
       if (awaitOrder.sell_type === AipAwaitModel.SELL_TYPE_AUTO_SELL) {
-        // auto_create filed is not in the strategy module
-        if (strategy.auto_create === 'Y') {
+        // Partial sell (intelligent strategy value averaging) — keep strategy open
+        if (awaitOrder.sell_amount > 0) {
+          strategy.quote_total -= orderInfo.amount;
+          strategy.now_quote_total -= orderInfo.amount;
+          logger.info(
+            `Partial sell completed (value averaging):\n Investment ID: \t${strategy._id}\n Sold Amount: \t${orderInfo.amount}\n Remaining: \t${strategy.quote_total}\n`,
+          );
+        } else if (strategy.auto_create === 'Y') {
+          // auto_create filed is not in the strategy module
           strategy.now_base_total = 0;
           strategy.now_buy_times = 0;
           strategy.value_total = 0;
           logger.info(
-            `Automatically restart after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `
+            `Automatically restart after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `,
           );
         } else {
           strategy.status = AipStrategyModel.STRATEGY_STATUS_CLOSED;
           strategy.stop_reason = 'profit auto sell';
           logger.info(
-            `Automatically close after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `
+            `Automatically close after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `,
           );
         }
       } else if (awaitOrder.sell_type === AipAwaitModel.SELL_TYPE_DEL_INVEST) {
