@@ -1,12 +1,14 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 ## Project Overview
 
 **moow-api-express** is a cryptocurrency automated investment platform backend API (moow.cc). It enables users to manage exchange API keys, configure DCA (Dollar Cost Averaging) and intelligent investment strategies, and automate buy/sell operations across crypto exchanges via CCXT.
 
 ## Tech Stack
 
-- **Runtime:** Node.js 22 LTS (nvm, `.nvmrc`)
+- **Runtime:** Node.js 22 LTS (Volta in `package.json` + `.nvmrc`)
 - **Framework:** Express 5 (native async error handling, no asyncHandler needed)
 - **Database:** MongoDB via Mongoose 8
 - **Exchange Integration:** CCXT 4.x (unified crypto exchange API)
@@ -649,7 +651,7 @@ const order = await exchange.createOrder(
 - **Indentation:** 2 spaces
 - **Quotes:** Single quotes
 - **Semicolons:** Required
-- **Trailing commas:** In multiline expressions
+- **Trailing commas:** ES5 (objects, arrays, params — not function args)
 - **Line width:** 100 characters
 - **Linter:** ESLint 9 (flat config) + Airbnb base + Prettier
 - **Formatter:** Prettier (config in `.prettierrc`)
@@ -658,7 +660,7 @@ const order = await exchange.createOrder(
 
 - **Worktrees:** Use `.worktrees/` directory (gitignored)
 - **Pre-commit:** lint-staged runs ESLint + Prettier on staged `.js` files
-- **Commitlint:** Enforced via commitlint — check `.commitlintrc` for scope format
+- **Commitlint:** Enforced via `commitlint.config.js` — extends `@commitlint/config-conventional` (standard scopes)
 
 ## Testing
 
@@ -791,9 +793,20 @@ npm test             # Run all tests
 npm test -- --coverage                      # Run tests + coverage
 npm test -- --testPathPatterns=unit         # Only unit tests
 npm test -- --testPathPatterns=integration  # Only integration tests
+npm test -- --testPathPatterns=strategyService  # Single test file by name
 npm run lint         # Run ESLint
 npm run lint:fix     # Auto-fix ESLint issues
 npm run format       # Run Prettier
+```
+
+### Seed Data (Initial Development Setup)
+
+Import seed data from `data/*.json` into MongoDB:
+```bash
+mongoimport --db xiaobao --collection portal_resource --file data/portal_resource.json --host 127.0.0.1:27017
+mongoimport --db xiaobao --collection portal_user --file data/portal_user.json --host 127.0.0.1:27017
+mongoimport --db xiaobao --collection common_config --file data/common_config.json --host 127.0.0.1:27017
+mongoimport --db xiaobao --collection market --file data/markets.json --host 127.0.0.1:27017
 ```
 
 ## App Initialization Sequence
