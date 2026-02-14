@@ -252,7 +252,7 @@ describe('StrategyService', () => {
         expect.objectContaining({
           strategy_id: 'strat-1',
           user: 'user-1',
-          sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
+          sell_type: AipAwaitModel.SELL_TYPE_DEL_INVEST,
           await_status: AipAwaitModel.STATUS_WAITING,
         })
       );
@@ -306,7 +306,7 @@ describe('StrategyService', () => {
         expect.objectContaining({
           apiKey: 'api-key',
           secret: 'api-secret',
-        }),
+        })
       );
       expect(mockExchange.fetchTicker).toHaveBeenCalledWith('BTC/USDT');
       expect(mockExchange.loadMarkets).toHaveBeenCalled();
@@ -317,7 +317,7 @@ describe('StrategyService', () => {
         'buy',
         expect.any(String),
         50000,
-        {},
+        {}
       );
       expect(OrderService.create).toHaveBeenCalled();
       expect(strategy.buy_times).toBe(6);
@@ -624,6 +624,46 @@ describe('StrategyService', () => {
       expect(StrategyService.executeBuy).toHaveBeenCalledWith(
         expect.objectContaining({ _id: 'strat-daily' })
       );
+    });
+  });
+
+  describe('sellAllOrders()', () => {
+    it('should continue processing when one await order fails', async () => {
+      const awaitOrders = [
+        { _id: 'await-1', strategy_id: 'strat-1' },
+        { _id: 'await-2', strategy_id: 'strat-2' },
+      ];
+
+      AwaitService.index.mockResolvedValue(awaitOrders);
+      AwaitService.update.mockResolvedValue({});
+
+      const strategy1 = { _id: 'strat-1', exchange: 'binance' };
+      const strategy2 = { _id: 'strat-2', exchange: 'binance' };
+
+      AipStrategyModel.findById.mockResolvedValueOnce(strategy1).mockResolvedValueOnce(strategy2);
+
+      // First sell fails, second succeeds
+      AwaitService.sellOnThirdParty
+        .mockRejectedValueOnce(new Error('Exchange error'))
+        .mockResolvedValueOnce({});
+
+      await StrategyService.sellAllOrders();
+
+      // Both should be attempted
+      expect(AipStrategyModel.findById).toHaveBeenCalledTimes(2);
+      expect(AwaitService.sellOnThirdParty).toHaveBeenCalledTimes(2);
+    });
+
+    it('should skip when strategy not found for await order', async () => {
+      const awaitOrders = [{ _id: 'await-1', strategy_id: 'strat-missing' }];
+
+      AwaitService.index.mockResolvedValue(awaitOrders);
+      AwaitService.update.mockResolvedValue({});
+      AipStrategyModel.findById.mockResolvedValue(null);
+
+      await StrategyService.sellAllOrders();
+
+      expect(AwaitService.sellOnThirdParty).not.toHaveBeenCalled();
     });
   });
 

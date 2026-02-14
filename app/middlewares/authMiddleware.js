@@ -18,7 +18,7 @@ const authMiddleware = async (req, res, next) => {
 
   // Check if token information is complete
   if (!currentPath || !token || !userId) {
-    ResponseHandler.fail(res, STATUS_TYPE.unauthorized, STATUS_TYPE.tokenIllegal);
+    ResponseHandler.fail(res, STATUS_TYPE.HTTP_UNAUTHORIZED, STATUS_TYPE.PORTAL_TOKEN_ILLEGAL);
     return;
   }
 
@@ -27,27 +27,27 @@ const authMiddleware = async (req, res, next) => {
 
   // Check if the document exists
   if (!loginInfoObj) {
-    ResponseHandler.fail(res, STATUS_TYPE.unauthorized, STATUS_TYPE.tokenIllegal);
+    ResponseHandler.fail(res, STATUS_TYPE.HTTP_UNAUTHORIZED, STATUS_TYPE.PORTAL_TOKEN_ILLEGAL);
     return;
   }
 
   // Check if the token has expired
   if ((+new Date() - loginInfoObj.last_access_time) / 1000 > 100000) {
     await AuthService.deleteToken(loginInfoObj);
-    ResponseHandler.fail(res, STATUS_TYPE.unauthorized, STATUS_TYPE.tokenExpired);
+    ResponseHandler.fail(res, STATUS_TYPE.HTTP_UNAUTHORIZED, STATUS_TYPE.PORTAL_TOKEN_EXPIRED);
     return;
   }
 
   // Check if the userId matches the user_id recorded in loginInfoObj
   if (loginInfoObj.user_id.toString() !== userId) {
-    ResponseHandler.fail(res, STATUS_TYPE.unauthorized, STATUS_TYPE.tokenIllegal);
+    ResponseHandler.fail(res, STATUS_TYPE.HTTP_UNAUTHORIZED, STATUS_TYPE.PORTAL_TOKEN_ILLEGAL);
     return;
   }
 
   // Update the latest access time of loginInfoObj
   loginInfoObj.last_access_time = +new Date();
   await AuthService.modifyAccessTime(loginInfoObj);
-  // req.userId = userId;
+  req.userId = userId;
   next();
 };
 

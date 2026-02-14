@@ -13,8 +13,8 @@ const validateParams = (schema) => [
       }));
       return ResponseHandler.fail(
         res,
-        STATUS_TYPE.badRequest,
-        STATUS_TYPE.paramsError,
+        STATUS_TYPE.HTTP_BAD_REQUEST,
+        STATUS_TYPE.COMMON_PARAMS_ERROR,
         paramErrors,
       );
     }

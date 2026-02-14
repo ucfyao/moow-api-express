@@ -51,11 +51,7 @@ router.get('/api/v1/captcha', AuthController.getCaptcha);
  *       200:
  *         description: User logged in successfully
  */
-router.post(
-  '/api/v1/auth/login',
-  validateParams(signinValidatorSchema),
-  AuthController.signin,
-);
+router.post('/api/v1/auth/login', validateParams(signinValidatorSchema), AuthController.signin);
 
 /**
  * @swagger
@@ -73,7 +69,7 @@ router.delete(
   '/api/v1/auth/logout',
   validateParams(signoutValidatorSchema),
   authMiddleware,
-  AuthController.signout,
+  AuthController.signout
 );
 
 /**
@@ -128,7 +124,7 @@ router.patch('/api/v1/auth/passwordReset', AuthController.resetPassword);
 router.post(
   '/api/v1/auth/activation',
   validateParams(sendActivateEmailValidatorSchema),
-  AuthController.sendActivateEmail,
+  AuthController.sendActivateEmail
 );
 /**
  * @swagger
@@ -161,7 +157,7 @@ router.post(
 router.post(
   '/api/v1/auth/signup',
   validateParams(createUserValidatorSchema),
-  AuthController.signUp,
+  AuthController.signUp
 );
 
 /**
@@ -193,6 +189,22 @@ router.patch('/api/v1/auth/verification', AuthController.activateUser);
 
 /**
  * @swagger
+ * /api/v1/auth/refresh:
+ *   post:
+ *     summary: Refresh token
+ *     tags:
+ *       - Authentication
+ *     description: Refresh the current session token. Requires valid auth headers.
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *       401:
+ *         description: Invalid or expired token
+ */
+router.post('/api/v1/auth/refresh', authMiddleware, AuthController.refresh);
+
+/**
+ * @swagger
  * /api/v1/auth/passwordRecovery:
  *   post:
  *     summary: Password recovery
@@ -216,7 +228,7 @@ router.patch('/api/v1/auth/verification', AuthController.activateUser);
 router.post(
   '/api/v1/auth/passwordRecovery',
   validateParams(retrievePasswordValidatorSchema),
-  AuthController.sendRetrieveEmail,
+  AuthController.sendRetrieveEmail
 );
 
 module.exports = router;
