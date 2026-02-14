@@ -107,6 +107,36 @@ class StrategyController {
     const message = `Strategy ${strategyId} executed successfully`;
     return ResponseHandler.success(res, result, 200, 0, message);
   }
+
+  /**
+   * Get exchange balance for a strategy's trading pair
+   * @param {Request} req
+   * @param {Response} res
+   */
+  async getBalance(req, res) {
+    const data = await StrategyService.getBalance(req.params.id, req.userId);
+    return ResponseHandler.success(res, data);
+  }
+
+  /**
+   * Get summary of all user's active strategies
+   * @param {Request} req
+   * @param {Response} res
+   */
+  async getSummary(req, res) {
+    const data = await StrategyService.getSummary(req.userId);
+    return ResponseHandler.success(res, data);
+  }
+
+  /**
+   * Get public DCA order data for homepage chart
+   * @param {Request} req
+   * @param {Response} res
+   */
+  async getPublicOrders(req, res) {
+    const data = await StrategyService.getPublicOrders();
+    return ResponseHandler.success(res, data);
+  }
 }
 
 module.exports = new StrategyController();

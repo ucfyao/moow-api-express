@@ -2,6 +2,8 @@ const ccxt = require('ccxt');
 const dayjs = require('dayjs');
 const AipStrategyModel = require('../models/aipStrategyModel');
 const AipAwaitModel = require('../models/aipAwaitModel');
+const AipOrderModel = require('../models/aipOrderModel');
+const AipExchangeKeyModel = require('../models/aipExchangeKeyModel');
 const DataExchangeSymbolModel = require('../models/dataExchangeSymbolModel');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 const logger = require('../utils/logger');
@@ -628,6 +630,86 @@ class StrategyService {
     }
 
     logger.info(`### Round time: ${Date.now() - start}ms`);
+  }
+
+  /**
+   * Get exchange balance for a strategy's trading pair
+   * @param {string} strategyId - The strategy id
+   * @param {string} userId - The user id
+   * @returns {Object} Balance info for the strategy's quote currency
+   */
+  async getBalance(strategyId, userId) {
+    const strategy = await AipStrategyModel.findById(strategyId);
+    if (!strategy || strategy.user.toString() !== userId) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND, 404, 'Strategy not found');
+    }
+
+    const exchangeKey = await AipExchangeKeyModel.findById(strategy.user_market_id);
+    if (!exchangeKey) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND, 404, 'Exchange key not found');
+    }
+
+    const decryptedKey = decrypt(exchangeKey.access_key);
+    const decryptedSecret = decrypt(exchangeKey.secret_key);
+
+    const exchange = new ccxt[strategy.exchange]({
+      apiKey: decryptedKey,
+      secret: decryptedSecret,
+      timeout: config.exchangeTimeOut,
+    });
+
+    const balance = await exchange.fetchBalance();
+    const [, quote] = strategy.symbol.split('/');
+
+    return {
+      free: balance.free[quote] || 0,
+      used: balance.used[quote] || 0,
+      total: balance.total[quote] || 0,
+      currency: quote,
+    };
+  }
+
+  /**
+   * Get summary of all user's active strategies
+   * @param {string} userId - The user id
+   * @returns {Object} Summary statistics
+   */
+  async getSummary(userId) {
+    const strategies = await AipStrategyModel.find({
+      user: userId,
+      status: AipStrategyModel.STRATEGY_STATUS_NORMAL,
+    }).lean();
+
+    let totalInvested = 0;
+    let totalValue = 0;
+
+    for (const s of strategies) {
+      totalInvested += s.base_total || 0;
+      totalValue += (s.quote_total || 0) * (s.sell_price || 0);
+    }
+
+    const totalProfit = totalValue - totalInvested;
+    const profitRate = totalInvested > 0 ? (totalProfit / totalInvested) * 100 : 0;
+
+    return {
+      strategyCount: strategies.length,
+      totalInvested,
+      totalValue,
+      totalProfit,
+      profitRate: profitRate.toFixed(2),
+    };
+  }
+
+  /**
+   * Get public DCA order data for homepage chart
+   * @returns {Object} Recent buy orders list
+   */
+  async getPublicOrders() {
+    const orders = await AipOrderModel.find({ side: 'buy' })
+      .sort({ created_at: -1 })
+      .limit(20)
+      .lean();
+    return { list: orders };
   }
 
   /**
