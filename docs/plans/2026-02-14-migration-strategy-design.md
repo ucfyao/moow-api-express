@@ -121,8 +121,8 @@ All foundation work is done in both projects:
 | Session | Tickets | Work |
 |---------|---------|------|
 | S3 | 501, 504 | Strategy list page: profit display, pagination, real-time data |
-| S4 | 505-526 | Create/edit strategy page: form, validation, submission |
-| S5 | 529 | Create strategy frontend-backend integration |
+| S4 | 505-526 | ~~Create/edit strategy page: form, validation, submission~~ DONE (PR #95) |
+| S5 | 529 | ~~Create strategy frontend-backend integration~~ DONE (PR #99) |
 | S6 | 507, 528, 531 | Strategy detail page + order display + integration |
 | S7 | 603-613 | Exchange key management complete flow |
 | S8 | 701-800 | Order history: list, detail, statistics |
@@ -191,6 +191,57 @@ All foundation work is done in both projects:
   - Value averaging sell strategy not implemented (future scope)
   - User ownership validation still commented out in `partiallyUpdateStrategy`
   - Inviter reward token transfer not implemented (pending assets module)
+
+### S4 — 2026-02-14: Create/Edit Strategy Page
+- **Repo:** moow-web-next
+- **Tickets:** 505-526
+- **What was done:**
+  - Rewrote `addstrategy/page.tsx` with form validation, i18n, and MUI notifications
+  - Replaced raw axios with HTTP client, added Snackbar/Alert for feedback
+  - Added period translation keys (hour_0-23, weekdays, day_1-28) to en.json and zh.json
+  - Removed key/secret from form data (security concern)
+  - Fixed CSS class references and duplicate validation errors
+  - All 81 tests passing
+- **PR:** #95
+- **Remaining issues:**
+  - Static symbol list (fetchExchangeSymbolList) — needs API integration (S5 scope)
+  - Strategy detail response shape mismatch (S5 scope)
+
+### S5 — 2026-02-14: Create Strategy Frontend-Backend Integration
+- **Repo:** moow-web-next
+- **Tickets:** 529
+- **What was done:**
+  - Replaced static `fetchExchangeSymbolList()` with dynamic `GET /v1/symbols` API call
+  - Symbols fetched once on mount, cached in `useRef`, filtered by exchange on selection
+  - Fixed strategy detail response shape: `res.data.info` instead of `res.data`
+  - Added `key`/`secret` fields to form data for strategy creation payload
+  - Separated create vs update payloads — update only sends editable fields per backend validator
+  - Added `secret_key` to `UserMarketItem` and `exchange` to `SymbolItem` interfaces
+  - Properly cast `type`/`period` as `String()` when loading from strategy detail
+  - All 94 tests passing (12 suites)
+- **PR:** #99
+- **Remaining issues:**
+  - Key masking mismatch: `GET /v1/keys` returns masked keys but `POST /v1/strategies` requires raw keys. Backend needs modification to look up keys by `user_market_id` during strategy creation (backend session needed)
+  - Value averaging sell strategy not implemented (future scope)
+
+### S6 — 2026-02-14: Strategy Detail Page Enhancement
+- **Repo:** moow-web-next
+- **Tickets:** 507, 528, 531
+- **What was done:**
+  - Added manual buy button (`POST /v1/strategies/:id/execute-buy`) with confirmation dialog
+  - Added manual sell button (`POST /v1/strategies/:id/execute-sell`) with confirmation dialog
+  - Added strategy status badge (running/stopped) with color-coded display
+  - Added edit button linking to strategy edit page
+  - Buttons disabled when strategy is stopped or action is in progress
+  - Added loading state during buy/sell execution
+  - Added `strategy.*` i18n keys to both zh.json and en.json (9 keys each)
+  - Added action bar CSS with status badge styles
+  - Changed `StrategyDetail.status` type from `string` to `number` for proper comparison
+  - All 94 tests passing (12 suites)
+- **PR:** #98
+- **Remaining issues:**
+  - Strategy detail page already had: info display, chart, order table, pagination, stats (from prior work)
+  - No test for the new manual buy/sell buttons (page-level tests not in scope per test config)
 
 ## Best Practices for Working with Claude
 
