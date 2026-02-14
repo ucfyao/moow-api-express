@@ -128,6 +128,38 @@ class AuthService {
     }
   }
 
+  async refreshToken(currentToken, userId, userIp) {
+    const tokenDoc = await PortalTokenModel.findOne({
+      token: currentToken,
+      type: 'session',
+    });
+
+    if (!tokenDoc) {
+      throw new CustomError(STATUS_TYPE.PORTAL_TOKEN_ILLEGAL, 401);
+    }
+
+    if (tokenDoc.user_id.toString() !== userId) {
+      throw new CustomError(STATUS_TYPE.PORTAL_TOKEN_ILLEGAL, 401);
+    }
+
+    if ((+new Date() - tokenDoc.last_access_time) / 1000 > 100000) {
+      await PortalTokenModel.deleteOne({ _id: tokenDoc._id });
+      throw new CustomError(STATUS_TYPE.PORTAL_TOKEN_EXPIRED, 401);
+    }
+
+    // Delete old token
+    await PortalTokenModel.deleteOne({ _id: tokenDoc._id });
+
+    // Get user info for generating new token
+    const user = await PortalUserModel.findById(userId).lean();
+    if (!user) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
+
+    const newToken = await this._getToken(user, userIp);
+    return { token: newToken };
+  }
+
   async getLoginfoByToken(token) {
     const tokenObj = await PortalTokenModel.findOne({ token });
     return tokenObj;

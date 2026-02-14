@@ -84,6 +84,14 @@ class AuthController {
     return ResponseHandler.success(res, resMessage);
   }
 
+  async refresh(req, res) {
+    const currentToken = req.headers.token;
+    const userId = req.userId;
+    const userIp = req.ip;
+    const data = await AuthService.refreshToken(currentToken, userId, userIp);
+    return ResponseHandler.success(res, data);
+  }
+
   // send retrieve password email
   async sendRetrieveEmail(req, res) {
     const { userEmail, captcha } = req.body;

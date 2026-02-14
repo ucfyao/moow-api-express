@@ -193,6 +193,22 @@ router.patch('/api/v1/auth/verification', AuthController.activateUser);
 
 /**
  * @swagger
+ * /api/v1/auth/refresh:
+ *   post:
+ *     summary: Refresh token
+ *     tags:
+ *       - Authentication
+ *     description: Refresh the current session token. Requires valid auth headers.
+ *     responses:
+ *       200:
+ *         description: Token refreshed successfully
+ *       401:
+ *         description: Invalid or expired token
+ */
+router.post('/api/v1/auth/refresh', authMiddleware, AuthController.refresh);
+
+/**
+ * @swagger
  * /api/v1/auth/passwordRecovery:
  *   post:
  *     summary: Password recovery
