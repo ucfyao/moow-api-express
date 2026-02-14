@@ -174,7 +174,7 @@ class StrategyService {
     const conditions = {
       strategy_id: doc._id,
       user: doc.user,
-      sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
+      sell_type: AipAwaitModel.SELL_TYPE_DEL_INVEST,
       await_status: AipAwaitModel.STATUS_WAITING,
     };
     await AwaitService.createAwait(conditions);
@@ -509,8 +509,16 @@ class StrategyService {
       const updateResult = await AwaitService.update(conditions);
       logger.info(`### Round time: ${JSON.stringify(updateResult)}`);
       for (const awaitorder of awaitOrders) {
-        const strategy = await AipStrategyModel.findById(awaitorder.strategy_id);
-        await AwaitService.sellOnThirdParty(strategy, awaitorder);
+        try {
+          const strategy = await AipStrategyModel.findById(awaitorder.strategy_id);
+          if (!strategy) {
+            logger.error(`Strategy not found for await order ${awaitorder._id}, strategy_id: ${awaitorder.strategy_id}`);
+            continue;
+          }
+          await AwaitService.sellOnThirdParty(strategy, awaitorder);
+        } catch (err) {
+          logger.error(`Failed to process await order ${awaitorder._id}: ${err.message}`);
+        }
       }
     }
 
