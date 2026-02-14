@@ -1,6 +1,8 @@
 const ccxt = require('ccxt');
 const AipExchangeKeyModel = require('../models/aipExchangeKeyModel');
 const { decrypt, encrypt } = require('../utils/cryptoUtils');
+const CustomError = require('../utils/customError');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class KeyService {
   async getAllKeys(params) {
@@ -21,8 +23,9 @@ class KeyService {
 
     const { keyword } = params;
     if (typeof keyword !== 'undefined') {
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       conditions = Object.assign(conditions, {
-        $or: [{ exchange: new RegExp(keyword, 'i') }, { desc: new RegExp(keyword, 'i') }],
+        $or: [{ exchange: new RegExp(escaped, 'i') }, { desc: new RegExp(escaped, 'i') }],
       });
     }
 
@@ -76,6 +79,31 @@ class KeyService {
     const exchangeKey = new AipExchangeKeyModel(keyData);
     await exchangeKey.save();
     return { exchangeKey, validation };
+  }
+
+  async updateKey(keyData) {
+    const exchangeKey = await AipExchangeKeyModel.findById(keyData.id);
+    if (!exchangeKey) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND);
+    }
+
+    if (keyData.exchange !== undefined) exchangeKey.exchange = keyData.exchange;
+    if (keyData.desc !== undefined) exchangeKey.desc = keyData.desc;
+
+    if (keyData.access_key && keyData.secret_key) {
+      const newExchange = new ccxt[keyData.exchange || exchangeKey.exchange]({
+        apiKey: keyData.access_key,
+        secret: keyData.secret_key,
+      });
+      await newExchange.fetchBalance();
+
+      exchangeKey.secret_show = `${keyData.secret_key.slice(0, 3)}******${keyData.secret_key.slice(-3)}`;
+      exchangeKey.access_key = encrypt(keyData.access_key);
+      exchangeKey.secret_key = encrypt(keyData.secret_key);
+    }
+
+    await exchangeKey.save();
+    return exchangeKey;
   }
 
   async deleteKey(id) {

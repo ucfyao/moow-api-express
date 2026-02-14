@@ -1,7 +1,7 @@
 const Hashids = require('hashids');
 
 function hashidsEncode(id, paddingLen = 8) {
-  if (id.isNaN) return '';
+  if (Number.isNaN(id)) return '';
   const hashids = new Hashids('xiaobao', paddingLen, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890');
   return hashids.encode(id);
 }

@@ -15,8 +15,10 @@ const PortalTokenSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'portal_tokens', // Explicit collection name
-  },
+  }
 );
+
+PortalTokenSchema.index({ user_id: 1, type: 1 });
 
 const PortalTokenModel = mongoose.model('portal_token', PortalTokenSchema);
 module.exports = PortalTokenModel;

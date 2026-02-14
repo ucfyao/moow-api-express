@@ -81,7 +81,7 @@ describe('AwaitService', () => {
         expect.objectContaining({
           apiKey: 'api-key',
           secret: 'api-secret',
-        }),
+        })
       );
       // Verify createOrder uses strategy params
       expect(mockExchange.createOrder).toHaveBeenCalledWith('BTC/USDT', 'market', 'sell', 0.5);
@@ -92,7 +92,7 @@ describe('AwaitService', () => {
           symbol: 'BTC/USDT',
           side: 'sell',
           type: 'market',
-        }),
+        })
       );
       expect(awaitOrder.await_status).toBe(AipAwaitModel.STATUS_COMPLETED);
       expect(awaitOrder.save).toHaveBeenCalled();

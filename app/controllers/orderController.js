@@ -8,15 +8,22 @@ class OrderController {
     return ResponseHandler.success(res, orders);
   }
 
+  // TODO: Accept keyId instead of raw credentials, decrypt server-side
   async listThirdPartyOrders(req, res) {
     const { exchangeName, symbol, apiKey, secret } = req.query;
-    const oders = await OrderService.getThirdPartyOrders(exchangeName, symbol, apiKey, secret);
-    return ResponseHandler.success(res, oders);
+    const orders = await OrderService.getThirdPartyOrders(exchangeName, symbol, apiKey, secret);
+    return ResponseHandler.success(res, orders);
   }
 
-  async cancelAllOpenThirdPartyOrders (req, res) {
+  // TODO: Accept keyId instead of raw credentials, decrypt server-side
+  async cancelAllOpenThirdPartyOrders(req, res) {
     const { exchangeName, symbol, apiKey, secret } = req.query;
-    const orders = await OrderService.cancelAllOpenThirdPartyOrders(exchangeName, symbol, apiKey, secret);
+    const orders = await OrderService.cancelAllOpenThirdPartyOrders(
+      exchangeName,
+      symbol,
+      apiKey,
+      secret
+    );
     return ResponseHandler.success(res, orders);
   }
 }

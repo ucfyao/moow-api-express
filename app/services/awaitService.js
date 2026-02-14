@@ -4,6 +4,7 @@ const logger = require('../utils/logger');
 const OrderService = require('./orderService');
 const { decrypt } = require('../utils/cryptoUtils');
 const config = require('../../config');
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const ccxt = require('ccxt');
 
@@ -14,23 +15,25 @@ class AwaitService {
    */
   async createAwait(params) {
     const start = Date.now();
-    let conditions = {};
+    const conditions = {};
     if (typeof params.strategy_id !== 'undefined') conditions.strategy_id = params.strategy_id;
     if (typeof params.user !== 'undefined') conditions.user = params.user;
     if (typeof params.sell_type !== 'undefined') conditions.sell_type = params.sell_type;
     if (typeof params.await_status !== 'undefined') conditions.await_status = params.await_status;
     const newAwait = await new AipAwaitModel(conditions).save();
-    logger.info(`\nNew Await\n  Strategy Id: \t${conditions.strategy_id}\n  User: \t${conditions.user}\n  Response Time: \t${Date.now() - start} ms\n`);
-    
+    logger.info(
+      `\nNew Await\n  Strategy Id: \t${conditions.strategy_id}\n  User: \t${conditions.user}\n  Response Time: \t${Date.now() - start} ms\n`
+    );
+
     return newAwait;
   }
 
   /**
    * Get all pending orders information.
-   * @param {object} conditions 
+   * @param {object} conditions
    */
   async index(conditions) {
-    const awaitOrders = await AipAwaitModel.find(conditions); 
+    const awaitOrders = await AipAwaitModel.find(conditions);
     return awaitOrders;
   }
 
@@ -39,19 +42,21 @@ class AwaitService {
    * @param {object} conditions
    */
   async update(conditions) {
-    const updatedOrders = await AipAwaitModel.updateMany(conditions, {'await_status': AipAwaitModel.STATUS_PROCESSING});
+    const updatedOrders = await AipAwaitModel.updateMany(conditions, {
+      await_status: AipAwaitModel.STATUS_PROCESSING,
+    });
     return updatedOrders;
   }
 
   /**
    * Execute a sell operation on a third-party platform based on the await database and add the results to the order database.
-   * @param {object} strategy 
-   * @param {object} awaitOrder 
-   * @returns 
+   * @param {object} strategy
+   * @param {object} awaitOrder
+   * @returns
    */
   async sellOnThirdParty(strategy, awaitOrder) {
     if (strategy.exchange === undefined) {
-      logger.info('[' + strategy._id + '] - exchange is null , call user !');
+      logger.info(`[${strategy._id}] - exchange is null , call user !`);
       return;
     }
 
@@ -63,82 +68,100 @@ class AwaitService {
       apiKey,
       secret,
       timeout: config.exchangeTimeOut,
+      enableRateLimit: true,
     });
     const type = 'market';
     const side = 'sell';
     const orderRes = await exchange.createOrder(
-      strategy.symbol, type, side, strategy.now_quote_total,
+      strategy.symbol,
+      type,
+      side,
+      strategy.now_quote_total
     );
 
     logger.info(`[order id ] - ${orderRes.id}`);
 
-    await sleep(5000);
+    try {
+      await sleep(5000);
 
-    const orderInfo = await exchange.fetchOrder(orderRes.id, strategy.symbol);
-    logger.info(`[order info] - ${JSON.stringify(orderInfo.info)}`);
-    const sellTimes = strategy.sell_times + 1;
-    strategy.sell_price =  orderInfo.average;
-    strategy.sell_times =  sellTimes;
+      const orderInfo = await exchange.fetchOrder(orderRes.id, strategy.symbol);
+      logger.info(`[order info] - ${JSON.stringify(orderInfo.info)}`);
+      const sellTimes = strategy.sell_times + 1;
+      strategy.sell_price = orderInfo.average;
+      strategy.sell_times = sellTimes;
 
-    let profit = strategy.quote_total * strategy.sell_price - strategy.base_total;
-    let profitPercentage = profit / strategy.base_total * 100;
+      const profit = strategy.quote_total * strategy.sell_price - strategy.base_total;
+      const profitPercentage = (profit / strategy.base_total) * 100;
 
-    // create order
-    const newOrder = {
-      strategy_id: strategy._id,
-      order_id: orderRes.id,
-      type,
-      side,
-      price: orderInfo.average,
-      amount: orderInfo.amount,
-      funds: strategy.now_quote_total * orderInfo.average,
-      avg_price: orderInfo.average,
-      deal_amount: orderInfo.amount,
-      cost: orderInfo.filled,
-      status: orderInfo.status,
-      symbol: strategy.symbol,
-      mid: strategy.user_market_id,
-      base_total: strategy.base_total,
-      quote_total: strategy.quote_total,
-      value_total: strategy.quote_total * strategy.sell_price,
-      now_base_total: strategy.now_base_total,
-      now_quote_total: strategy.now_base_total,
-      sell_times: sellTimes,
-      now_buy_times: strategy.now_buy_times,
-      buy_times: strategy.buy_times,
-      profit,
-      profit_percentage: profitPercentage,
-      record_amount: orderInfo.amount,
-      record_cost: orderInfo.cost,
-      pl_create_at: new Date(),
-    };
+      // create order
+      const newOrder = {
+        strategy_id: strategy._id,
+        order_id: orderRes.id,
+        type,
+        side,
+        price: orderInfo.average,
+        amount: orderInfo.amount,
+        funds: strategy.now_quote_total * orderInfo.average,
+        avg_price: orderInfo.average,
+        deal_amount: orderInfo.amount,
+        cost: orderInfo.filled,
+        status: orderInfo.status,
+        symbol: strategy.symbol,
+        mid: strategy.user_market_id,
+        base_total: strategy.base_total,
+        quote_total: strategy.quote_total,
+        value_total: strategy.quote_total * strategy.sell_price,
+        now_base_total: strategy.now_base_total,
+        now_quote_total: strategy.now_base_total,
+        sell_times: sellTimes,
+        now_buy_times: strategy.now_buy_times,
+        buy_times: strategy.buy_times,
+        profit,
+        profit_percentage: profitPercentage,
+        record_amount: orderInfo.amount,
+        record_cost: orderInfo.cost,
+        pl_create_at: new Date(),
+      };
 
-    const createOrder = await OrderService.create(newOrder);
-    logger.info(`[new order] - ${createOrder._id}`);
+      const createOrder = await OrderService.create(newOrder);
+      logger.info(`[new order] - ${createOrder._id}`);
 
-    awaitOrder.await_status = AipAwaitModel.STATUS_COMPLETED;
-    await awaitOrder.save();
+      awaitOrder.await_status = AipAwaitModel.STATUS_COMPLETED;
+      await awaitOrder.save();
 
-    if (awaitOrder.sell_type === AipAwaitModel.SELL_TYPE_AUTO_SELL) {
-      //auto_create filed is not in the strategy module
-      if (strategy.auto_create === 'Y') {
-        strategy.now_base_total = 0 ;
-        strategy.now_buy_times= 0;
-        strategy.value_total = 0;
-        logger.info(`Automatically restart after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `);
-      }else{
-        strategy.status = AipStrategyModel.STRATEGY_STATUS_CLOSED;
-        strategy.stop_reason = 'profit auto sell';
-        logger.info(`Automatically close after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `);
-  
+      if (awaitOrder.sell_type === AipAwaitModel.SELL_TYPE_AUTO_SELL) {
+        // auto_create filed is not in the strategy module
+        if (strategy.auto_create === 'Y') {
+          strategy.now_base_total = 0;
+          strategy.now_buy_times = 0;
+          strategy.value_total = 0;
+          logger.info(
+            `Automatically restart after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `
+          );
+        } else {
+          strategy.status = AipStrategyModel.STRATEGY_STATUS_CLOSED;
+          strategy.stop_reason = 'profit auto sell';
+          logger.info(
+            `Automatically close after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `
+          );
+        }
+      } else if (awaitOrder.sell_type === AipAwaitModel.SELL_TYPE_DEL_INVEST) {
+        strategy.status = AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED;
+        strategy.stop_reason = 'user delete sell';
+        logger.info(
+          `User deleted investment:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `
+        );
       }
-    } else if (awaitOrder.sell_type === AipAwaitModel.SELL_TYPE_DEL_INVEST) {
-      strategy.status = AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED;
-      strategy.stop_reason = 'user delete sell';
-      logger.info(`User deleted investment:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `);
-    }
 
-    await strategy.save();
+      await strategy.save();
+    } catch (error) {
+      logger.error(
+        `sellOnThirdParty: post-order processing failed for exchange order ${orderRes.id}, ` +
+          `strategy ${strategy._id}, symbol ${strategy.symbol}. ` +
+          `Manual recovery may be required. Error: ${error.message}`
+      );
+      throw error;
+    }
   }
 }
 

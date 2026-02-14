@@ -85,17 +85,21 @@ class AuthService {
     const user = await PortalUserModel.findOne({ email: loginInfo.email }).lean();
 
     if (!user) {
-      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+      throw new CustomError(STATUS_TYPE.PORTAL_INCORRECT_PASSWORD);
     }
 
     const isPasswordCorrect = await this._verifyPassword(
       loginInfo.password,
       user.salt,
-      user.password,
+      user.password
     );
 
     if (!isPasswordCorrect) {
-      throw new Error('Incorrect password');
+      throw new CustomError(STATUS_TYPE.PORTAL_INCORRECT_PASSWORD);
+    }
+
+    if (!user.is_activated) {
+      throw new CustomError(STATUS_TYPE.PORTAL_NOT_ACTIVATED);
     }
 
     await PortalTokenModel.deleteMany({ user_id: user._id, type: 'session' });
@@ -134,7 +138,7 @@ class AuthService {
   }
 
   async deleteToken(loginInfo) {
-    await loginInfo.findOneAndDelete();
+    await PortalTokenModel.findOneAndDelete({ _id: loginInfo._id });
     return loginInfo;
   }
 
@@ -342,7 +346,6 @@ class AuthService {
 
   async _getToken(user, userIp) {
     const token = this._generateToken(user);
-    this.userIp = userIp;
     await new PortalTokenModel({
       user_id: user._id,
       token,

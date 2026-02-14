@@ -334,9 +334,7 @@ describe('AuthService', () => {
       expect(refUser.save).toHaveBeenCalled();
       expect(refUser.vip_time_out_at).toBeInstanceOf(Date);
       // The new date should be 1 day after 2026-03-01
-      expect(refUser.vip_time_out_at.getTime()).toBeGreaterThan(
-        new Date('2026-03-01').getTime(),
-      );
+      expect(refUser.vip_time_out_at.getTime()).toBeGreaterThan(new Date('2026-03-01').getTime());
     });
 
     it('should throw when activation token not found', async () => {
@@ -372,7 +370,7 @@ describe('AuthService', () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         'Error sending activation email:',
-        'SMTP connection error',
+        'SMTP connection error'
       );
       expect(result.message).toBe('Activation email will be sent!');
     });

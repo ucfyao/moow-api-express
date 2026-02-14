@@ -128,12 +128,24 @@ describe('UserService', () => {
   describe('getAllUsers()', () => {
     it('should call PortalUserModel.find()', async () => {
       const mockUsers = [{ email: 'a@b.com' }, { email: 'c@d.com' }];
-      PortalUserModel.find.mockResolvedValue(mockUsers);
+      PortalUserModel.countDocuments.mockResolvedValue(2);
+      PortalUserModel.find.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          sort: jest.fn().mockReturnValue({
+            skip: jest.fn().mockReturnValue({
+              limit: jest.fn().mockReturnValue({
+                lean: jest.fn().mockResolvedValue(mockUsers),
+              }),
+            }),
+          }),
+        }),
+      });
 
       const result = await UserService.getAllUsers();
 
       expect(PortalUserModel.find).toHaveBeenCalled();
-      expect(result).toEqual(mockUsers);
+      expect(result.list).toEqual(mockUsers);
+      expect(result.total).toBe(2);
     });
   });
 });

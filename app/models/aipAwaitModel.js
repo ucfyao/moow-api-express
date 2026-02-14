@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 
 const AipAwaitSchema = new mongoose.Schema(
   {
-    //id: { type: String, unique: true, trim: true }, // 自增id
+    // id: { type: String, unique: true, trim: true }, // 自增id
     strategy_id: { type: String, trim: true }, // Investment strategy id
     user: { type: mongoose.Schema.Types.ObjectId, unique: false, ref: 'PortalUser' },
     await_status: { type: Number, trim: true }, // 1: Waiting 2: Completed 3: Processing
@@ -25,7 +25,7 @@ const AipAwaitSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'aip_awaits',
-  },
+  }
 );
 // QuantsDingtouAwaitSchema.statics.findAndModify = function (query, sort, doc, options, callback) {
 //   return this.collection.findAndModify(query, sort, doc, options, callback);
@@ -38,6 +38,8 @@ AipAwaitSchema.statics.STATUS_PROCESSING = 3;
 // Sell type
 AipAwaitSchema.statics.SELL_TYPE_AUTO_SELL = 1;
 AipAwaitSchema.statics.SELL_TYPE_DEL_INVEST = 2;
+
+AipAwaitSchema.index({ await_status: 1 });
 
 const AipAwaitModel = mongoose.model('aip_await', AipAwaitSchema);
 module.exports = AipAwaitModel;

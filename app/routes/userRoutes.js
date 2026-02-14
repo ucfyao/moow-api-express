@@ -1,5 +1,6 @@
 const express = require('express');
 const UserController = require('../controllers/userController');
+const authMiddleware = require('../middlewares/authMiddleware');
 const validateParams = require('../middlewares/validateMiddleware');
 
 const { updateUserValidatorSchema } = require('../validators/userValidator');
@@ -34,7 +35,7 @@ const router = express.Router();
  *                     type: string
  *                     example: "alice@example.com"
  */
-router.get('/api/v1/users', UserController.index);
+router.get('/api/v1/users', authMiddleware, UserController.index);
 
 /**
  * @swagger
@@ -69,7 +70,7 @@ router.get('/api/v1/users', UserController.index);
  *                   type: string
  *                   example: "alice@example.com"
  */
-router.get('/api/v1/users/:id', UserController.show);
+router.get('/api/v1/users/:id', authMiddleware, UserController.show);
 
 /**
  * @swagger
@@ -105,8 +106,9 @@ router.get('/api/v1/users/:id', UserController.show);
  */
 router.patch(
   '/api/v1/users/:id',
+  authMiddleware,
   validateParams(updateUserValidatorSchema),
-  UserController.patch,
+  UserController.patch
 );
 
 /**

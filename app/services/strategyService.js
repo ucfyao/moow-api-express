@@ -1,6 +1,8 @@
 const ccxt = require('ccxt');
+const dayjs = require('dayjs');
 const AipStrategyModel = require('../models/aipStrategyModel');
 const AipAwaitModel = require('../models/aipAwaitModel');
+const DataExchangeSymbolModel = require('../models/dataExchangeSymbolModel');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 const logger = require('../utils/logger');
 const OrderService = require('./orderService');
@@ -9,7 +11,6 @@ const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
 const { encrypt, decrypt } = require('../utils/cryptoUtils');
 const config = require('../../config');
-const dayjs = require('dayjs');
 
 class StrategyService {
   /**
@@ -21,7 +22,7 @@ class StrategyService {
     const start = Date.now();
 
     // Do not query strategies with SOFT_DELETED status by default
-    let conditions = {
+    const conditions = {
       user: params.userId,
       status: { $lt: AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED },
     };
@@ -33,17 +34,42 @@ class StrategyService {
     const pageNumber = params.pageNumber || 1;
     const pageSize = params.pageSize || 9999;
 
-    const list = await AipStrategyModel.find(conditions).sort({ created_at: -1 }).skip((pageNumber - 1) * pageSize).limit(pageSize).lean();
+    const list = await AipStrategyModel.find(conditions)
+      .sort({ created_at: -1 })
+      .skip((pageNumber - 1) * pageSize)
+      .limit(pageSize)
+      .lean();
 
-    // Calculate the profit rate accroding to the exchange symbol for every strategy
+    // Batch-fetch symbol prices to avoid N+1 queries
+    const uniquePairs = [];
+    const pairSet = new Set();
+    for (const item of list) {
+      const key = `${item.exchange}:${item.symbol}`;
+      if (!pairSet.has(key)) {
+        pairSet.add(key);
+        uniquePairs.push({ exchange: item.exchange, symbol: item.symbol });
+      }
+    }
+
+    const symbolLookup = {};
+    if (uniquePairs.length > 0) {
+      const symbolDocs = await DataExchangeSymbolModel.find({
+        $or: uniquePairs.map((p) => ({ exchange: p.exchange, symbol: p.symbol })),
+      })
+        .sort({ percent: -1 })
+        .lean();
+      for (const doc of symbolDocs) {
+        const lookupKey = `${doc.exchange}:${doc.symbol}`;
+        if (!symbolLookup[lookupKey]) {
+          symbolLookup[lookupKey] = doc;
+        }
+      }
+    }
+
+    // Calculate the profit rate for every strategy
     for (let i = 0, len = list.length; i < len; i++) {
-      const exSymConditions = {
-        exchange: list[i].exchange,
-        symbol: list[i].symbol,
-      };
-
-      const symbolList = await SymbolService.getAllSymbols(exSymConditions);
-      const symbolPrice = symbolList.list[0];
+      const lookupKey = `${list[i].exchange}:${list[i].symbol}`;
+      const symbolPrice = symbolLookup[lookupKey];
       if (!symbolPrice) {
         list[i].price_native = '-';
         list[i].profit = '-';
@@ -52,11 +78,14 @@ class StrategyService {
       }
       list[i].price_native = parseFloat(symbolPrice.price_native);
       list[i].profit = list[i].quote_total * symbolPrice.price_native - list[i].base_total;
-      list[i].profit_percentage = parseInt(list[i].base_total, 10) !== 0 ? list[i].profit / list[i].base_total * 100 : 0;
+      list[i].profit_percentage =
+        parseInt(list[i].base_total, 10) !== 0 ? (list[i].profit / list[i].base_total) * 100 : 0;
     }
-  
+
     const total = await AipStrategyModel.countDocuments(conditions);
-    logger.info(`\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${list.length}\n  Response Time: \t${Date.now() - start} ms\n`);
+    logger.info(
+      `\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${list.length}\n  Response Time: \t${Date.now() - start} ms\n`
+    );
 
     return {
       list,
@@ -82,12 +111,14 @@ class StrategyService {
 
     const symbolList = await SymbolService.getAllSymbols(exSymConditions);
     let symbolPrice = symbolList.list[0];
-    if(symbolPrice) {
+    if (symbolPrice) {
       symbolPrice.total_price = info.quote_total * symbolPrice.price_usd;
     } else {
       symbolPrice = {};
     }
-    logger.info(`\nQuery Details\n  Strategy Id: \t${id}\n  Info Details: \t${info}\n   Response Time: \t${Date.now() - start} ms\n`);
+    logger.info(
+      `\nQuery Details\n  Strategy Id: \t${id}\n  Info Details: \t${info}\n   Response Time: \t${Date.now() - start} ms\n`
+    );
 
     return { info, symbolPrice };
   }
@@ -99,7 +130,11 @@ class StrategyService {
    */
   async createStrategy(strategy) {
     const start = Date.now();
-    const processedStrategy = { ...strategy, minute:`${parseInt(60 * Math.random(),10)}`, hour:`${parseInt(24 * Math.random(),10)}`};
+    const processedStrategy = {
+      ...strategy,
+      minute: `${parseInt(60 * Math.random(), 10)}`,
+      hour: `${parseInt(24 * Math.random(), 10)}`,
+    };
 
     // Encrypt exchange credentials before storing
     if (processedStrategy.key) {
@@ -113,7 +148,9 @@ class StrategyService {
     await doc.save();
     const strategyId = doc ? doc._id : '';
 
-    logger.info(`\nNew Strategy\n  Strategy Id: \t${JSON.stringify(strategyId)}\n  Strategy Info: \t${JSON.stringify(processedStrategy)}\n  Response Time: \t${Date.now() - start} ms\n`);
+    logger.info(
+      `\nNew Strategy\n  Strategy Id: \t${JSON.stringify(strategyId)}\n  Strategy Info: \t${JSON.stringify(processedStrategy)}\n  Response Time: \t${Date.now() - start} ms\n`
+    );
 
     return { _id: strategyId };
   }
@@ -123,26 +160,26 @@ class StrategyService {
    * @param params - The strategy data needs to be updated
    * @returns id - Strategies _id
    */
-  async partiallyUpdateStrategy(params){
+  async partiallyUpdateStrategy(params) {
     const start = Date.now();
     const doc = await AipStrategyModel.findById(params._id);
 
     if (!doc) {
       throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND);
     }
-    // TODO test with portal user module
-    // if (doc.user.toString() !== params.user) {
-    //   throw  new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
-    // }
+    if (doc.user.toString() !== params.user) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
 
     if (typeof params.period !== 'undefined') doc.period = params.period;
     if (typeof params.period_value !== 'undefined') doc.period_value = params.period_value;
     if (typeof params.base_limit !== 'undefined') doc.base_limit = params.base_limit;
-    if (typeof params.stop_profit_percentage !== 'undefined') doc.stop_profit_percentage = params.stop_profit_percentage;
+    if (typeof params.stop_profit_percentage !== 'undefined')
+      doc.stop_profit_percentage = params.stop_profit_percentage;
     if (typeof params.drawdown !== 'undefined') doc.drawdown = params.drawdown;
-    
+
     // For status switching
-    if (typeof params.status !== 'undefined'){
+    if (typeof params.status !== 'undefined') {
       if (AipStrategyModel.STRATEGY_STATUS_NORMAL === parseInt(params.status, 10)) {
         doc.status = AipStrategyModel.STRATEGY_STATUS_NORMAL;
       } else if (AipStrategyModel.STRATEGY_STATUS_CLOSED === parseInt(params.status, 10)) {
@@ -151,7 +188,9 @@ class StrategyService {
     }
 
     await doc.save();
-    logger.info(`\nUpdate Strategy\n  Strategy Id: \t${JSON.stringify(params._id)}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`);
+    logger.info(
+      `\nUpdate Strategy\n  Strategy Id: \t${JSON.stringify(params._id)}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`
+    );
 
     return {
       _id: params._id,
@@ -163,7 +202,7 @@ class StrategyService {
    * @param strategy - The strategy needs to be soft deleted
    * @returns status - Strategy status
    */
-  async deleteStrategy(id){
+  async deleteStrategy(id) {
     const start = Date.now();
     const doc = await AipStrategyModel.findById(id);
 
@@ -182,8 +221,10 @@ class StrategyService {
     // soft delete, update the status
     doc.status = AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED;
     await doc.save();
-    logger.info(`\nDelete Strategy\n  Strategy Id: \t${id}\n  Response Time: \t${Date.now() - start} ms\n`);
-  
+    logger.info(
+      `\nDelete Strategy\n  Strategy Id: \t${id}\n  Response Time: \t${Date.now() - start} ms\n`
+    );
+
     return {
       status: doc.status,
     };
@@ -200,47 +241,53 @@ class StrategyService {
       status: AipStrategyModel.STRATEGY_STATUS_NORMAL,
       minute: now.get('minute').toString(),
     };
-    const strategiesArr = await AipStrategyModel.find(conditions).lean();
-    logger.info(`cur day: ${now.get('day')}, hour: ${now.get('hour')}, minite: ${now.get('minute')}`);
+    const strategiesArr = await AipStrategyModel.find(conditions);
+    logger.info(
+      `cur day: ${now.get('day')}, hour: ${now.get('hour')}, minite: ${now.get('minute')}`
+    );
 
     const results = [];
 
     for (const strategy of strategiesArr) {
-      if (strategy.exchange === undefined) {
-        logger.info(`[${strategy._id}] - exchange is null , call user!`);
-        continue;
-      }
-      switch (strategy.period * 1) {
-      case 1:
-        logger.info(`Daily purchase: ${strategy.period_value}, cur hour: ${now.get('hour')}`);
-        if (strategy.period_value.indexOf(now.get('hour')) !== -1) {
-          const result = await this.executeBuy(strategy);
-          results.push(result);
+      try {
+        if (strategy.exchange === undefined) {
+          logger.info(`[${strategy._id}] - exchange is null , call user!`);
+          continue;
         }
-        break;
-      case 2:
-        logger.info(`Weekly purchase: ${strategy.period_value}, cur hour: ${now.get('hour')}`);
-        if (
-          strategy.period_value.indexOf(now.get('day')) !== -1 &&
-            strategy.hour === now.get('hour').toString()
-        ) {
-          const result = await this.executeBuy(strategy);
-          results.push(result);
-        }
-        break;
+        switch (strategy.period * 1) {
+          case AipStrategyModel.PERIOD_DAILY:
+            logger.info(`Daily purchase: ${strategy.period_value}, cur hour: ${now.get('hour')}`);
+            if (strategy.period_value.indexOf(now.get('hour')) !== -1) {
+              const result = await this.processBuy(strategy);
+              results.push(result);
+            }
+            break;
+          case AipStrategyModel.PERIOD_WEEKLY:
+            logger.info(`Weekly purchase: ${strategy.period_value}, cur hour: ${now.get('hour')}`);
+            if (
+              strategy.period_value.indexOf(now.get('day')) !== -1 &&
+              strategy.hour === now.get('hour').toString()
+            ) {
+              const result = await this.processBuy(strategy);
+              results.push(result);
+            }
+            break;
 
-      case 3:
-        logger.info(`Monthly purchase: ${strategy.period_value},cur hour: ${now.get('hour')}`);
-        if (
-          strategy.period_value.indexOf(now.get('date')) !== -1 &&
-            strategy.hour === now.get('hour').toString()
-        ) {
-          const result = await this.executeBuy(strategy);
-          results.push(result);
+          case AipStrategyModel.PERIOD_MONTHLY:
+            logger.info(`Monthly purchase: ${strategy.period_value},cur hour: ${now.get('hour')}`);
+            if (
+              strategy.period_value.indexOf(now.get('date')) !== -1 &&
+              strategy.hour === now.get('hour').toString()
+            ) {
+              const result = await this.processBuy(strategy);
+              results.push(result);
+            }
+            break;
+          default:
+            logger.info('Trading period not found');
         }
-        break;
-      default:
-        logger.info('Trading period not found');
+      } catch (error) {
+        logger.error(`[executeAllBuys] Strategy ${strategy._id} failed: ${error.message}`);
       }
     }
     logger.info(`### Round time: ${Date.now() - start}ms`);
@@ -285,9 +332,7 @@ class StrategyService {
     if (market && market.limits) {
       const minCost = market.limits.cost && market.limits.cost.min;
       if (minCost && strategy.base_limit < minCost) {
-        logger.info(
-          `== order cost ${strategy.base_limit} is below exchange minimum ${minCost}`,
-        );
+        logger.info(`== order cost ${strategy.base_limit} is below exchange minimum ${minCost}`);
         throw new CustomError(STATUS_TYPE.AIP_BELOW_MINIMUM_ORDER);
       }
     }
@@ -330,15 +375,18 @@ class StrategyService {
     if (market && market.limits) {
       const minAmount = market.limits.amount && market.limits.amount.min;
       if (minAmount && amount < minAmount) {
-        logger.info(
-          `== order amount ${amount} is below exchange minimum ${minAmount}`,
-        );
+        logger.info(`== order amount ${amount} is below exchange minimum ${minAmount}`);
         throw new CustomError(STATUS_TYPE.AIP_BELOW_MINIMUM_ORDER);
       }
     }
 
     const orderRes = await exchange.createOrder(
-      strategy.symbol, type, side, amount, price, inParams,
+      strategy.symbol,
+      type,
+      side,
+      amount,
+      price,
+      inParams
     );
 
     logger.info(`== exchange res order id: ${orderRes.id}`);
@@ -373,9 +421,16 @@ class StrategyService {
     };
     await OrderService.create(inOrder);
 
-    strategy.buy_times = buyTimes;
-    strategy.now_buy_times = nowBuyTimes;
-    await strategy.save();
+    await AipStrategyModel.findByIdAndUpdate(strategy._id, {
+      $inc: {
+        buy_times: 1,
+        now_buy_times: 1,
+        base_total: valueTotal,
+        quote_total: parseFloat(amount),
+        now_base_total: valueTotal,
+        now_quote_total: parseFloat(amount),
+      },
+    });
 
     return true;
   }
@@ -390,23 +445,29 @@ class StrategyService {
       status: AipStrategyModel.STRATEGY_STATUS_NORMAL,
     };
     const results = [];
-    const strategiesArr = await AipStrategyModel.find(conditions).lean();
+    const strategiesArr = await AipStrategyModel.find(conditions);
     for (const strategy of strategiesArr) {
-      if (strategy.exchange === undefined) {
-        logger.info('[' + strategy._id + '] - exchange is null , call user !');
-        continue;
+      try {
+        if (strategy.exchange === undefined) {
+          logger.info(`[${strategy._id}] - exchange is null , call user !`);
+          continue;
+        }
+        const result = await this.processSell(strategy);
+        results.push(result);
+      } catch (error) {
+        logger.error(`[executeAllSells] Strategy ${strategy._id} failed: ${error.message}`);
       }
-      const result = await this.executeSell(strategy._id);
-      results.push(result)
     }
     logger.info(`### Round time: ${Date.now() - start}ms`);
-    logger.info('The future has arrived, it just hasn\'t become mainstream yet. Let us lead you into the world of blockchain ahead of time.');
+    logger.info(
+      "The future has arrived, it just hasn't become mainstream yet. Let us lead you into the world of blockchain ahead of time."
+    );
     return results;
   }
 
   /**
    * Method to detect sell signal and execute corresponding operation
-   * @param {strategyId} - The id of the strategy  
+   * @param {strategyId} - The id of the strategy
    * @returns {Object} Result of the sell operation
    */
   async executeSell(strategyId) {
@@ -432,25 +493,27 @@ class StrategyService {
     });
     const tickerRes = await exchange.fetchTicker(strategy.symbol);
     const sell_price = tickerRes.bid;
-    logger.info('[price] - ' + sell_price);
+    logger.info(`[price] - ${sell_price}`);
 
     // check whether profit reaches the stop profit
     const profit = strategy.quote_total * sell_price - strategy.base_total;
-    const profit_percentage = profit / strategy.base_total * 100;
+    const profit_percentage = (profit / strategy.base_total) * 100;
 
-    if(!strategy.stop_profit_percentage) {
+    if (strategy.stop_profit_percentage == null) {
       return;
     }
 
     // Did not reach the stop profit point, exiting
     if (profit_percentage < strategy.stop_profit_percentage) {
-      logger.info(`[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`);
+      logger.info(
+        `[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`
+      );
       return {
         strategyId: strategy._id,
-        result: `[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`
+        result: `[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`,
       };
     }
-    if(!strategy.drawdown) {
+    if (strategy.drawdown == null) {
       return;
     }
     // Reached the stop profit point, peak not set, proceeding to sell.
@@ -464,20 +527,22 @@ class StrategyService {
     if (strategy.drawdown_status === 'Y' && strategy.drawdown > 0) {
       // If a drawdown is set, compare the current price with the last locked price as a percentage
       // Below the previous price, breaching the drawdown, selling off completely
-      if (strategy.drawdown_price !== 'undefined' && sell_price <= strategy.drawdown_price * (1 - strategy.drawdown / 100)) {
+      if (
+        strategy.drawdown_price != null &&
+        sell_price <= strategy.drawdown_price * (1 - strategy.drawdown / 100)
+      ) {
         logger.info('[drawdown] - Triggering drawdown, selling');
         strategy.sell_price = sell_price;
         return await this.sellout(strategy);
-      } else {
-        // Price is higher than the previous price, resetting the locked price
-        logger.info('[drawdown_price] - Did not trigger peak drawdown, resetting the drawdown price');
-        strategy.drawdown_price = sell_price;
-        await strategy.save();
-        return {
-          strategyId: strategy._id,
-          result: `Did not trigger peak drawdown, resetting the drawdown price. New drawdown price is ${strategy.drawdown_price}.`
-        };
       }
+      // Price is higher than the previous price, resetting the locked price
+      logger.info('[drawdown_price] - Did not trigger peak drawdown, resetting the drawdown price');
+      strategy.drawdown_price = sell_price;
+      await strategy.save();
+      return {
+        strategyId: strategy._id,
+        result: `Did not trigger peak drawdown, resetting the drawdown price. New drawdown price is ${strategy.drawdown_price}.`,
+      };
     }
   }
 
@@ -486,7 +551,7 @@ class StrategyService {
       strategy_id: strategy._id,
       user: strategy.user,
       sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
-      await_status: AipAwaitModel.STATUS_WAITING
+      await_status: AipAwaitModel.STATUS_WAITING,
     };
     const awaitOrder = await AwaitService.createAwait(conditions);
     const id = awaitOrder ? awaitOrder._id : '';
@@ -503,14 +568,23 @@ class StrategyService {
     const conditions = {
       await_status: AipAwaitModel.STATUS_WAITING,
     };
-    const awaitOrders = await AwaitService.index(conditions); 
-    logger.info(`### Round time: ${awaitOrders}`);
-    if (awaitOrders.length > 0){
-      const updateResult = await AwaitService.update(conditions);
-      logger.info(`### Round time: ${JSON.stringify(updateResult)}`);
-      for (const awaitorder of awaitOrders) {
+    const awaitOrders = await AwaitService.index(conditions);
+    logger.info(`### Pending await orders: ${awaitOrders.length}`);
+    for (const awaitorder of awaitOrders) {
+      try {
+        const updatedOrder = await AipAwaitModel.findOneAndUpdate(
+          { _id: awaitorder._id, await_status: AipAwaitModel.STATUS_WAITING },
+          { await_status: AipAwaitModel.STATUS_PROCESSING },
+          { new: true }
+        );
+        if (!updatedOrder) {
+          logger.info(`[sellAllOrders] Await order ${awaitorder._id} already processing, skipping`);
+          continue;
+        }
         const strategy = await AipStrategyModel.findById(awaitorder.strategy_id);
-        await AwaitService.sellOnThirdParty(strategy, awaitorder);
+        await AwaitService.sellOnThirdParty(strategy, updatedOrder);
+      } catch (error) {
+        logger.error(`[sellAllOrders] Await order ${awaitorder._id} failed: ${error.message}`);
       }
     }
 
@@ -534,7 +608,9 @@ class StrategyService {
     // Amount to be purchased = current value - expected value
     const nowWorth = strategy.quote_total * price;
     const expectWorth =
-      strategy.base_limit * (1 + strategy.expect_frowth_rate) ** strategy.buy_times;
+      strategy.base_limit *
+      strategy.buy_times *
+      (1 + strategy.expect_growth_rate) ** strategy.buy_times;
     const funds = expectWorth - nowWorth;
     // TODO In theory, value averaging sell strategy means selling the portion that exceeds the expected value, so this should be calculated here and added to the sell strategy.
     // TODO Set the maximum or minimum monthly buy/sell limit, for example, 5 times the preset monthly growth amount, to reduce the fund requirement during significant market fluctuations.

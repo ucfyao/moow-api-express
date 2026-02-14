@@ -1,11 +1,14 @@
 // routes/ExchangeKeyRoutes.js
 const express = require('express');
 const ExchangeKeyController = require('../controllers/exchangeKeyController');
+const authMiddleware = require('../middlewares/authMiddleware');
 const validateParams = require('../middlewares/validateMiddleware');
-const { createKeyValidatorSchema, updateKeyValidatorSchema } = require('../validators/exchangeKeyValidator');
+const {
+  createKeyValidatorSchema,
+  updateKeyValidatorSchema,
+} = require('../validators/exchangeKeyValidator');
 
 const router = express.Router();
-
 
 /**
  * @swagger
@@ -35,7 +38,7 @@ const router = express.Router();
  *                     type: string
  *                     example: "your-api-key"
  */
-router.get('/api/v1/keys', ExchangeKeyController.index);
+router.get('/api/v1/keys', authMiddleware, ExchangeKeyController.index);
 
 /**
  * @swagger
@@ -67,8 +70,9 @@ router.get('/api/v1/keys', ExchangeKeyController.index);
  */
 router.post(
   '/api/v1/keys',
+  authMiddleware,
   validateParams(createKeyValidatorSchema),
-  ExchangeKeyController.create,
+  ExchangeKeyController.create
 );
 
 /**
@@ -101,8 +105,9 @@ router.post(
  */
 router.put(
   '/api/v1/keys',
+  authMiddleware,
   validateParams(updateKeyValidatorSchema),
-  ExchangeKeyController.update,
+  ExchangeKeyController.update
 );
 
 /**
@@ -138,7 +143,7 @@ router.put(
  *                   type: string
  *                   example: "your-api-key"
  */
-router.get('/api/v1/keys/:id', ExchangeKeyController.show);
+router.get('/api/v1/keys/:id', authMiddleware, ExchangeKeyController.show);
 
 /**
  * @swagger
@@ -159,6 +164,6 @@ router.get('/api/v1/keys/:id', ExchangeKeyController.show);
  *       200:
  *         description: Transaction key deleted successfullyK
  */
-router.delete('/api/v1/keys/:id', ExchangeKeyController.destroy);
+router.delete('/api/v1/keys/:id', authMiddleware, ExchangeKeyController.destroy);
 
 module.exports = router;

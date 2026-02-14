@@ -5,7 +5,6 @@ const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class ExchangeKeyController {
   async index(req, res) {
-    // const params = req.body;
     const params = req.query;
     const exchangeKeys = await ExchangeKeyService.getAllKeys(params);
     return ResponseHandler.success(res, exchangeKeys, STATUS_TYPE.HTTP_OK);
@@ -23,13 +22,14 @@ class ExchangeKeyController {
   }
 
   async update(req, res) {
-    const market = await MarketService.updateMarket(req.params.id, req.body);
-    return ResponseHandler.success(res, market);
+    const keyData = req.body;
+    const result = await ExchangeKeyService.updateKey(keyData);
+    return ResponseHandler.success(res, result);
   }
 
   async destroy(req, res) {
     const result = await ExchangeKeyService.deleteKey(req.params.id);
-    return ResponseHandler.success(res, STATUS_TYPE.HTTP_OK);
+    return ResponseHandler.success(res, result);
   }
 }
 module.exports = new ExchangeKeyController();
