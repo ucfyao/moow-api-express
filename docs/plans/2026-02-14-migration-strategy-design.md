@@ -164,7 +164,7 @@ All foundation work is done in both projects:
   - Added comprehensive unit tests for `awaitService.sellOnThirdParty()` (5 test cases)
   - Updated `processBuy` tests to verify correct order parameters and minimum validation
   - All 122 tests passing (13 suites)
-- **PR:** (pending)
+- **PR:** #106
 - **Remaining issues:**
   - Exchange credentials still stored in plaintext (S2 scope — RSA encryption integration)
   - Value averaging sell strategy not implemented (future scope)
