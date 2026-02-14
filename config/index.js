@@ -50,9 +50,17 @@ const config = {
   },
 
   // Currency exchange from USD to others
-  currencyRate:{
+  currencyRate: {
     apiUrl: 'https://api.exchangerate-api.com/v4/latest/USD',
-  }
+  },
+
+  // WeChat integration
+  wechat: {
+    tokenStr: process.env.WECHAT_TOKEN || '',
+    appID: process.env.WECHAT_APP_ID || '',
+    appSecret: process.env.WECHAT_APP_SECRET || '',
+    menu: {},
+  },
 };
 
 module.exports = config;
