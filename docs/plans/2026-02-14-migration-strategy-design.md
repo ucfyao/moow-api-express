@@ -170,6 +170,28 @@ All foundation work is done in both projects:
   - Value averaging sell strategy not implemented (future scope)
   - User ownership validation still commented out in `partiallyUpdateStrategy`
 
+### S2 — 2026-02-14: RSA Encryption Integration
+- **Repo:** moow-api-express
+- **Tickets:** 609 enhance
+- **What was done:**
+  - Fixed `cryptoUtils.decrypt()` bug — was returning `base64` instead of `utf8`, which would produce garbled API keys
+  - Integrated RSA encryption into `strategyService.createStrategy()` — key/secret are now encrypted before storing to DB
+  - Integrated RSA decryption into `strategyService.processBuy()` and `processSell()` — credentials decrypted before creating CCXT instance
+  - Integrated RSA decryption into `awaitService.sellOnThirdParty()` — same decryption pattern
+  - Fixed `authService.js` error logging — replaced `console.error` with `logger.error` on email send failures (lines 182, 269)
+  - Fixed `authService.js` moment.js usage — replaced `moment(fromTime).add(1, 'days')` with `dayjs(fromTime).add(1, 'day')` (line 309)
+  - Removed stale `console.log(html)` in `authService.sendRetrieveEmail()`
+  - Updated CLAUDE.md known issues — removed all resolved items from S1 and S2
+  - Added encryption/decryption tests for strategyService and awaitService
+  - Added activateUser inviter VIP extension test (validates dayjs fix)
+  - Added sendActivateEmail error logging test
+  - All 126 tests passing (13 suites)
+- **PR:** #107
+- **Remaining issues:**
+  - Value averaging sell strategy not implemented (future scope)
+  - User ownership validation still commented out in `partiallyUpdateStrategy`
+  - Inviter reward token transfer not implemented (pending assets module)
+
 ## Best Practices for Working with Claude
 
 ### Prompt Template
