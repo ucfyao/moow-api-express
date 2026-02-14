@@ -505,6 +505,29 @@ class StrategyService {
     const sell_price = tickerRes.bid;
     logger.info(`[price] - ${sell_price}`);
 
+    // Intelligent strategies use value-based sell instead of stop_profit logic
+    if (strategy.type === AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT) {
+      const nowWorth = strategy.quote_total * sell_price;
+      const expectWorth =
+        strategy.base_limit *
+        strategy.buy_times *
+        (1 + (strategy.expect_growth_rate || 0.008)) ** strategy.buy_times;
+
+      if (nowWorth > expectWorth) {
+        const excessValue = nowWorth - expectWorth;
+        const sellAmount = excessValue / sell_price;
+        logger.info(
+          `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth}, expectWorth=${expectWorth}, selling ${sellAmount}`,
+        );
+        strategy.sell_price = sell_price;
+        return await this.sellout(strategy);
+      }
+      logger.info(
+        `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth} <= expectWorth=${expectWorth}, no sell needed`,
+      );
+      return;
+    }
+
     // check whether profit reaches the stop profit
     const profit = strategy.quote_total * sell_price - strategy.base_total;
     const profit_percentage = (profit / strategy.base_total) * 100;
