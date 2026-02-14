@@ -9,7 +9,7 @@ class StrategyController {
    * @param {Response} res
    */
   async index(req, res) {
-    const params = req.body;
+    const params = req.query;
     params.userId = req.userId;
     const strategies = await StrategyService.getAllStrategies(params);
     return ResponseHandler.success(res, strategies);
@@ -35,7 +35,7 @@ class StrategyController {
     const strategyData = req.body;
     strategyData.user = req.userId;
     const strategy = await StrategyService.createStrategy(strategyData);
-    return ResponseHandler.success(res, strategy, STATUS_TYPE.created);
+    return ResponseHandler.success(res, strategy, STATUS_TYPE.HTTP_CREATED);
   }
 
   /**
@@ -47,6 +47,7 @@ class StrategyController {
     const strategyId = req.params.id;
     const updateData = req.body;
     updateData._id = strategyId;
+    updateData.user = req.userId;
     const strategy = await StrategyService.partiallyUpdateStrategy(updateData);
     return ResponseHandler.success(res, strategy);
   }
@@ -56,7 +57,7 @@ class StrategyController {
    * @param {Request} req
    * @param {Response} res
    */
-  async destory(req, res){
+  async destory(req, res) {
     const strategyId = req.params.id;
     const status = await StrategyService.deleteStrategy(strategyId);
     return ResponseHandler.success(res, status);
@@ -103,7 +104,7 @@ class StrategyController {
   async executeSell(req, res) {
     const { strategyId } = req.params;
     const result = await StrategyService.executeSell(strategyId);
-    const message = `Strategy ${strategyId} executed successfully`
+    const message = `Strategy ${strategyId} executed successfully`;
     return ResponseHandler.success(res, result, 200, 0, message);
   }
 }

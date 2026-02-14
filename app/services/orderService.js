@@ -83,14 +83,13 @@ class OrderService {
 
   async create(order) {
     const doc = new AipOrderModel(order);
-    // const secret = await encrypt(strategy.secret);  // for testing
-    // doc.secret = secret;
     await doc.save();
     const orderId = doc ? doc._id : '';
 
     return { _id: orderId };
   }
 
+  // TODO: Accept keyId instead of raw credentials, decrypt server-side
   async getThirdPartyOrders(exchangeName, symbol, apiKey, secret) {
     const exchange = new ccxt[exchangeName]({
       apiKey,
@@ -98,22 +97,10 @@ class OrderService {
       timeout: config.exchangeTimeOut,
     });
     const openOrders = await exchange.fetchOpenOrders(symbol);
-    openOrders.forEach((order) => {
-      const timestamp = new Date(order.timestamp);
-      const formattedDate = timestamp.toISOString();
-      logger.info(`Order ID: ${order.id}`);
-      logger.info(`Symbol: ${order.symbol}`);
-      logger.info(`Type: ${order.type}`);
-      logger.info(`Side: ${order.side}`);
-      logger.info(`Price: ${order.price}`);
-      logger.info(`Amount: ${order.amount}`);
-      logger.info(`Status: ${order.status}`);
-      logger.info(`Timestamp: ${formattedDate}`);
-      logger.info('-----------------------------------');
-    });
     return openOrders;
   }
 
+  // TODO: Accept keyId instead of raw credentials, decrypt server-side
   async cancelAllOpenThirdPartyOrders(exchangeName, symbol, apiKey, secret) {
     const exchange = new ccxt[exchangeName]({
       apiKey,

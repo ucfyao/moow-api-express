@@ -1,6 +1,7 @@
 jest.mock('ccxt');
 jest.mock('../../../app/models/aipStrategyModel');
 jest.mock('../../../app/models/aipAwaitModel');
+jest.mock('../../../app/models/dataExchangeSymbolModel');
 jest.mock('../../../app/services/orderService');
 jest.mock('../../../app/services/symbolService');
 jest.mock('../../../app/services/awaitService');
@@ -14,6 +15,7 @@ jest.mock('../../../app/utils/logger', () => ({
 const ccxt = require('ccxt');
 const AipStrategyModel = require('../../../app/models/aipStrategyModel');
 const AipAwaitModel = require('../../../app/models/aipAwaitModel');
+const DataExchangeSymbolModel = require('../../../app/models/dataExchangeSymbolModel');
 const OrderService = require('../../../app/services/orderService');
 const SymbolService = require('../../../app/services/symbolService');
 const AwaitService = require('../../../app/services/awaitService');
@@ -25,9 +27,9 @@ const { createMockExchange, setupCcxtMock } = require('../../helpers/mockCcxt');
 AipStrategyModel.STRATEGY_STATUS_NORMAL = 1;
 AipStrategyModel.STRATEGY_STATUS_CLOSED = 2;
 AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED = 3;
-AipStrategyModel.PERIOD_MONTHLY = 1;
+AipStrategyModel.PERIOD_DAILY = 1;
 AipStrategyModel.PERIOD_WEEKLY = 2;
-AipStrategyModel.PERIOD_DAILY = 3;
+AipStrategyModel.PERIOD_MONTHLY = 3;
 AipStrategyModel.INVESTMENT_TYPE_REGULAR = 1;
 AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT = 2;
 AipStrategyModel.DRAWDOWN_STATUS_ENABLED = 'Y';
@@ -138,8 +140,12 @@ describe('StrategyService', () => {
       });
       AipStrategyModel.countDocuments.mockResolvedValue(1);
 
-      SymbolService.getAllSymbols.mockResolvedValue({
-        list: [{ price_native: 52000 }],
+      DataExchangeSymbolModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          lean: jest
+            .fn()
+            .mockResolvedValue([{ exchange: 'binance', symbol: 'BTC/USDT', price_native: 52000 }]),
+        }),
       });
 
       const result = await StrategyService.getAllStrategies({
@@ -178,7 +184,12 @@ describe('StrategyService', () => {
         }),
       });
       AipStrategyModel.countDocuments.mockResolvedValue(1);
-      SymbolService.getAllSymbols.mockResolvedValue({ list: [] });
+
+      DataExchangeSymbolModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([]),
+        }),
+      });
 
       const result = await StrategyService.getAllStrategies({ userId: 'user-1' });
 
@@ -192,6 +203,7 @@ describe('StrategyService', () => {
     it('should update strategy fields', async () => {
       const mockDoc = {
         _id: 'strat-1',
+        user: { toString: () => 'user-1' },
         period: '1',
         base_limit: 100,
         status: 1,
@@ -201,6 +213,7 @@ describe('StrategyService', () => {
 
       const result = await StrategyService.partiallyUpdateStrategy({
         _id: 'strat-1',
+        user: 'user-1',
         base_limit: 200,
         period: '2',
       });
@@ -222,12 +235,17 @@ describe('StrategyService', () => {
     it('should handle status changes (normal/closed)', async () => {
       const mockDoc = {
         _id: 'strat-1',
+        user: { toString: () => 'user-1' },
         status: 1,
         save: jest.fn().mockResolvedValue(true),
       };
       AipStrategyModel.findById.mockResolvedValue(mockDoc);
 
-      await StrategyService.partiallyUpdateStrategy({ _id: 'strat-1', status: '2' });
+      await StrategyService.partiallyUpdateStrategy({
+        _id: 'strat-1',
+        user: 'user-1',
+        status: '2',
+      });
 
       expect(mockDoc.status).toBe(2);
     });
@@ -273,6 +291,7 @@ describe('StrategyService', () => {
       mockExchange = createMockExchange();
       setupCcxtMock(ccxt, mockExchange);
       OrderService.create.mockResolvedValue({ _id: 'order-1' });
+      AipStrategyModel.findByIdAndUpdate.mockResolvedValue({});
     });
 
     it('should decrypt credentials and execute a regular buy order', async () => {
@@ -320,9 +339,15 @@ describe('StrategyService', () => {
         {}
       );
       expect(OrderService.create).toHaveBeenCalled();
-      expect(strategy.buy_times).toBe(6);
-      expect(strategy.now_buy_times).toBe(4);
-      expect(strategy.save).toHaveBeenCalled();
+      expect(AipStrategyModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        'strat-1',
+        expect.objectContaining({
+          $inc: expect.objectContaining({
+            buy_times: 1,
+            now_buy_times: 1,
+          }),
+        })
+      );
       expect(result).toBe(true);
     });
 
@@ -418,7 +443,7 @@ describe('StrategyService', () => {
         now_buy_times: 50,
         quote_total: 100, // huge amount already held
         base_total: 5000,
-        expect_frowth_rate: 0.001,
+        expect_growth_rate: 0.001,
         save: jest.fn(),
       };
 
@@ -588,11 +613,9 @@ describe('StrategyService', () => {
   describe('executeAllBuys()', () => {
     it('should skip strategies with no exchange', async () => {
       AipStrategyModel.find.mockReturnValue({
-        lean: jest
-          .fn()
-          .mockResolvedValue([
-            { _id: 'strat-1', exchange: undefined, period: 1, period_value: [10] },
-          ]),
+        lean: jest.fn().mockResolvedValue([
+          { _id: 'strat-1', exchange: undefined, period: 1, period_value: [10] },
+        ]),
       });
 
       const results = await StrategyService.executeAllBuys();
@@ -617,11 +640,11 @@ describe('StrategyService', () => {
         ]),
       });
 
-      jest.spyOn(StrategyService, 'executeBuy').mockResolvedValue({ success: true });
+      jest.spyOn(StrategyService, 'processBuy').mockResolvedValue({ success: true });
 
       const results = await StrategyService.executeAllBuys();
 
-      expect(StrategyService.executeBuy).toHaveBeenCalledWith(
+      expect(StrategyService.processBuy).toHaveBeenCalledWith(
         expect.objectContaining({ _id: 'strat-daily' })
       );
     });
@@ -635,7 +658,13 @@ describe('StrategyService', () => {
       ];
 
       AwaitService.index.mockResolvedValue(awaitOrders);
-      AwaitService.update.mockResolvedValue({});
+
+      // Atomic update via findOneAndUpdate returns the updated order
+      const updatedOrder1 = { _id: 'await-1', strategy_id: 'strat-1', await_status: 3 };
+      const updatedOrder2 = { _id: 'await-2', strategy_id: 'strat-2', await_status: 3 };
+      AipAwaitModel.findOneAndUpdate
+        .mockResolvedValueOnce(updatedOrder1)
+        .mockResolvedValueOnce(updatedOrder2);
 
       const strategy1 = { _id: 'strat-1', exchange: 'binance' };
       const strategy2 = { _id: 'strat-2', exchange: 'binance' };
@@ -650,6 +679,7 @@ describe('StrategyService', () => {
       await StrategyService.sellAllOrders();
 
       // Both should be attempted
+      expect(AipAwaitModel.findOneAndUpdate).toHaveBeenCalledTimes(2);
       expect(AipStrategyModel.findById).toHaveBeenCalledTimes(2);
       expect(AwaitService.sellOnThirdParty).toHaveBeenCalledTimes(2);
     });
@@ -658,7 +688,8 @@ describe('StrategyService', () => {
       const awaitOrders = [{ _id: 'await-1', strategy_id: 'strat-missing' }];
 
       AwaitService.index.mockResolvedValue(awaitOrders);
-      AwaitService.update.mockResolvedValue({});
+      const updatedOrder = { _id: 'await-1', strategy_id: 'strat-missing', await_status: 3 };
+      AipAwaitModel.findOneAndUpdate.mockResolvedValue(updatedOrder);
       AipStrategyModel.findById.mockResolvedValue(null);
 
       await StrategyService.sellAllOrders();
@@ -672,35 +703,53 @@ describe('StrategyService', () => {
       const strategy = {
         quote_total: 0.01, // currently holds 0.01 BTC
         base_limit: 100, // each purchase $100
-        expect_frowth_rate: 0.008, // 0.8% growth rate
+        expect_growth_rate: 0.008, // 0.8% growth rate
         buy_times: 5,
       };
       const price = 50000;
 
       // nowWorth = 0.01 * 50000 = 500
-      // expectWorth = 100 * (1 + 0.008)^5 ≈ 100 * 1.0406 ≈ 104.06
-      // funds = 104.06 - 500 = -395.94 → returns 0 (funds <= 0)
+      // expectWorth = 100 * 5 * (1 + 0.008)^5 ≈ 500 * 1.0406 ≈ 520.32
+      // funds = 520.32 - 500 = 20.32
+      // amount = 20.32 / 50000 ≈ 0.000406
       const result = await StrategyService._valueAveraging(strategy, price);
 
-      expect(result).toBe(0);
+      expect(result).toBeGreaterThan(0);
     });
 
     it('should return positive amount when expected > current value', async () => {
       const strategy = {
         quote_total: 0.001, // small holdings
         base_limit: 100,
-        expect_frowth_rate: 0.008,
+        expect_growth_rate: 0.008,
         buy_times: 10,
       };
       const price = 50000;
 
       // nowWorth = 0.001 * 50000 = 50
-      // expectWorth = 100 * (1.008)^10 ≈ 100 * 1.0829 ≈ 108.29
-      // funds = 108.29 - 50 = 58.29
-      // amount = 58.29 / 50000 ≈ 0.001166
+      // expectWorth = 100 * 10 * (1.008)^10 ≈ 1000 * 1.0829 ≈ 1082.94
+      // funds = 1082.94 - 50 = 1032.94
+      // amount = 1032.94 / 50000 ≈ 0.02066
       const result = await StrategyService._valueAveraging(strategy, price);
 
       expect(result).toBeGreaterThan(0);
+    });
+
+    it('should return 0 when current value exceeds expected value', async () => {
+      const strategy = {
+        quote_total: 1.0, // large holdings
+        base_limit: 100,
+        expect_growth_rate: 0.008,
+        buy_times: 2,
+      };
+      const price = 50000;
+
+      // nowWorth = 1.0 * 50000 = 50000
+      // expectWorth = 100 * 2 * (1.008)^2 ≈ 200 * 1.016 ≈ 203.21
+      // funds = 203.21 - 50000 < 0 → returns 0
+      const result = await StrategyService._valueAveraging(strategy, price);
+
+      expect(result).toBe(0);
     });
   });
 });

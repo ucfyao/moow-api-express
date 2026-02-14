@@ -79,9 +79,13 @@ describe('Strategy API Integration', () => {
         period_value: [10],
       };
 
-      const res = await request(app).post('/api/v1/strategies').send(strategyData);
+      const res = await request(app)
+        .post('/api/v1/strategies')
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id)
+        .send(strategyData);
 
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(201);
       expect(res.body.code).toBe(0);
       expect(res.body.data._id).toBeDefined();
 
@@ -95,10 +99,14 @@ describe('Strategy API Integration', () => {
     });
 
     it('should reject strategy with missing required fields', async () => {
-      const res = await request(app).post('/api/v1/strategies').send({
-        exchange: 'binance',
-        // Missing most required fields
-      });
+      const res = await request(app)
+        .post('/api/v1/strategies')
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id)
+        .send({
+          exchange: 'binance',
+          // Missing most required fields
+        });
 
       expect(res.status).toBeGreaterThanOrEqual(400);
     });
@@ -108,7 +116,11 @@ describe('Strategy API Integration', () => {
     it('should return strategies list when sent as POST body', async () => {
       // The controller reads params from req.body, so we must send JSON body.
       // GET with body is unusual but matches the controller's implementation.
-      const res = await request(app).get('/api/v1/strategies').send({ userId: userId.toString() });
+      const res = await request(app)
+        .get('/api/v1/strategies')
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id)
+        .send({ userId: userId.toString() });
 
       expect(res.status).toBe(200);
       expect(res.body.data).toBeDefined();
@@ -120,7 +132,10 @@ describe('Strategy API Integration', () => {
     it('should return strategy details', async () => {
       const strategy = await AipStrategyModel.create(createStrategyData({ user: userId }));
 
-      const res = await request(app).get(`/api/v1/strategies/${strategy._id}`);
+      const res = await request(app)
+        .get(`/api/v1/strategies/${strategy._id}`)
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBe(200);
       expect(res.body.data.info).toBeDefined();
@@ -133,6 +148,8 @@ describe('Strategy API Integration', () => {
 
       const res = await request(app)
         .patch(`/api/v1/strategies/${strategy._id}`)
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id)
         .send({ base_limit: 200 });
 
       expect(res.status).toBe(200);
@@ -148,6 +165,8 @@ describe('Strategy API Integration', () => {
 
       const res = await request(app)
         .patch(`/api/v1/strategies/${strategy._id}`)
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id)
         .send({ status: '2' });
 
       expect(res.status).toBe(200);
@@ -161,6 +180,8 @@ describe('Strategy API Integration', () => {
 
       const res = await request(app)
         .patch(`/api/v1/strategies/${fakeId}`)
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id)
         .send({ base_limit: 200 });
 
       expect(res.status).toBeGreaterThanOrEqual(400);
@@ -171,7 +192,10 @@ describe('Strategy API Integration', () => {
     it('should soft delete a strategy', async () => {
       const strategy = await AipStrategyModel.create(createStrategyData({ user: userId }));
 
-      const res = await request(app).delete(`/api/v1/strategies/${strategy._id}`);
+      const res = await request(app)
+        .delete(`/api/v1/strategies/${strategy._id}`)
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBe(200);
       expect(res.body.data.status).toBe(AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED);
@@ -188,7 +212,10 @@ describe('Strategy API Integration', () => {
     it('should return error for nonexistent strategy', async () => {
       const fakeId = new mongoose.Types.ObjectId();
 
-      const res = await request(app).delete(`/api/v1/strategies/${fakeId}`);
+      const res = await request(app)
+        .delete(`/api/v1/strategies/${fakeId}`)
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBeGreaterThanOrEqual(400);
     });

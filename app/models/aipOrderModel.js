@@ -33,8 +33,10 @@ const AipOrderSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'aip_orders',
-  },
+  }
 );
+
+AipOrderSchema.index({ strategy_id: 1, created_at: -1 });
 
 const AipOrderModel = mongoose.model('aip_order', AipOrderSchema);
 module.exports = AipOrderModel;

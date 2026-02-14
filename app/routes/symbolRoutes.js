@@ -1,5 +1,6 @@
 const express = require('express');
 const SymbolController = require('../controllers/symbolController');
+const authMiddleware = require('../middlewares/authMiddleware');
 const validateParams = require('../middlewares/validateMiddleware');
 const { dateValidatorSchema, loaderValidatorSchema } = require('../validators/symbolValidator');
 
@@ -34,7 +35,7 @@ const router = express.Router();
  *                     type: string
  *                     example: "Binance"
  */
-router.get('/api/v1/symbols', SymbolController.index);
+router.get('/api/v1/symbols', authMiddleware, SymbolController.index);
 
 // view a symbol by id
 /**
@@ -56,7 +57,7 @@ router.get('/api/v1/symbols', SymbolController.index);
  *       200:
  *         description: Successfully returned transaction pair details
  */
-router.get('/api/v1/symbols/:id', SymbolController.show);
+router.get('/api/v1/symbols/:id', authMiddleware, SymbolController.show);
 
 // For test, so there's no validator
 // Create a new data exchange symbol
@@ -85,7 +86,7 @@ router.get('/api/v1/symbols/:id', SymbolController.show);
  *       201:
  *         description: Trading pair created successfully
  */
-router.post('/api/v1/symbols', SymbolController.create);
+router.post('/api/v1/symbols', authMiddleware, SymbolController.create);
 
 /**
  * @swagger
@@ -118,9 +119,10 @@ router.post('/api/v1/symbols', SymbolController.create);
  *         description: Successfully returned price data
  */
 router.post(
-  '/api/v1/symbols/getPrice',   
+  '/api/v1/symbols/getPrice',
+  authMiddleware,
   validateParams(dateValidatorSchema),
-  SymbolController.getPrice,
+  SymbolController.getPrice
 );
 
 /**
@@ -151,8 +153,9 @@ router.post(
  *         description: Price data loaded successfully
  */
 router.post(
-  '/api/v1/symbols/priceLoader', 
+  '/api/v1/symbols/priceLoader',
+  authMiddleware,
   validateParams(loaderValidatorSchema),
-  SymbolController.loadPrice,
+  SymbolController.loadPrice
 );
 module.exports = router;

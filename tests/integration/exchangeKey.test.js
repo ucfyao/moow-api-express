@@ -31,8 +31,9 @@ jest.mock('../../app/services/emailService', () => ({
 const ccxt = require('ccxt');
 const createTestApp = require('../helpers/app');
 const AipExchangeKeyModel = require('../../app/models/aipExchangeKeyModel');
+const PortalTokenModel = require('../../app/models/portalTokenModel');
 const { createMockExchange, setupCcxtMock } = require('../helpers/mockCcxt');
-const { createExchangeKeyData } = require('../helpers/fixtures');
+const { createExchangeKeyData, createTokenData } = require('../helpers/fixtures');
 
 let app;
 
@@ -49,18 +50,45 @@ afterEach(async () => {
   await clearDatabase();
 });
 
+// Helper: create auth token and return headers
+const createAuthHeaders = async (userId) => {
+  const token = await PortalTokenModel.create(
+    createTokenData({
+      user_id: userId,
+      token: `session-${Date.now()}`,
+      type: 'session',
+    })
+  );
+  return {
+    token: token.token,
+    user_id: userId.toString(),
+  };
+};
+
 describe('ExchangeKey API Integration', () => {
+  let userId;
+  let authHeaders;
+
+  beforeEach(async () => {
+    userId = new mongoose.Types.ObjectId();
+    authHeaders = await createAuthHeaders(userId);
+  });
+
   describe('POST /api/v1/keys', () => {
     it('should create a new exchange key after CCXT validation', async () => {
       const mockExchange = createMockExchange();
       setupCcxtMock(ccxt, mockExchange);
 
-      const res = await request(app).post('/api/v1/keys').send({
-        exchange: 'binance',
-        access_key: 'my-access-key-123',
-        secret_key: 'my-secret-key-456',
-        desc: 'My Binance key',
-      });
+      const res = await request(app)
+        .post('/api/v1/keys')
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id)
+        .send({
+          exchange: 'binance',
+          access_key: 'my-access-key-123',
+          secret_key: 'my-secret-key-456',
+          desc: 'My Binance key',
+        });
 
       expect(res.status).toBe(201);
       expect(res.body.code).toBe(0);
@@ -74,10 +102,14 @@ describe('ExchangeKey API Integration', () => {
     });
 
     it('should reject key creation with missing fields', async () => {
-      const res = await request(app).post('/api/v1/keys').send({
-        exchange: 'binance',
-        // Missing access_key, secret_key, desc
-      });
+      const res = await request(app)
+        .post('/api/v1/keys')
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id)
+        .send({
+          exchange: 'binance',
+          // Missing access_key, secret_key, desc
+        });
 
       expect(res.status).toBeGreaterThanOrEqual(400);
     });
@@ -93,7 +125,10 @@ describe('ExchangeKey API Integration', () => {
         })
       );
 
-      const res = await request(app).get('/api/v1/keys');
+      const res = await request(app)
+        .get('/api/v1/keys')
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBe(200);
       expect(res.body.data.list).toBeDefined();
@@ -107,7 +142,10 @@ describe('ExchangeKey API Integration', () => {
       await AipExchangeKeyModel.create(createExchangeKeyData({ is_deleted: false }));
       await AipExchangeKeyModel.create(createExchangeKeyData({ is_deleted: true }));
 
-      const res = await request(app).get('/api/v1/keys');
+      const res = await request(app)
+        .get('/api/v1/keys')
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBe(200);
       expect(res.body.data.list).toHaveLength(1);
@@ -116,7 +154,10 @@ describe('ExchangeKey API Integration', () => {
     it('should show deleted keys when showDeleted=true', async () => {
       await AipExchangeKeyModel.create(createExchangeKeyData({ is_deleted: true }));
 
-      const res = await request(app).get('/api/v1/keys?showDeleted=true');
+      const res = await request(app)
+        .get('/api/v1/keys?showDeleted=true')
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBe(200);
       expect(res.body.data.list).toHaveLength(1);
@@ -127,7 +168,10 @@ describe('ExchangeKey API Integration', () => {
     it('should soft delete an exchange key', async () => {
       const key = await AipExchangeKeyModel.create(createExchangeKeyData());
 
-      const res = await request(app).delete(`/api/v1/keys/${key._id}`);
+      const res = await request(app)
+        .delete(`/api/v1/keys/${key._id}`)
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBe(200);
 
@@ -147,7 +191,10 @@ describe('ExchangeKey API Integration', () => {
         })
       );
 
-      const res = await request(app).get(`/api/v1/keys/${key._id}`);
+      const res = await request(app)
+        .get(`/api/v1/keys/${key._id}`)
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBe(200);
       expect(res.body.data.access_key).toContain('******');

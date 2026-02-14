@@ -1,7 +1,12 @@
 const express = require('express');
 const MarketController = require('../controllers/marketController');
+const authMiddleware = require('../middlewares/authMiddleware');
 const validateParams = require('../middlewares/validateMiddleware');
-const { createMarketValidatorSchema, updateMarketValidatorSchema } = require('../validators/marketValidator');
+const {
+  createMarketValidatorSchema,
+  updateMarketValidatorSchema,
+} = require('../validators/marketValidator');
+
 const router = express.Router();
 
 // get all markets list
@@ -33,7 +38,7 @@ const router = express.Router();
  *                     type: string
  *                     example: "active"
  */
-router.get('/api/v1/markets', MarketController.index);
+router.get('/api/v1/markets', authMiddleware, MarketController.index);
 
 // create a new markets
 /**
@@ -63,8 +68,9 @@ router.get('/api/v1/markets', MarketController.index);
  */
 router.post(
   '/api/v1/markets',
+  authMiddleware,
   validateParams(createMarketValidatorSchema),
-  MarketController.create,
+  MarketController.create
 );
 
 // get a market by ID
@@ -101,7 +107,7 @@ router.post(
  *                   type: string
  *                   example: "active"
  */
-router.get('/api/v1/markets/:id', MarketController.show);
+router.get('/api/v1/markets/:id', authMiddleware, MarketController.show);
 
 // update market info updateMarket
 /**
@@ -136,7 +142,7 @@ router.get('/api/v1/markets/:id', MarketController.show);
  *       200:
  *         description: Market information updated successfully
  */
-router.put('/api/v1/markets/:id', MarketController.update);
+router.put('/api/v1/markets/:id', authMiddleware, MarketController.update);
 
 // delete a market
 /**
@@ -158,6 +164,6 @@ router.put('/api/v1/markets/:id', MarketController.update);
  *       200:
  *         description: Market deleted successfully
  */
-router.delete('/api/v1/markets/:id', MarketController.destroy);
+router.delete('/api/v1/markets/:id', authMiddleware, MarketController.destroy);
 
 module.exports = router;

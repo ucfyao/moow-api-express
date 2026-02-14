@@ -27,6 +27,7 @@ class SymbolService {
       return cached;
     }
 
+
     const conditions = {};
 
     const pageNumber = params.pageNumber || 1;
@@ -47,18 +48,19 @@ class SymbolService {
       conditions.quote = quote;
     }
     if (typeof keyword !== 'undefined') {
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       conditions.$or = [
         {
-          exchange: new RegExp(keyword, 'i'),
+          exchange: new RegExp(escaped, 'i'),
         },
         {
-          symbol: new RegExp(keyword, 'i'),
+          symbol: new RegExp(escaped, 'i'),
         },
         {
-          base: new RegExp(keyword, 'i'),
+          base: new RegExp(escaped, 'i'),
         },
         {
-          quote: new RegExp(keyword, 'i'),
+          quote: new RegExp(escaped, 'i'),
         },
       ];
     }
@@ -147,6 +149,7 @@ class SymbolService {
     if (cached) {
       return cached;
     }
+
 
     const exchange = new ccxt[exchangeId]();
     const exchangeUrl = exchange.urls.www || exchange.urls.api;

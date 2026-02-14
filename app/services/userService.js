@@ -4,8 +4,17 @@ const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class UserService {
-  async getAllUsers() {
-    return PortalUserModel.find();
+  async getAllUsers(params = {}) {
+    const pageNumber = params.pageNumber || 1;
+    const pageSize = params.pageSize || 20;
+    const total = await PortalUserModel.countDocuments();
+    const list = await PortalUserModel.find()
+      .select('-password -salt')
+      .sort({ created_at: -1 })
+      .skip((pageNumber - 1) * pageSize)
+      .limit(pageSize)
+      .lean();
+    return { list, pageNumber, pageSize, total };
   }
 
   async getUserById(id, query = {}) {
@@ -40,7 +49,7 @@ class UserService {
     if (query.invitations && user.invitation_code) {
       // console.log(user.invitation_code);
       const invitationList = await PortalUserModel.find({ inviter: user._id }).select(
-        'email created_at',
+        'email created_at'
       );
       // console.log(invitationList);
       queryData.invitations = invitationList;

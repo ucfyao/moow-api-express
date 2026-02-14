@@ -11,8 +11,9 @@ class MarketService {
     const { keyword } = params;
     // search
     if (typeof keyword !== 'undefined') {
+      const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       conditions = Object.assign(conditions, {
-        $or: [{ name: new RegExp(keyword, 'i') }, { exchange: new RegExp(keyword, 'i') }],
+        $or: [{ name: new RegExp(escaped, 'i') }, { exchange: new RegExp(escaped, 'i') }],
       });
     }
 

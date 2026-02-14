@@ -36,18 +36,30 @@ afterEach(async () => {
   await clearDatabase();
 });
 
-// Helper to create auth token and return headers
-const createAuthHeaders = async () => {
-  const userId = new mongoose.Types.ObjectId();
-  const tokenData = createTokenData({ user_id: userId });
+// Helper: create auth token and return headers
+const createAuthHeaders = async (userId) => {
+  const uid = userId || new mongoose.Types.ObjectId();
+  const tokenData = createTokenData({
+    user_id: uid,
+    token: `session-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    type: 'session',
+  });
   await PortalTokenModel.create(tokenData);
   return {
     token: tokenData.token,
-    user_id: userId.toString(),
+    user_id: uid.toString(),
   };
 };
 
 describe('Order API Integration', () => {
+  let userId;
+  let authHeaders;
+
+  beforeEach(async () => {
+    userId = new mongoose.Types.ObjectId();
+    authHeaders = await createAuthHeaders(userId);
+  });
+
   describe('GET /api/v1/orders', () => {
     it('should return 401 when no auth headers provided', async () => {
       const res = await request(app).get('/api/v1/orders');
@@ -56,7 +68,6 @@ describe('Order API Integration', () => {
     });
 
     it('should return orders for a given strategy_id', async () => {
-      const auth = await createAuthHeaders();
       const strategyId = new mongoose.Types.ObjectId().toString();
       await AipOrderModel.create(createOrderData({ strategy_id: strategyId, side: 'buy' }));
       await AipOrderModel.create(createOrderData({ strategy_id: strategyId, side: 'buy' }));
@@ -65,8 +76,8 @@ describe('Order API Integration', () => {
 
       const res = await request(app)
         .get(`/api/v1/orders?strategy_id=${strategyId}`)
-        .set('token', auth.token)
-        .set('user_id', auth.user_id);
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBe(200);
       expect(res.body.code).toBe(0);
@@ -74,22 +85,20 @@ describe('Order API Integration', () => {
     });
 
     it('should return empty list when no orders match', async () => {
-      const auth = await createAuthHeaders();
       const res = await request(app)
         .get('/api/v1/orders?strategy_id=nonexistent')
-        .set('token', auth.token)
-        .set('user_id', auth.user_id);
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       expect(res.status).toBe(200);
       expect(res.body.data.list).toHaveLength(0);
     });
 
     it('should handle missing strategy_id query param', async () => {
-      const auth = await createAuthHeaders();
       const res = await request(app)
         .get('/api/v1/orders')
-        .set('token', auth.token)
-        .set('user_id', auth.user_id);
+        .set('token', authHeaders.token)
+        .set('user_id', authHeaders.user_id);
 
       // Without strategy_id, it queries with undefined which returns empty
       expect(res.status).toBe(200);
