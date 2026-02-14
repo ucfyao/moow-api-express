@@ -2,6 +2,7 @@ jest.mock('ccxt');
 jest.mock('../../../app/models/aipAwaitModel');
 jest.mock('../../../app/models/aipStrategyModel');
 jest.mock('../../../app/services/orderService');
+jest.mock('../../../app/utils/cryptoUtils');
 jest.mock('../../../app/utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
@@ -12,6 +13,7 @@ const ccxt = require('ccxt');
 const AipAwaitModel = require('../../../app/models/aipAwaitModel');
 const AipStrategyModel = require('../../../app/models/aipStrategyModel');
 const OrderService = require('../../../app/services/orderService');
+const { decrypt } = require('../../../app/utils/cryptoUtils');
 const AwaitService = require('../../../app/services/awaitService');
 const { createMockExchange, setupCcxtMock } = require('../../helpers/mockCcxt');
 
@@ -29,6 +31,7 @@ AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED = 3;
 describe('AwaitService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    decrypt.mockImplementation((val) => val.replace(/^enc_/, ''));
   });
 
   describe('sellOnThirdParty()', () => {
@@ -40,12 +43,12 @@ describe('AwaitService', () => {
       OrderService.create.mockResolvedValue({ _id: 'order-1' });
     });
 
-    it('should execute sell with correct strategy params', async () => {
+    it('should decrypt credentials and execute sell with correct strategy params', async () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         base: 'USDT',
         quote: 'BTC',
@@ -70,7 +73,17 @@ describe('AwaitService', () => {
 
       await AwaitService.sellOnThirdParty(strategy, awaitOrder);
 
-      // Verify createOrder uses strategy params, not hardcoded values
+      // Verify credentials are decrypted
+      expect(decrypt).toHaveBeenCalledWith('enc_api-key');
+      expect(decrypt).toHaveBeenCalledWith('enc_api-secret');
+      // Verify CCXT is initialized with decrypted credentials
+      expect(ccxt.binance).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apiKey: 'api-key',
+          secret: 'api-secret',
+        }),
+      );
+      // Verify createOrder uses strategy params
       expect(mockExchange.createOrder).toHaveBeenCalledWith('BTC/USDT', 'market', 'sell', 0.5);
       expect(mockExchange.fetchOrder).toHaveBeenCalledWith('mock-order-123', 'BTC/USDT');
       expect(OrderService.create).toHaveBeenCalledWith(
@@ -79,7 +92,7 @@ describe('AwaitService', () => {
           symbol: 'BTC/USDT',
           side: 'sell',
           type: 'market',
-        })
+        }),
       );
       expect(awaitOrder.await_status).toBe(AipAwaitModel.STATUS_COMPLETED);
       expect(awaitOrder.save).toHaveBeenCalled();
@@ -95,6 +108,7 @@ describe('AwaitService', () => {
 
       await AwaitService.sellOnThirdParty(strategy, awaitOrder);
 
+      expect(decrypt).not.toHaveBeenCalled();
       expect(mockExchange.createOrder).not.toHaveBeenCalled();
       expect(awaitOrder.save).not.toHaveBeenCalled();
     });
@@ -103,8 +117,8 @@ describe('AwaitService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         now_quote_total: 0.5,
         quote_total: 0.5,
@@ -134,8 +148,8 @@ describe('AwaitService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         now_quote_total: 0.5,
         quote_total: 0.5,
@@ -166,8 +180,8 @@ describe('AwaitService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         now_quote_total: 0.5,
         quote_total: 0.5,

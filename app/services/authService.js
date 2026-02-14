@@ -14,6 +14,7 @@ const config = require('../../config');
 const EmailService = require('./emailService');
 const PortalEmailInfoModel = require('../models/portalEmailInfoModel');
 const { hashidsEncode, hashidsDecode } = require('../utils/hashidsHandler');
+const logger = require('../utils/logger');
 
 class AuthService {
   // verify captcha
@@ -175,12 +176,10 @@ class AuthService {
       text: `Hello, ${displayName}, to reset your password, please click the link: ${resetPasswordUrl}`,
       html,
     };
-    console.log(html);
     const sendEmailRes = await EmailService.sendEmail(resetPasswordEmail);
 
     if (sendEmailRes.emailStatus === PortalEmailInfoModel.STATUS_FAILED) {
-      // TODO error log
-      console.error('Error sending activation email:', sendEmailRes.desc);
+      logger.error('Error sending retrieve password email:', sendEmailRes.desc);
     }
 
     return {
@@ -266,8 +265,7 @@ class AuthService {
 
     const sendEmailRes = await EmailService.sendEmail(activeEmail);
     if (sendEmailRes.emailStatus === PortalEmailInfoModel.STATUS_FAILED) {
-      // TODO error log
-      console.error('Error sending activation email:', sendEmailRes.desc);
+      logger.error('Error sending activation email:', sendEmailRes.desc);
     }
 
     return {
@@ -306,7 +304,7 @@ class AuthService {
         const now = new Date().getTime();
         const fromTime = now > timeOutAt ? now : timeOutAt;
 
-        const toDate = moment(fromTime).add(1, 'days').toDate();
+        const toDate = dayjs(fromTime).add(1, 'day').toDate();
         refUser.vip_time_out_at = toDate;
 
         // TODO: handle this part after completing assets module

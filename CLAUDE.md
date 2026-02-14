@@ -815,27 +815,17 @@ app.js:
 
 These are documented incomplete features in the codebase. When working on related code, be aware:
 
-### Security (High Priority)
+### Core Trading Logic
 
-- **Exchange credentials plaintext:** `strategyService.js` lines 258-260 and `awaitService.js` line 52 — strategy stores key/secret without encryption. RSA encryption exists in `cryptoUtils.js` but is NOT integrated into the strategy execution flow.
-
-### Core Trading Logic (Critical)
-
-- **Hardcoded test orders:** `strategyService.js` line 314 uses `'EOS/USDT', 'limit', 'buy', 50, 0.15` instead of actual strategy parameters. `awaitService.js` line 67 similarly hardcoded.
-- **No minimum amount validation:** `strategyService.js` line 312 — should enforce exchange minimum (e.g., 5 USDT) via `exchange.loadMarkets()`.
-- **No balance check:** `strategyService.js` line 295 — should verify sufficient balance before ordering.
-- **Value averaging sell not implemented:** `strategyService.js` lines 507-508 — reducing holdings above expected value not built.
+- **Value averaging sell not implemented:** `strategyService.js` — reducing holdings above expected value not built.
 
 ### Auth & User
 
-- **Error logging missing:** `authService.js` lines 182, 269 — catch blocks lack error logging.
-- **Inviter reward incomplete:** `authService.js` line 312 — token reward for referrer not implemented.
-- **moment.js usage:** `authService.js` line 309 — should use dayjs instead.
+- **Inviter reward incomplete:** `authService.js` — token reward for referrer not implemented.
 
 ### Other
 
-- **Route typo:** `/api/v1/openOders` in `orderRoutes.js` should be `/api/v1/openOrders`.
-- **User ownership validation:** `strategyService.js` line 124 — commented out, strategies not verified against requesting user.
+- **User ownership validation:** `strategyService.js` — commented out, strategies not verified against requesting user.
 
 ## Important Notes
 

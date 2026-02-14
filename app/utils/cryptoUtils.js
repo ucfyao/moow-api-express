@@ -29,7 +29,7 @@ const decrypt = (encrypted) => {
     Buffer.from(encrypted, 'base64'),
   );
 
-  return decrypted.toString('base64');
+  return decrypted.toString('utf8');
 };
 
 module.exports = { encrypt, decrypt };
