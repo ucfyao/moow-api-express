@@ -9,6 +9,7 @@ const AipAwaitSchema = new mongoose.Schema(
     await_status: { type: Number, trim: true }, // 1: Waiting 2: Completed 3: Processing
     sell_type: { type: Number, trim: true }, // 1: Automatic sell 2: Delete investment
     sell_price: { type: Number, default: 0 }, // Sell price
+    sell_amount: { type: Number, default: 0 }, // Partial sell amount (for intelligent strategy value averaging)
 
     user_market_id: { type: String, trim: true }, // ID of the market key set by the user
     exchange: { type: String, trim: true }, // Market

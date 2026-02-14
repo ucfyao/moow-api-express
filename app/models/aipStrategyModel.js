@@ -41,6 +41,7 @@ const AipStartegySchema = new mongoose.Schema(
     profit_percentage: { type: Number, default: 0 }, // Profit percentage
     profit: { type: Number, default: 0 }, // Profit
     type: { type: Number, trim: true }, // Investment type. 1: Regular investment. 2: Intelligent investment
+    expect_growth_rate: { type: Number, default: 0.008 }, // Expected growth rate for value averaging (default 0.8%)
     status: {
       type: Number,
       default() {

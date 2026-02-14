@@ -1,6 +1,7 @@
 jest.mock('ccxt');
 jest.mock('../../../app/models/aipStrategyModel');
 jest.mock('../../../app/models/aipAwaitModel');
+jest.mock('../../../app/models/aipOrderModel');
 jest.mock('../../../app/models/dataExchangeSymbolModel');
 jest.mock('../../../app/services/orderService');
 jest.mock('../../../app/services/symbolService');
@@ -15,6 +16,7 @@ jest.mock('../../../app/utils/logger', () => ({
 const ccxt = require('ccxt');
 const AipStrategyModel = require('../../../app/models/aipStrategyModel');
 const AipAwaitModel = require('../../../app/models/aipAwaitModel');
+const AipOrderModel = require('../../../app/models/aipOrderModel');
 const DataExchangeSymbolModel = require('../../../app/models/dataExchangeSymbolModel');
 const OrderService = require('../../../app/services/orderService');
 const SymbolService = require('../../../app/services/symbolService');
@@ -583,6 +585,67 @@ describe('StrategyService', () => {
       expect(AwaitService.createAwait).toHaveBeenCalled();
     });
 
+    it('should call sellout with sellAmount for intelligent strategy when nowWorth > expectWorth', async () => {
+      mockExchange.fetchTicker.mockResolvedValue({ bid: 60000 });
+
+      const strategy = {
+        _id: 'strat-intel',
+        exchange: 'binance',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
+        symbol: 'BTC/USDT',
+        type: AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT,
+        quote_total: 1.0,
+        base_total: 10000,
+        base_limit: 100,
+        buy_times: 5,
+        expect_growth_rate: 0.008,
+        sell_price: 0,
+        user: 'user-1',
+      };
+
+      // nowWorth = 1.0 * 60000 = 60000
+      // expectWorth = 100 * 5 * (1.008)^5 ≈ 520.32
+      // excessValue = 60000 - 520.32 = 59479.68
+      // sellAmount = 59479.68 / 60000 ≈ 0.9913
+      AwaitService.createAwait.mockResolvedValue({
+        _id: 'await-intel',
+        strategy_id: 'strat-intel',
+      });
+
+      jest.spyOn(StrategyService, 'sellout');
+
+      await StrategyService.processSell(strategy);
+
+      expect(StrategyService.sellout).toHaveBeenCalledWith(strategy, expect.closeTo(0.9913, 2));
+    });
+
+    it('should not sell intelligent strategy when nowWorth <= expectWorth', async () => {
+      mockExchange.fetchTicker.mockResolvedValue({ bid: 50 });
+
+      const strategy = {
+        _id: 'strat-intel-2',
+        exchange: 'binance',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
+        symbol: 'BTC/USDT',
+        type: AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT,
+        quote_total: 0.001,
+        base_total: 500,
+        base_limit: 100,
+        buy_times: 5,
+        expect_growth_rate: 0.008,
+      };
+
+      // nowWorth = 0.001 * 50 = 0.05 (way below expectWorth)
+      jest.spyOn(StrategyService, 'sellout');
+
+      const result = await StrategyService.processSell(strategy);
+
+      expect(StrategyService.sellout).not.toHaveBeenCalled();
+      expect(result).toBeUndefined();
+    });
+
     it('should reset drawdown_price when price has not dropped below threshold', async () => {
       mockExchange.fetchTicker.mockResolvedValue({ bid: 110000 });
 
@@ -695,6 +758,97 @@ describe('StrategyService', () => {
       await StrategyService.sellAllOrders();
 
       expect(AwaitService.sellOnThirdParty).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getSummary()', () => {
+    it('should compute summary using live prices from DataExchangeSymbolModel', async () => {
+      const mockStrategies = [
+        {
+          _id: 'strat-1',
+          exchange: 'binance',
+          symbol: 'BTC/USDT',
+          base_total: 1000,
+          quote_total: 0.02,
+        },
+        {
+          _id: 'strat-2',
+          exchange: 'binance',
+          symbol: 'ETH/USDT',
+          base_total: 500,
+          quote_total: 0.5,
+        },
+      ];
+
+      AipStrategyModel.find.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockStrategies),
+      });
+
+      DataExchangeSymbolModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([
+            { exchange: 'binance', symbol: 'BTC/USDT', price_native: '52000' },
+            { exchange: 'binance', symbol: 'ETH/USDT', price_native: '3000' },
+          ]),
+        }),
+      });
+
+      const result = await StrategyService.getSummary('user-1');
+
+      // totalInvested = 1000 + 500 = 1500
+      // totalValue = 0.02 * 52000 + 0.5 * 3000 = 1040 + 1500 = 2540
+      // totalProfit = 2540 - 1500 = 1040
+      // profitRate = (1040/1500) * 100 = 69.33%
+      expect(result.strategyCount).toBe(2);
+      expect(result.totalInvested).toBe(1500);
+      expect(result.totalValue).toBe(2540);
+      expect(result.totalProfit).toBe(1040);
+      expect(result.profitRate).toBe('69.33');
+    });
+
+    it('should handle strategies with no matching symbol price', async () => {
+      AipStrategyModel.find.mockReturnValue({
+        lean: jest.fn().mockResolvedValue([
+          {
+            _id: 'strat-1',
+            exchange: 'binance',
+            symbol: 'UNKNOWN/USDT',
+            base_total: 100,
+            quote_total: 1,
+          },
+        ]),
+      });
+
+      DataExchangeSymbolModel.find.mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([]),
+        }),
+      });
+
+      const result = await StrategyService.getSummary('user-1');
+
+      expect(result.totalValue).toBe(0);
+      expect(result.totalProfit).toBe(-100);
+    });
+  });
+
+  describe('getPublicOrders()', () => {
+    it('should return orders with only selected fields', async () => {
+      const mockOrders = [
+        { symbol: 'BTC/USDT', price: 50000, amount: 0.002, side: 'buy', created_at: new Date() },
+      ];
+
+      const mockLean = jest.fn().mockResolvedValue(mockOrders);
+      const mockLimit = jest.fn().mockReturnValue({ lean: mockLean });
+      const mockSort = jest.fn().mockReturnValue({ limit: mockLimit });
+      const mockSelect = jest.fn().mockReturnValue({ sort: mockSort });
+      AipOrderModel.find.mockReturnValue({ select: mockSelect });
+
+      const result = await StrategyService.getPublicOrders();
+
+      expect(AipOrderModel.find).toHaveBeenCalledWith({ side: 'buy' });
+      expect(mockSelect).toHaveBeenCalledWith('symbol price amount side created_at');
+      expect(result.list).toEqual(mockOrders);
     });
   });
 

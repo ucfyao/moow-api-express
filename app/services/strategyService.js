@@ -522,7 +522,7 @@ class StrategyService {
           `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth}, expectWorth=${expectWorth}, selling ${sellAmount}`,
         );
         strategy.sell_price = sell_price;
-        return await this.sellout(strategy);
+        return await this.sellout(strategy, sellAmount);
       }
       logger.info(
         `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth} <= expectWorth=${expectWorth}, no sell needed`,
@@ -581,12 +581,13 @@ class StrategyService {
     }
   }
 
-  async sellout(strategy) {
+  async sellout(strategy, sellAmount = 0) {
     const conditions = {
       strategy_id: strategy._id,
       user: strategy.user,
       sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
       await_status: AipAwaitModel.STATUS_WAITING,
+      sell_amount: sellAmount,
     };
     const awaitOrder = await AwaitService.createAwait(conditions);
     const id = awaitOrder ? awaitOrder._id : '';
@@ -680,12 +681,41 @@ class StrategyService {
       status: AipStrategyModel.STRATEGY_STATUS_NORMAL,
     }).lean();
 
+    // Batch-fetch live symbol prices (same pattern as getAllStrategies)
+    const uniquePairs = [];
+    const pairSet = new Set();
+    for (const s of strategies) {
+      const key = `${s.exchange}:${s.symbol}`;
+      if (!pairSet.has(key)) {
+        pairSet.add(key);
+        uniquePairs.push({ exchange: s.exchange, symbol: s.symbol });
+      }
+    }
+
+    const symbolLookup = {};
+    if (uniquePairs.length > 0) {
+      const symbolDocs = await DataExchangeSymbolModel.find({
+        $or: uniquePairs.map((p) => ({ exchange: p.exchange, symbol: p.symbol })),
+      })
+        .sort({ percent: -1 })
+        .lean();
+      for (const doc of symbolDocs) {
+        const lookupKey = `${doc.exchange}:${doc.symbol}`;
+        if (!symbolLookup[lookupKey]) {
+          symbolLookup[lookupKey] = doc;
+        }
+      }
+    }
+
     let totalInvested = 0;
     let totalValue = 0;
 
     for (const s of strategies) {
       totalInvested += s.base_total || 0;
-      totalValue += (s.quote_total || 0) * (s.sell_price || 0);
+      const lookupKey = `${s.exchange}:${s.symbol}`;
+      const symbolPrice = symbolLookup[lookupKey];
+      const livePrice = symbolPrice ? parseFloat(symbolPrice.price_native) : 0;
+      totalValue += (s.quote_total || 0) * livePrice;
     }
 
     const totalProfit = totalValue - totalInvested;
@@ -706,6 +736,7 @@ class StrategyService {
    */
   async getPublicOrders() {
     const orders = await AipOrderModel.find({ side: 'buy' })
+      .select('symbol price amount side created_at')
       .sort({ created_at: -1 })
       .limit(20)
       .lean();
