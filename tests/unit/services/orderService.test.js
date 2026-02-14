@@ -1,4 +1,5 @@
 jest.mock('../../../app/models/aipOrderModel');
+jest.mock('../../../app/models/aipStrategyModel');
 jest.mock('../../../app/utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
@@ -6,12 +7,72 @@ jest.mock('../../../app/utils/logger', () => ({
 }));
 
 const AipOrderModel = require('../../../app/models/aipOrderModel');
+const AipStrategyModel = require('../../../app/models/aipStrategyModel');
 const OrderService = require('../../../app/services/orderService');
 const CustomError = require('../../../app/utils/customError');
+
+AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED = 3;
 
 describe('OrderService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('getOrderStatistics()', () => {
+    it('should return zero stats when user has no strategies', async () => {
+      AipStrategyModel.find.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([]),
+        }),
+      });
+
+      const result = await OrderService.getOrderStatistics('user-1');
+
+      expect(result.total_orders).toBe(0);
+      expect(result.buy_count).toBe(0);
+      expect(result.sell_count).toBe(0);
+    });
+
+    it('should return aggregated stats for user strategies', async () => {
+      AipStrategyModel.find.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([{ _id: 'strat-1' }, { _id: 'strat-2' }]),
+        }),
+      });
+
+      AipOrderModel.aggregate.mockResolvedValue([
+        {
+          _id: null,
+          total_orders: 5,
+          buy_count: 3,
+          sell_count: 2,
+          total_buy_cost: 1500,
+          total_sell_revenue: 2000,
+          total_profit: 500,
+        },
+      ]);
+
+      const result = await OrderService.getOrderStatistics('user-1');
+
+      expect(result.total_orders).toBe(5);
+      expect(result.buy_count).toBe(3);
+      expect(result.sell_count).toBe(2);
+      expect(result.total_profit).toBe(500);
+    });
+
+    it('should return zero stats when strategies have no orders', async () => {
+      AipStrategyModel.find.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([{ _id: 'strat-1' }]),
+        }),
+      });
+
+      AipOrderModel.aggregate.mockResolvedValue([]);
+
+      const result = await OrderService.getOrderStatistics('user-1');
+
+      expect(result.total_orders).toBe(0);
+    });
   });
 
   describe('getOrderById()', () => {

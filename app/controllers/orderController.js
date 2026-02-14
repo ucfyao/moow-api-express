@@ -8,6 +8,11 @@ class OrderController {
     return ResponseHandler.success(res, orders);
   }
 
+  async statistics(req, res) {
+    const data = await OrderService.getOrderStatistics(req.userId);
+    return ResponseHandler.success(res, data);
+  }
+
   async show(req, res) {
     const { id } = req.params;
     const order = await OrderService.getOrderById(id);

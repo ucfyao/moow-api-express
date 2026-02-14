@@ -17,8 +17,9 @@ jest.mock('../../app/services/emailService', () => ({
 
 const createTestApp = require('../helpers/app');
 const AipOrderModel = require('../../app/models/aipOrderModel');
+const AipStrategyModel = require('../../app/models/aipStrategyModel');
 const PortalTokenModel = require('../../app/models/portalTokenModel');
-const { createOrderData, createTokenData } = require('../helpers/fixtures');
+const { createOrderData, createStrategyData, createTokenData } = require('../helpers/fixtures');
 
 let app;
 
@@ -128,6 +129,65 @@ describe('Order API Integration', () => {
         .set('user_id', auth.user_id);
 
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /api/v1/orders/statistics', () => {
+    it('should return 401 when no auth headers provided', async () => {
+      const res = await request(app).get('/api/v1/orders/statistics');
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return zero stats when user has no orders', async () => {
+      const auth = await createAuthHeaders();
+
+      const res = await request(app)
+        .get('/api/v1/orders/statistics')
+        .set('token', auth.token)
+        .set('user_id', auth.user_id);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total_orders).toBe(0);
+      expect(res.body.data.buy_count).toBe(0);
+    });
+
+    it('should return correct statistics for user orders', async () => {
+      const auth = await createAuthHeaders();
+      const userId = new mongoose.Types.ObjectId(auth.user_id);
+
+      // Create a strategy belonging to this user
+      const strategy = await AipStrategyModel.create(
+        createStrategyData({ user: userId }),
+      );
+
+      // Create orders for this strategy
+      await AipOrderModel.create(
+        createOrderData({
+          strategy_id: strategy._id.toString(),
+          side: 'buy',
+          base_total: 100,
+          profit: 0,
+        }),
+      );
+      await AipOrderModel.create(
+        createOrderData({
+          strategy_id: strategy._id.toString(),
+          side: 'buy',
+          base_total: 200,
+          profit: 0,
+        }),
+      );
+
+      const res = await request(app)
+        .get('/api/v1/orders/statistics')
+        .set('token', auth.token)
+        .set('user_id', auth.user_id);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total_orders).toBe(2);
+      expect(res.body.data.buy_count).toBe(2);
+      expect(res.body.data.sell_count).toBe(0);
     });
   });
 });

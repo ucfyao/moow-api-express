@@ -40,6 +40,38 @@ const router = express.Router();
  */
 router.get('/api/v1/orders', authMiddleware, OrderController.index);
 
+// Get order statistics for current user
+/**
+ * @swagger
+ * /api/v1/orders/statistics:
+ *   get:
+ *     summary: Get order statistics
+ *     tags:
+ *       - Orders Management
+ *     description: Get aggregated order statistics for the authenticated user.
+ *     responses:
+ *       200:
+ *         description: Successfully returned order statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total_orders:
+ *                   type: number
+ *                 buy_count:
+ *                   type: number
+ *                 sell_count:
+ *                   type: number
+ *                 total_buy_cost:
+ *                   type: number
+ *                 total_sell_revenue:
+ *                   type: number
+ *                 total_profit:
+ *                   type: number
+ */
+router.get('/api/v1/orders/statistics', authMiddleware, OrderController.statistics);
+
 // Get order detail by id
 /**
  * @swagger
