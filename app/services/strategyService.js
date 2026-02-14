@@ -84,7 +84,7 @@ class StrategyService {
 
     const total = await AipStrategyModel.countDocuments(conditions);
     logger.info(
-      `\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${list.length}\n  Response Time: \t${Date.now() - start} ms\n`
+      `\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${list.length}\n  Response Time: \t${Date.now() - start} ms\n`,
     );
 
     return {
@@ -117,7 +117,7 @@ class StrategyService {
       symbolPrice = {};
     }
     logger.info(
-      `\nQuery Details\n  Strategy Id: \t${id}\n  Info Details: \t${info}\n   Response Time: \t${Date.now() - start} ms\n`
+      `\nQuery Details\n  Strategy Id: \t${id}\n  Info Details: \t${info}\n   Response Time: \t${Date.now() - start} ms\n`,
     );
 
     return { info, symbolPrice };
@@ -149,7 +149,7 @@ class StrategyService {
     const strategyId = doc ? doc._id : '';
 
     logger.info(
-      `\nNew Strategy\n  Strategy Id: \t${JSON.stringify(strategyId)}\n  Strategy Info: \t${JSON.stringify(processedStrategy)}\n  Response Time: \t${Date.now() - start} ms\n`
+      `\nNew Strategy\n  Strategy Id: \t${JSON.stringify(strategyId)}\n  Strategy Info: \t${JSON.stringify(processedStrategy)}\n  Response Time: \t${Date.now() - start} ms\n`,
     );
 
     return { _id: strategyId };
@@ -189,7 +189,7 @@ class StrategyService {
 
     await doc.save();
     logger.info(
-      `\nUpdate Strategy\n  Strategy Id: \t${JSON.stringify(params._id)}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`
+      `\nUpdate Strategy\n  Strategy Id: \t${JSON.stringify(params._id)}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`,
     );
 
     return {
@@ -213,7 +213,7 @@ class StrategyService {
     const conditions = {
       strategy_id: doc._id,
       user: doc.user,
-      sell_type: AipAwaitModel.SELL_TYPE_AUTO_SELL,
+      sell_type: AipAwaitModel.SELL_TYPE_DEL_INVEST,
       await_status: AipAwaitModel.STATUS_WAITING,
     };
     await AwaitService.createAwait(conditions);
@@ -222,7 +222,7 @@ class StrategyService {
     doc.status = AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED;
     await doc.save();
     logger.info(
-      `\nDelete Strategy\n  Strategy Id: \t${id}\n  Response Time: \t${Date.now() - start} ms\n`
+      `\nDelete Strategy\n  Strategy Id: \t${id}\n  Response Time: \t${Date.now() - start} ms\n`,
     );
 
     return {
@@ -241,9 +241,9 @@ class StrategyService {
       status: AipStrategyModel.STRATEGY_STATUS_NORMAL,
       minute: now.get('minute').toString(),
     };
-    const strategiesArr = await AipStrategyModel.find(conditions);
+    const strategiesArr = await AipStrategyModel.find(conditions).lean();
     logger.info(
-      `cur day: ${now.get('day')}, hour: ${now.get('hour')}, minite: ${now.get('minute')}`
+      `cur day: ${now.get('day')}, hour: ${now.get('hour')}, minite: ${now.get('minute')}`,
     );
 
     const results = [];
@@ -386,7 +386,7 @@ class StrategyService {
       side,
       amount,
       price,
-      inParams
+      inParams,
     );
 
     logger.info(`== exchange res order id: ${orderRes.id}`);
@@ -460,7 +460,7 @@ class StrategyService {
     }
     logger.info(`### Round time: ${Date.now() - start}ms`);
     logger.info(
-      "The future has arrived, it just hasn't become mainstream yet. Let us lead you into the world of blockchain ahead of time."
+      "The future has arrived, it just hasn't become mainstream yet. Let us lead you into the world of blockchain ahead of time.",
     );
     return results;
   }
@@ -575,13 +575,19 @@ class StrategyService {
         const updatedOrder = await AipAwaitModel.findOneAndUpdate(
           { _id: awaitorder._id, await_status: AipAwaitModel.STATUS_WAITING },
           { await_status: AipAwaitModel.STATUS_PROCESSING },
-          { new: true }
+          { new: true },
         );
         if (!updatedOrder) {
           logger.info(`[sellAllOrders] Await order ${awaitorder._id} already processing, skipping`);
           continue;
         }
         const strategy = await AipStrategyModel.findById(awaitorder.strategy_id);
+        if (!strategy) {
+          logger.error(
+            `Strategy not found for await order ${awaitorder._id}, strategy_id: ${awaitorder.strategy_id}`,
+          );
+          continue;
+        }
         await AwaitService.sellOnThirdParty(strategy, updatedOrder);
       } catch (error) {
         logger.error(`[sellAllOrders] Await order ${awaitorder._id} failed: ${error.message}`);

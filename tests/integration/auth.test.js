@@ -200,4 +200,44 @@ describe('Auth API Integration', () => {
       expect(res.status).toBe(500);
     });
   });
+
+  describe('POST /api/v1/auth/refresh', () => {
+    it('should return 401 when no auth headers provided', async () => {
+      const res = await request(app).post('/api/v1/auth/refresh');
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should refresh token and return new token', async () => {
+      const user = await PortalUserModel.create({
+        nick_name: 'RefreshUser',
+        email: 'refresh@test.com',
+        password: 'hashed',
+        salt: 'salt',
+        seq_id: 300,
+      });
+
+      const tokenDoc = await PortalTokenModel.create({
+        user_id: user._id,
+        token: 'old-refresh-token',
+        type: 'session',
+        last_access_time: new Date(),
+        email: user.email,
+        nick_name: user.nick_name,
+      });
+
+      const res = await request(app)
+        .post('/api/v1/auth/refresh')
+        .set('token', 'old-refresh-token')
+        .set('user_id', user._id.toString());
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.token).toBeDefined();
+      expect(res.body.data.token).not.toBe('old-refresh-token');
+
+      // Verify old token was deleted
+      const oldToken = await PortalTokenModel.findOne({ token: 'old-refresh-token' });
+      expect(oldToken).toBeNull();
+    });
+  });
 });

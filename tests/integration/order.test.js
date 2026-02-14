@@ -17,8 +17,9 @@ jest.mock('../../app/services/emailService', () => ({
 
 const createTestApp = require('../helpers/app');
 const AipOrderModel = require('../../app/models/aipOrderModel');
+const AipStrategyModel = require('../../app/models/aipStrategyModel');
 const PortalTokenModel = require('../../app/models/portalTokenModel');
-const { createOrderData, createTokenData } = require('../helpers/fixtures');
+const { createOrderData, createStrategyData, createTokenData } = require('../helpers/fixtures');
 
 let app;
 
@@ -37,16 +38,16 @@ afterEach(async () => {
 
 // Helper: create auth token and return headers
 const createAuthHeaders = async (userId) => {
-  const token = await PortalTokenModel.create(
-    createTokenData({
-      user_id: userId,
-      token: `session-${Date.now()}`,
-      type: 'session',
-    })
-  );
+  const uid = userId || new mongoose.Types.ObjectId();
+  const tokenData = createTokenData({
+    user_id: uid,
+    token: `session-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    type: 'session',
+  });
+  await PortalTokenModel.create(tokenData);
   return {
-    token: token.token,
-    user_id: userId.toString(),
+    token: tokenData.token,
+    user_id: uid.toString(),
   };
 };
 
@@ -60,6 +61,12 @@ describe('Order API Integration', () => {
   });
 
   describe('GET /api/v1/orders', () => {
+    it('should return 401 when no auth headers provided', async () => {
+      const res = await request(app).get('/api/v1/orders');
+
+      expect(res.status).toBe(401);
+    });
+
     it('should return orders for a given strategy_id', async () => {
       const strategyId = new mongoose.Types.ObjectId().toString();
       await AipOrderModel.create(createOrderData({ strategy_id: strategyId, side: 'buy' }));
@@ -96,6 +103,98 @@ describe('Order API Integration', () => {
       // Without strategy_id, it queries with undefined which returns empty
       expect(res.status).toBe(200);
       expect(res.body.data.list).toBeDefined();
+    });
+  });
+
+  describe('GET /api/v1/orders/:id', () => {
+    it('should return 401 when no auth headers provided', async () => {
+      const orderId = new mongoose.Types.ObjectId().toString();
+      const res = await request(app).get(`/api/v1/orders/${orderId}`);
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return order detail when found', async () => {
+      const auth = await createAuthHeaders();
+      const order = await AipOrderModel.create(createOrderData({ side: 'buy' }));
+
+      const res = await request(app)
+        .get(`/api/v1/orders/${order._id}`)
+        .set('token', auth.token)
+        .set('user_id', auth.user_id);
+
+      expect(res.status).toBe(200);
+      expect(res.body.code).toBe(0);
+      expect(res.body.data._id).toBe(order._id.toString());
+    });
+
+    it('should return 404 when order not found', async () => {
+      const auth = await createAuthHeaders();
+      const fakeId = new mongoose.Types.ObjectId().toString();
+
+      const res = await request(app)
+        .get(`/api/v1/orders/${fakeId}`)
+        .set('token', auth.token)
+        .set('user_id', auth.user_id);
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe('GET /api/v1/orders/statistics', () => {
+    it('should return 401 when no auth headers provided', async () => {
+      const res = await request(app).get('/api/v1/orders/statistics');
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return zero stats when user has no orders', async () => {
+      const auth = await createAuthHeaders();
+
+      const res = await request(app)
+        .get('/api/v1/orders/statistics')
+        .set('token', auth.token)
+        .set('user_id', auth.user_id);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total_orders).toBe(0);
+      expect(res.body.data.buy_count).toBe(0);
+    });
+
+    it('should return correct statistics for user orders', async () => {
+      const auth = await createAuthHeaders();
+      const userId = new mongoose.Types.ObjectId(auth.user_id);
+
+      // Create a strategy belonging to this user
+      const strategy = await AipStrategyModel.create(createStrategyData({ user: userId }));
+
+      // Create orders for this strategy
+      await AipOrderModel.create(
+        createOrderData({
+          strategy_id: strategy._id.toString(),
+          side: 'buy',
+          base_total: 100,
+          profit: 0,
+        })
+      );
+      await AipOrderModel.create(
+        createOrderData({
+          strategy_id: strategy._id.toString(),
+          side: 'buy',
+          base_total: 200,
+          profit: 0,
+        })
+      );
+
+      const res = await request(app)
+        .get('/api/v1/orders/statistics')
+        .set('token', auth.token)
+        .set('user_id', auth.user_id);
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.total_orders).toBe(2);
+      expect(res.body.data.buy_count).toBe(2);
+      expect(res.body.data.sell_count).toBe(0);
     });
   });
 });

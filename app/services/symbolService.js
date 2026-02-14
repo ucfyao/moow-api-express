@@ -4,6 +4,7 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const DataExchangeSymbolModel = require('../models/dataExchangeSymbolModel');
 const DataExchangeRateModel = require('../models/dataExchangeRateModel');
+const { priceCache, rateCache, symbolCache } = require('../utils/cacheManager');
 const logger = require('../utils/logger');
 const config = require('../../config');
 
@@ -15,6 +16,17 @@ class SymbolService {
    */
   async getAllSymbols(params) {
     const start = Date.now();
+
+    // Check cache for simple exchange+symbol lookups (strategy list uses this pattern)
+    const cacheKey = `symbols:${JSON.stringify(params)}`;
+    const cached = symbolCache.get(cacheKey);
+    if (cached) {
+      logger.info(
+        `\nQuery List (cached)\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${cached.list.length}\n  Response Time: \t${Date.now() - start} ms\n`,
+      );
+      return cached;
+    }
+
 
     const conditions = {};
 
@@ -62,16 +74,19 @@ class SymbolService {
       .lean();
     const total = await DataExchangeSymbolModel.find(conditions).countDocuments();
 
-    logger.info(
-      `\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${symbolList.length}\n  Response Time: \t${Date.now() - start} ms\n`
-    );
-
-    return {
+    const result = {
       list: symbolList,
       pageNumber,
       pageSize,
       total,
     };
+
+    symbolCache.set(cacheKey, result);
+    logger.info(
+      `\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${symbolList.length}\n  Response Time: \t${Date.now() - start} ms\n`,
+    );
+
+    return result;
   }
 
   /**
@@ -84,7 +99,7 @@ class SymbolService {
     const info = await DataExchangeSymbolModel.findById(id);
 
     logger.info(
-      `\nQuery Details\n  Symbol Id: \t${id}\n  Info Details: \t${JSON.stringify(info)}\n    Response Time: \t${Date.now() - start} ms\n`
+      `\nQuery Details\n  Symbol Id: \t${id}\n  Info Details: \t${JSON.stringify(info)}\n    Response Time: \t${Date.now() - start} ms\n`,
     );
 
     return info;
@@ -127,8 +142,15 @@ class SymbolService {
     symbol = 'BTC/USDT',
     interval = '1d',
     limit = 1,
-    otherCurrency = 'CNY'
+    otherCurrency = 'CNY',
   ) {
+    const cacheKey = `price:${exchangeId}:${symbol}:${startDate}:${endDate}:${interval}`;
+    const cached = priceCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+
     const exchange = new ccxt[exchangeId]();
     const exchangeUrl = exchange.urls.www || exchange.urls.api;
     // Convert dates to timestamps
@@ -147,6 +169,7 @@ class SymbolService {
     // Process the price data
     await this.processPriceData(allOHLCV, exchangeId, symbol, otherCurrency, exchangeUrl);
 
+    priceCache.set(cacheKey, allOHLCV);
     return allOHLCV;
   }
 
@@ -204,6 +227,12 @@ class SymbolService {
   }
 
   async getUSDToOtherRate(otherCurrency) {
+    const cacheKey = `rate:USD:${otherCurrency}`;
+    const cached = rateCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const { apiUrl } = config.currencyRate;
     try {
       let exchangeRate = await DataExchangeRateModel.findOne({
@@ -211,6 +240,7 @@ class SymbolService {
         to_currency: otherCurrency,
       });
       if (exchangeRate) {
+        rateCache.set(cacheKey, exchangeRate.rate);
         return exchangeRate.rate;
       }
       const response = await axios.get(apiUrl);
@@ -223,6 +253,7 @@ class SymbolService {
       });
 
       await exchangeRate.save();
+      rateCache.set(cacheKey, rate);
       return rate;
     } catch (error) {
       // todo: we need a status code for this
@@ -235,7 +266,7 @@ class SymbolService {
     filePath,
     exchangeId = 'binance',
     symbol = 'BTC/USDT',
-    otherCurrency = 'CNY'
+    otherCurrency = 'CNY',
   ) {
     const records = [];
     const exchange = new ccxt[exchangeId]();
@@ -265,7 +296,7 @@ class SymbolService {
           exchangeId,
           symbol,
           otherCurrency,
-          exchangeUrl
+          exchangeUrl,
         );
       });
   }

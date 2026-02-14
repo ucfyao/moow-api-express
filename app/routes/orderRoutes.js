@@ -1,6 +1,6 @@
 const express = require('express');
-const OrderController = require('../controllers/orderController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const OrderController = require('../controllers/orderController');
 
 const router = express.Router();
 
@@ -40,6 +40,61 @@ const router = express.Router();
  *                     example: 2
  */
 router.get('/api/v1/orders', authMiddleware, OrderController.index);
+
+// Get order statistics for current user
+/**
+ * @swagger
+ * /api/v1/orders/statistics:
+ *   get:
+ *     summary: Get order statistics
+ *     tags:
+ *       - Orders Management
+ *     description: Get aggregated order statistics for the authenticated user.
+ *     responses:
+ *       200:
+ *         description: Successfully returned order statistics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 total_orders:
+ *                   type: number
+ *                 buy_count:
+ *                   type: number
+ *                 sell_count:
+ *                   type: number
+ *                 total_buy_cost:
+ *                   type: number
+ *                 total_sell_revenue:
+ *                   type: number
+ *                 total_profit:
+ *                   type: number
+ */
+router.get('/api/v1/orders/statistics', authMiddleware, OrderController.statistics);
+
+// Get order detail by id
+/**
+ * @swagger
+ * /api/v1/orders/{id}:
+ *   get:
+ *     summary: Get order detail
+ *     tags:
+ *       - Orders Management
+ *     description: Get a single order by its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully returned the order detail
+ *       404:
+ *         description: Order not found
+ */
+router.get('/api/v1/orders/:id', authMiddleware, OrderController.show);
 
 // Fetch all open orders
 /**

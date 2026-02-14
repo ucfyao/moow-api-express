@@ -8,6 +8,17 @@ class OrderController {
     return ResponseHandler.success(res, orders);
   }
 
+  async statistics(req, res) {
+    const data = await OrderService.getOrderStatistics(req.userId);
+    return ResponseHandler.success(res, data);
+  }
+
+  async show(req, res) {
+    const { id } = req.params;
+    const order = await OrderService.getOrderById(id);
+    return ResponseHandler.success(res, order);
+  }
+
   // TODO: Accept keyId instead of raw credentials, decrypt server-side
   async listThirdPartyOrders(req, res) {
     const { exchangeName, symbol, apiKey, secret } = req.query;

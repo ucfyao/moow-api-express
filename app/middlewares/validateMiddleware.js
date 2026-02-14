@@ -15,7 +15,7 @@ const validateParams = (schema) => [
         res,
         STATUS_TYPE.HTTP_BAD_REQUEST,
         STATUS_TYPE.COMMON_PARAMS_ERROR,
-        paramErrors
+        paramErrors,
       );
     }
     next();
