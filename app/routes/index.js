@@ -23,6 +23,8 @@ const path = require('path');
  *     description: API endpoints related to symbols price query
  *   - name: Users Management
  *     description: API endpoints related to user information
+ *   - name: Arbitrage
+ *     description: API endpoints for arbitrage opportunity detection and configuration
  *   - name: Home
  *     description: API endpoints for general system checks and status
  *
