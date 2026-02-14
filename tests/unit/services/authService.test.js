@@ -5,13 +5,20 @@ jest.mock('../../../app/services/userService');
 jest.mock('../../../app/services/sequenceService');
 jest.mock('../../../app/services/emailService');
 jest.mock('../../../app/utils/hashidsHandler');
+jest.mock('../../../app/utils/logger', () => ({
+  info: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+}));
 
 const PortalTokenModel = require('../../../app/models/portalTokenModel');
 const PortalUserModel = require('../../../app/models/portalUserModel');
+const PortalEmailInfoModel = require('../../../app/models/portalEmailInfoModel');
 const UserService = require('../../../app/services/userService');
 const SequenceService = require('../../../app/services/sequenceService');
 const EmailService = require('../../../app/services/emailService');
 const { hashidsEncode, hashidsDecode } = require('../../../app/utils/hashidsHandler');
+const logger = require('../../../app/utils/logger');
 const AuthService = require('../../../app/services/authService');
 const CustomError = require('../../../app/utils/customError');
 const { STATUS_TYPE } = require('../../../app/utils/statusCodes');
@@ -288,6 +295,86 @@ describe('AuthService', () => {
       expect(loginInfo.last_access_time).toBeDefined();
       expect(loginInfo.save).toHaveBeenCalled();
       expect(result).toBe(loginInfo);
+    });
+  });
+
+  describe('activateUser()', () => {
+    it('should activate user and extend inviter VIP using dayjs', async () => {
+      const existToken = {
+        _id: 'token-id',
+        user_id: 'user-id',
+        last_access_time: Date.now(),
+      };
+      PortalTokenModel.findOne.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(existToken),
+      });
+
+      const refUser = {
+        _id: 'aabbccddeeff001122334455',
+        vip_time_out_at: new Date('2026-03-01'),
+        save: jest.fn().mockResolvedValue(true),
+      };
+      const mockUser = {
+        _id: 'user-id',
+        is_activated: false,
+        inviter: 'aabbccddeeff001122334455', // valid 24-char hex ObjectId
+        save: jest.fn().mockResolvedValue(true),
+      };
+      PortalUserModel.findById
+        .mockResolvedValueOnce(mockUser) // user lookup
+        .mockResolvedValueOnce(refUser); // inviter lookup
+      PortalTokenModel.deleteOne.mockResolvedValue({});
+
+      const result = await AuthService.activateUser('valid-token');
+
+      expect(result.message).toBe('Account activation successful.');
+      expect(mockUser.is_activated).toBe(true);
+      expect(mockUser.save).toHaveBeenCalled();
+      // Verify the inviter's VIP was extended (dayjs adds 1 day)
+      expect(refUser.save).toHaveBeenCalled();
+      expect(refUser.vip_time_out_at).toBeInstanceOf(Date);
+      // The new date should be 1 day after 2026-03-01
+      expect(refUser.vip_time_out_at.getTime()).toBeGreaterThan(
+        new Date('2026-03-01').getTime(),
+      );
+    });
+
+    it('should throw when activation token not found', async () => {
+      PortalTokenModel.findOne.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(AuthService.activateUser('bad-token')).rejects.toThrow();
+    });
+  });
+
+  describe('sendActivateEmail()', () => {
+    it('should log error when email sending fails', async () => {
+      const mockUser = {
+        _id: 'user-id',
+        email: 'test@test.com',
+        nick_name: 'Test',
+        is_activated: false,
+      };
+      PortalUserModel.findOne.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockUser),
+      });
+      PortalTokenModel.findOne.mockResolvedValue(null);
+      jest.spyOn(AuthService, '_getCode').mockResolvedValue('mock-code');
+
+      PortalEmailInfoModel.STATUS_FAILED = 'failed';
+      EmailService.sendEmail.mockResolvedValue({
+        emailStatus: 'failed',
+        desc: 'SMTP connection error',
+      });
+
+      const result = await AuthService.sendActivateEmail('test@test.com', '127.0.0.1');
+
+      expect(logger.error).toHaveBeenCalledWith(
+        'Error sending activation email:',
+        'SMTP connection error',
+      );
+      expect(result.message).toBe('Activation email will be sent!');
     });
   });
 });

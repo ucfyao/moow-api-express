@@ -2,6 +2,7 @@ const AipAwaitModel = require('../models/aipAwaitModel');
 const AipStrategyModel = require('../models/aipStrategyModel');
 const logger = require('../utils/logger');
 const OrderService = require('./orderService');
+const { decrypt } = require('../utils/cryptoUtils');
 const config = require('../../config');
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const ccxt = require('ccxt');
@@ -49,15 +50,19 @@ class AwaitService {
    * @returns 
    */
   async sellOnThirdParty(strategy, awaitOrder) {
-    //TODO: encrypte and decrypte key and secret
     if (strategy.exchange === undefined) {
       logger.info('[' + strategy._id + '] - exchange is null , call user !');
       return;
     }
+
+    // Decrypt RSA-encrypted exchange credentials
+    const apiKey = decrypt(strategy.key);
+    const secret = decrypt(strategy.secret);
+
     const exchange = new ccxt[strategy.exchange]({
-      apiKey: strategy.key,
-      secret: strategy.secret,
-      timeout: config.exchangeTimeOut
+      apiKey,
+      secret,
+      timeout: config.exchangeTimeOut,
     });
     const type = 'market';
     const side = 'sell';

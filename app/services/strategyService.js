@@ -7,6 +7,7 @@ const OrderService = require('./orderService');
 const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
+const { encrypt, decrypt } = require('../utils/cryptoUtils');
 const config = require('../../config');
 const dayjs = require('dayjs');
 
@@ -99,6 +100,14 @@ class StrategyService {
   async createStrategy(strategy) {
     const start = Date.now();
     const processedStrategy = { ...strategy, minute:`${parseInt(60 * Math.random(),10)}`, hour:`${parseInt(24 * Math.random(),10)}`};
+
+    // Encrypt exchange credentials before storing
+    if (processedStrategy.key) {
+      processedStrategy.key = encrypt(processedStrategy.key);
+    }
+    if (processedStrategy.secret) {
+      processedStrategy.secret = encrypt(processedStrategy.secret);
+    }
 
     const doc = new AipStrategyModel(processedStrategy);
     await doc.save();
@@ -255,12 +264,9 @@ class StrategyService {
    * @returns {Object} Result of the buy operation
    */
   async processBuy(strategy) {
-    // TODO When creating a Strategy, it is necessary to store the encrypted key and secret.
-    // const apiKey = await decrypt(strategy.key);
-    // const secret = await decrypt(strategy.secret);
-
-    const apiKey = strategy.key;
-    const { secret } = strategy;
+    // Decrypt RSA-encrypted exchange credentials
+    const apiKey = decrypt(strategy.key);
+    const secret = decrypt(strategy.secret);
 
     const exchange = new ccxt[strategy.exchange]({
       apiKey,
@@ -415,10 +421,14 @@ class StrategyService {
    * @returns {Object} Result of the sell operation
    */
   async processSell(strategy) {
+    // Decrypt RSA-encrypted exchange credentials
+    const apiKey = decrypt(strategy.key);
+    const secret = decrypt(strategy.secret);
+
     const exchange = new ccxt[strategy.exchange]({
-      apiKey: strategy.key,
-      secret: strategy.secret,
-      timeout: config.exchangeTimeOut
+      apiKey,
+      secret,
+      timeout: config.exchangeTimeOut,
     });
     const tickerRes = await exchange.fetchTicker(strategy.symbol);
     const sell_price = tickerRes.bid;

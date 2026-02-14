@@ -4,6 +4,7 @@ jest.mock('../../../app/models/aipAwaitModel');
 jest.mock('../../../app/services/orderService');
 jest.mock('../../../app/services/symbolService');
 jest.mock('../../../app/services/awaitService');
+jest.mock('../../../app/utils/cryptoUtils');
 jest.mock('../../../app/utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),
@@ -16,6 +17,7 @@ const AipAwaitModel = require('../../../app/models/aipAwaitModel');
 const OrderService = require('../../../app/services/orderService');
 const SymbolService = require('../../../app/services/symbolService');
 const AwaitService = require('../../../app/services/awaitService');
+const { encrypt, decrypt } = require('../../../app/utils/cryptoUtils');
 const StrategyService = require('../../../app/services/strategyService');
 const { createMockExchange, setupCcxtMock } = require('../../helpers/mockCcxt');
 
@@ -40,6 +42,9 @@ AipAwaitModel.SELL_TYPE_DEL_INVEST = 2;
 describe('StrategyService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default mock: encrypt prefixes with 'enc_', decrypt strips it
+    encrypt.mockImplementation((val) => `enc_${val}`);
+    decrypt.mockImplementation((val) => val.replace(/^enc_/, ''));
   });
 
   describe('createStrategy()', () => {
@@ -76,6 +81,37 @@ describe('StrategyService', () => {
       expect(hour).toBeLessThan(24);
       expect(minute).toBeGreaterThanOrEqual(0);
       expect(minute).toBeLessThan(60);
+    });
+
+    it('should encrypt key and secret before saving', async () => {
+      const mockSave = jest.fn().mockResolvedValue(true);
+      AipStrategyModel.mockImplementation((data) => ({
+        ...data,
+        _id: 'new-strategy-id',
+        save: mockSave,
+      }));
+
+      const strategy = {
+        user: 'user-1',
+        exchange: 'binance',
+        key: 'my-api-key',
+        secret: 'my-api-secret',
+        symbol: 'BTC/USDT',
+        base_limit: 100,
+        period: '1',
+        period_value: [1],
+        type: 1,
+      };
+
+      await StrategyService.createStrategy(strategy);
+
+      expect(encrypt).toHaveBeenCalledWith('my-api-key');
+      expect(encrypt).toHaveBeenCalledWith('my-api-secret');
+
+      // Verify encrypted values are passed to the model
+      const constructorCall = AipStrategyModel.mock.calls[0][0];
+      expect(constructorCall.key).toBe('enc_my-api-key');
+      expect(constructorCall.secret).toBe('enc_my-api-secret');
     });
   });
 
@@ -239,12 +275,12 @@ describe('StrategyService', () => {
       OrderService.create.mockResolvedValue({ _id: 'order-1' });
     });
 
-    it('should execute a regular buy order with correct strategy params', async () => {
+    it('should decrypt credentials and execute a regular buy order', async () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         base: 'USDT',
         quote: 'BTC',
@@ -262,17 +298,26 @@ describe('StrategyService', () => {
 
       const result = await StrategyService.processBuy(strategy);
 
+      // Verify credentials are decrypted
+      expect(decrypt).toHaveBeenCalledWith('enc_api-key');
+      expect(decrypt).toHaveBeenCalledWith('enc_api-secret');
+      // Verify CCXT is initialized with decrypted credentials
+      expect(ccxt.binance).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apiKey: 'api-key',
+          secret: 'api-secret',
+        }),
+      );
       expect(mockExchange.fetchTicker).toHaveBeenCalledWith('BTC/USDT');
       expect(mockExchange.loadMarkets).toHaveBeenCalled();
       expect(mockExchange.fetchBalance).toHaveBeenCalled();
-      // Verify createOrder is called with strategy's actual symbol, not hardcoded values
       expect(mockExchange.createOrder).toHaveBeenCalledWith(
         'BTC/USDT',
         'market',
         'buy',
-        expect.any(String), // amount (toFixed returns string)
-        50000, // price from ticker.ask
-        {} // inParams (not okex)
+        expect.any(String),
+        50000,
+        {},
       );
       expect(OrderService.create).toHaveBeenCalled();
       expect(strategy.buy_times).toBe(6);
@@ -285,8 +330,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         base: 'USDT',
         base_limit: 2, // below minimum cost of 5
@@ -317,8 +362,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         base: 'USDT',
         base_limit: 100, // 100/50000 = 0.002 BTC, below min 1 BTC
@@ -342,8 +387,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         base: 'USDT',
         base_limit: 100,
@@ -363,8 +408,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         base: 'USDT',
         base_limit: 100,
@@ -399,8 +444,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         quote_total: 0.01,
         base_total: 400,
@@ -418,8 +463,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         quote_total: 0.01,
         base_total: 500,
@@ -439,8 +484,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         quote_total: 0.01,
         base_total: 500,
@@ -461,8 +506,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         quote_total: 0.01,
         base_total: 500,
@@ -489,8 +534,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         quote_total: 0.01,
         base_total: 500,
@@ -519,8 +564,8 @@ describe('StrategyService', () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
-        key: 'api-key',
-        secret: 'api-secret',
+        key: 'enc_api-key',
+        secret: 'enc_api-secret',
         symbol: 'BTC/USDT',
         quote_total: 0.01,
         base_total: 500,
