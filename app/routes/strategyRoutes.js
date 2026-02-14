@@ -9,6 +9,36 @@ const {
 
 const router = express.Router();
 
+// Public endpoint: DCA orders for homepage chart (no auth)
+/**
+ * @swagger
+ * /api/v1/public/dingtou/orders:
+ *   post:
+ *     summary: Get public DCA order data for homepage chart
+ *     tags:
+ *       - Trading strategy management
+ *     responses:
+ *       200:
+ *         description: Recent buy orders list
+ */
+router.post('/api/v1/public/dingtou/orders', StrategyController.getPublicOrders);
+
+// Summary must be defined BEFORE /:id to avoid matching "summary" as an id
+/**
+ * @swagger
+ * /api/v1/strategies/summary:
+ *   get:
+ *     summary: Get summary of all user's active strategies
+ *     tags:
+ *       - Trading strategy management
+ *     security:
+ *       - tokenAuth: []
+ *     responses:
+ *       200:
+ *         description: Strategy summary statistics
+ */
+router.get('/api/v1/strategies/summary', authMiddleware, StrategyController.getSummary);
+
 // view all strategies
 /**
  * @swagger
@@ -94,6 +124,29 @@ router.post(
  *         description: Successfully returned policy details
  */
 router.get('/api/v1/strategies/:id', authMiddleware, StrategyController.show);
+
+// Get exchange balance for a strategy
+/**
+ * @swagger
+ * /api/v1/strategies/{id}/balance:
+ *   get:
+ *     summary: Get exchange balance for a strategy's trading pair
+ *     tags:
+ *       - Trading strategy management
+ *     security:
+ *       - tokenAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Unique ID of the trading strategy
+ *     responses:
+ *       200:
+ *         description: Balance information
+ */
+router.get('/api/v1/strategies/:id/balance', authMiddleware, StrategyController.getBalance);
 
 // update a strategy
 /**

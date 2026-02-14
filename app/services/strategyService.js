@@ -2,6 +2,8 @@ const ccxt = require('ccxt');
 const dayjs = require('dayjs');
 const AipStrategyModel = require('../models/aipStrategyModel');
 const AipAwaitModel = require('../models/aipAwaitModel');
+const AipOrderModel = require('../models/aipOrderModel');
+const AipExchangeKeyModel = require('../models/aipExchangeKeyModel');
 const DataExchangeSymbolModel = require('../models/dataExchangeSymbolModel');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 const logger = require('../utils/logger');
@@ -100,9 +102,16 @@ class StrategyService {
    * @param {string} id- The strategy id
    * @returns {list} - Strategy detailed info list and symbol price
    */
-  async getStrategyById(id) {
+  async getStrategyById(id, userId) {
     const start = Date.now();
     const info = await AipStrategyModel.findById(id);
+
+    if (!info) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND, 404, 'Strategy not found');
+    }
+    if (userId && info.user.toString() !== userId) {
+      throw new CustomError(STATUS_TYPE.HTTP_FORBIDDEN, 403, 'Access denied');
+    }
 
     const exSymConditions = {
       exchange: info.exchange,
@@ -202,12 +211,15 @@ class StrategyService {
    * @param strategy - The strategy needs to be soft deleted
    * @returns status - Strategy status
    */
-  async deleteStrategy(id) {
+  async deleteStrategy(id, userId) {
     const start = Date.now();
     const doc = await AipStrategyModel.findById(id);
 
     if (!doc) {
       throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND);
+    }
+    if (userId && doc.user.toString() !== userId) {
+      throw new CustomError(STATUS_TYPE.HTTP_FORBIDDEN, 403, 'Access denied');
     }
 
     const conditions = {
@@ -495,6 +507,29 @@ class StrategyService {
     const sell_price = tickerRes.bid;
     logger.info(`[price] - ${sell_price}`);
 
+    // Intelligent strategies use value-based sell instead of stop_profit logic
+    if (strategy.type === AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT) {
+      const nowWorth = strategy.quote_total * sell_price;
+      const expectWorth =
+        strategy.base_limit *
+        strategy.buy_times *
+        (1 + (strategy.expect_growth_rate || 0.008)) ** strategy.buy_times;
+
+      if (nowWorth > expectWorth) {
+        const excessValue = nowWorth - expectWorth;
+        const sellAmount = excessValue / sell_price;
+        logger.info(
+          `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth}, expectWorth=${expectWorth}, selling ${sellAmount}`,
+        );
+        strategy.sell_price = sell_price;
+        return await this.sellout(strategy);
+      }
+      logger.info(
+        `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth} <= expectWorth=${expectWorth}, no sell needed`,
+      );
+      return;
+    }
+
     // check whether profit reaches the stop profit
     const profit = strategy.quote_total * sell_price - strategy.base_total;
     const profit_percentage = (profit / strategy.base_total) * 100;
@@ -595,6 +630,86 @@ class StrategyService {
     }
 
     logger.info(`### Round time: ${Date.now() - start}ms`);
+  }
+
+  /**
+   * Get exchange balance for a strategy's trading pair
+   * @param {string} strategyId - The strategy id
+   * @param {string} userId - The user id
+   * @returns {Object} Balance info for the strategy's quote currency
+   */
+  async getBalance(strategyId, userId) {
+    const strategy = await AipStrategyModel.findById(strategyId);
+    if (!strategy || strategy.user.toString() !== userId) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND, 404, 'Strategy not found');
+    }
+
+    const exchangeKey = await AipExchangeKeyModel.findById(strategy.user_market_id);
+    if (!exchangeKey) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND, 404, 'Exchange key not found');
+    }
+
+    const decryptedKey = decrypt(exchangeKey.access_key);
+    const decryptedSecret = decrypt(exchangeKey.secret_key);
+
+    const exchange = new ccxt[strategy.exchange]({
+      apiKey: decryptedKey,
+      secret: decryptedSecret,
+      timeout: config.exchangeTimeOut,
+    });
+
+    const balance = await exchange.fetchBalance();
+    const [, quote] = strategy.symbol.split('/');
+
+    return {
+      free: balance.free[quote] || 0,
+      used: balance.used[quote] || 0,
+      total: balance.total[quote] || 0,
+      currency: quote,
+    };
+  }
+
+  /**
+   * Get summary of all user's active strategies
+   * @param {string} userId - The user id
+   * @returns {Object} Summary statistics
+   */
+  async getSummary(userId) {
+    const strategies = await AipStrategyModel.find({
+      user: userId,
+      status: AipStrategyModel.STRATEGY_STATUS_NORMAL,
+    }).lean();
+
+    let totalInvested = 0;
+    let totalValue = 0;
+
+    for (const s of strategies) {
+      totalInvested += s.base_total || 0;
+      totalValue += (s.quote_total || 0) * (s.sell_price || 0);
+    }
+
+    const totalProfit = totalValue - totalInvested;
+    const profitRate = totalInvested > 0 ? (totalProfit / totalInvested) * 100 : 0;
+
+    return {
+      strategyCount: strategies.length,
+      totalInvested,
+      totalValue,
+      totalProfit,
+      profitRate: profitRate.toFixed(2),
+    };
+  }
+
+  /**
+   * Get public DCA order data for homepage chart
+   * @returns {Object} Recent buy orders list
+   */
+  async getPublicOrders() {
+    const orders = await AipOrderModel.find({ side: 'buy' })
+      .sort({ created_at: -1 })
+      .limit(20)
+      .lean();
+    return { list: orders };
   }
 
   /**
