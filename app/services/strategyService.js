@@ -100,9 +100,16 @@ class StrategyService {
    * @param {string} id- The strategy id
    * @returns {list} - Strategy detailed info list and symbol price
    */
-  async getStrategyById(id) {
+  async getStrategyById(id, userId) {
     const start = Date.now();
     const info = await AipStrategyModel.findById(id);
+
+    if (!info) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND, 404, 'Strategy not found');
+    }
+    if (userId && info.user.toString() !== userId) {
+      throw new CustomError(STATUS_TYPE.HTTP_FORBIDDEN, 403, 'Access denied');
+    }
 
     const exSymConditions = {
       exchange: info.exchange,
@@ -202,12 +209,15 @@ class StrategyService {
    * @param strategy - The strategy needs to be soft deleted
    * @returns status - Strategy status
    */
-  async deleteStrategy(id) {
+  async deleteStrategy(id, userId) {
     const start = Date.now();
     const doc = await AipStrategyModel.findById(id);
 
     if (!doc) {
       throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND);
+    }
+    if (userId && doc.user.toString() !== userId) {
+      throw new CustomError(STATUS_TYPE.HTTP_FORBIDDEN, 403, 'Access denied');
     }
 
     const conditions = {

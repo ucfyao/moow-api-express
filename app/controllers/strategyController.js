@@ -22,7 +22,7 @@ class StrategyController {
    */
   async show(req, res) {
     const strategyId = req.params.id;
-    const strategy = await StrategyService.getStrategyById(strategyId);
+    const strategy = await StrategyService.getStrategyById(strategyId, req.userId);
     return ResponseHandler.success(res, strategy);
   }
 
@@ -59,7 +59,7 @@ class StrategyController {
    */
   async destory(req, res) {
     const strategyId = req.params.id;
-    const status = await StrategyService.deleteStrategy(strategyId);
+    const status = await StrategyService.deleteStrategy(strategyId, req.userId);
     return ResponseHandler.success(res, status);
   }
 
