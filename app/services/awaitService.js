@@ -61,10 +61,9 @@ class AwaitService {
     });
     const type = 'market';
     const side = 'sell';
-    // For real environment
-    //const orderRes = await exchange.createOrder(strategy.symbol, type, side, strategy.now_quote_total);
-    //for test
-    const orderRes = await exchange.createOrder('EOS/USDT', 'limit', 'sell', 10, 2);
+    const orderRes = await exchange.createOrder(
+      strategy.symbol, type, side, strategy.now_quote_total,
+    );
 
     logger.info(`[order id ] - ${orderRes.id}`);
 
@@ -110,7 +109,7 @@ class AwaitService {
     };
 
     const createOrder = await OrderService.create(newOrder);
-    app.logger.info(`[new order] - ${createOrder._id}`);
+    logger.info(`[new order] - ${createOrder._id}`);
 
     awaitOrder.await_status = AipAwaitModel.STATUS_COMPLETED;
     await awaitOrder.save();

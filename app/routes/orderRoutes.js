@@ -74,7 +74,7 @@ router.get('/api/v1/orders', OrderController.index);
  *                     type: number
  *                     example: 1.5
  */
-router.get('/api/v1/openOders', OrderController.listThirdPartyOrders);
+router.get('/api/v1/openOrders', OrderController.listThirdPartyOrders);
 
 // Cancel all open orders
 /**

@@ -42,7 +42,24 @@ const createMockExchange = (overrides = {}) => ({
   }),
   fetchOpenOrders: jest.fn().mockResolvedValue([]),
   cancelAllOrders: jest.fn().mockResolvedValue([]),
-  loadMarkets: jest.fn().mockResolvedValue({}),
+  loadMarkets: jest.fn().mockResolvedValue({
+    'BTC/USDT': {
+      symbol: 'BTC/USDT',
+      limits: {
+        amount: { min: 0.00001, max: 9000 },
+        cost: { min: 5, max: undefined },
+      },
+    },
+  }),
+  markets: {
+    'BTC/USDT': {
+      symbol: 'BTC/USDT',
+      limits: {
+        amount: { min: 0.00001, max: 9000 },
+        cost: { min: 5, max: undefined },
+      },
+    },
+  },
   ...overrides,
 });
 

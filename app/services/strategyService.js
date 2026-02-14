@@ -272,7 +272,19 @@ class StrategyService {
     const price = ticker.ask;
 
     logger.info(`== buy price: ${price}`);
-    // TODO: make sure to reach the minimum amount and prize by const markets = await exchange.loadMarkets()[strategy.symbol];
+
+    // Validate minimum order amount via exchange market info
+    await exchange.loadMarkets();
+    const market = exchange.markets[strategy.symbol];
+    if (market && market.limits) {
+      const minCost = market.limits.cost && market.limits.cost.min;
+      if (minCost && strategy.base_limit < minCost) {
+        logger.info(
+          `== order cost ${strategy.base_limit} is below exchange minimum ${minCost}`,
+        );
+        throw new CustomError(STATUS_TYPE.AIP_BELOW_MINIMUM_ORDER);
+      }
+    }
 
     let amount = 0;
     // Fetch the current price, calculate purchase amount this time by type
@@ -292,7 +304,6 @@ class StrategyService {
     const balance = await exchange.fetchBalance();
     const valueTotal = amount * price;
 
-    // TODO Determine if the balance is sufficient.
     if (balance[strategy.base].free < valueTotal) {
       logger.info(`== balance is not enough: ${balance[strategy.base].free}`);
       throw new CustomError(STATUS_TYPE.AIP_INSUFFICIENT_BALANCE);
@@ -309,9 +320,20 @@ class StrategyService {
     const type = 'market';
     const side = 'buy';
 
-    // TODO The total price per transaction cannot be less than 5 USDT, and the lowest price cannot be less than 20% of the current price
-    // const orderRes = exchange.createOrder(strategy.symbol, type, side, amount, price, inParams);
-    const orderRes = await exchange.createOrder('EOS/USDT', 'limit', 'buy', 50, 0.15, inParams);
+    // Validate minimum amount against exchange limits
+    if (market && market.limits) {
+      const minAmount = market.limits.amount && market.limits.amount.min;
+      if (minAmount && amount < minAmount) {
+        logger.info(
+          `== order amount ${amount} is below exchange minimum ${minAmount}`,
+        );
+        throw new CustomError(STATUS_TYPE.AIP_BELOW_MINIMUM_ORDER);
+      }
+    }
+
+    const orderRes = await exchange.createOrder(
+      strategy.symbol, type, side, amount, price, inParams,
+    );
 
     logger.info(`== exchange res order id: ${orderRes.id}`);
 

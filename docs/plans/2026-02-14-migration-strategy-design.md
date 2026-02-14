@@ -150,7 +150,25 @@ All foundation work is done in both projects:
 - **Remaining issues:** [if any]
 -->
 
-(No sessions completed yet)
+### S1 — 2026-02-14: Fix Strategy Execution
+- **Repo:** moow-api-express
+- **Tickets:** 512 fix
+- **What was done:**
+  - Fixed hardcoded buy order params in `strategyService.js` — now uses `strategy.symbol`, type, side, amount, price instead of `'EOS/USDT', 'limit', 'buy', 50, 0.15`
+  - Fixed hardcoded sell order params in `awaitService.js` — now uses `strategy.symbol`, type, side, `strategy.now_quote_total` instead of `'EOS/USDT', 'limit', 'sell', 10, 2`
+  - Added minimum order validation via `exchange.loadMarkets()` — checks both minimum cost and minimum amount against exchange limits
+  - Added `AIP_BELOW_MINIMUM_ORDER (12008)` status code with EN/ZH messages
+  - Fixed `app.logger.info` → `logger.info` bug in `awaitService.js` (leftover from Egg.js migration)
+  - Fixed route typo `/api/v1/openOders` → `/api/v1/openOrders` in `orderRoutes.js`
+  - Updated mock CCXT helper with realistic `loadMarkets` / `markets` data
+  - Added comprehensive unit tests for `awaitService.sellOnThirdParty()` (5 test cases)
+  - Updated `processBuy` tests to verify correct order parameters and minimum validation
+  - All 122 tests passing (13 suites)
+- **PR:** (pending)
+- **Remaining issues:**
+  - Exchange credentials still stored in plaintext (S2 scope — RSA encryption integration)
+  - Value averaging sell strategy not implemented (future scope)
+  - User ownership validation still commented out in `partiallyUpdateStrategy`
 
 ## Best Practices for Working with Claude
 
