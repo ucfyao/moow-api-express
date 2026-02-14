@@ -12,6 +12,7 @@
  * - aip: 12001 ~ 13000
  * - data: 13001 ~ 14000
  * - asset: 14001 ~ 15000
+ * - arbitrage: 15001 ~ 16000
  */
 
 const STATUS_TYPE = {
@@ -85,6 +86,11 @@ const STATUS_TYPE = {
   ASSET_POST_ONLY: 14003, // Asset module POST requests only
   ASSET_PARAMS_ERROR: 14004, // Asset module invalid parameters
   ASSET_ACCESS_FORBIDDEN: 14005, // Asset module access forbidden
+
+  // Custom status codes for arbitrage module (15001-16000)
+  ARBITRAGE_CONFIG_NOT_FOUND: 15001, // Arbitrage config not found
+  ARBITRAGE_EXCHANGE_LOAD_FAILED: 15002, // Failed to load exchange markets
+  ARBITRAGE_CACHE_NOT_FOUND: 15003, // Symbol cache not found
 };
 
 const STATUS_MESSAGE_ZH = {
@@ -157,6 +163,11 @@ const STATUS_MESSAGE_ZH = {
   [STATUS_TYPE.ASSET_POST_ONLY]: '资产模块仅支持POST请求',
   [STATUS_TYPE.ASSET_PARAMS_ERROR]: '资产模块参数错误',
   [STATUS_TYPE.ASSET_ACCESS_FORBIDDEN]: '资产模块禁止访问',
+
+  // Arbitrage module messages
+  [STATUS_TYPE.ARBITRAGE_CONFIG_NOT_FOUND]: '套利配置未找到',
+  [STATUS_TYPE.ARBITRAGE_EXCHANGE_LOAD_FAILED]: '交易所市场数据加载失败',
+  [STATUS_TYPE.ARBITRAGE_CACHE_NOT_FOUND]: '交易对缓存未找到',
 };
 
 const STATUS_MESSAGE = {
@@ -230,6 +241,11 @@ const STATUS_MESSAGE = {
   [STATUS_TYPE.ASSET_POST_ONLY]: 'Asset module POST requests only',
   [STATUS_TYPE.ASSET_PARAMS_ERROR]: 'Asset module invalid parameters',
   [STATUS_TYPE.ASSET_ACCESS_FORBIDDEN]: 'Asset module access forbidden',
+
+  // Arbitrage module messages
+  [STATUS_TYPE.ARBITRAGE_CONFIG_NOT_FOUND]: 'Arbitrage config not found',
+  [STATUS_TYPE.ARBITRAGE_EXCHANGE_LOAD_FAILED]: 'Failed to load exchange markets',
+  [STATUS_TYPE.ARBITRAGE_CACHE_NOT_FOUND]: 'Symbol cache not found',
 };
 
 module.exports = { STATUS_TYPE, STATUS_MESSAGE, STATUS_MESSAGE_ZH };
