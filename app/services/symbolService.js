@@ -4,6 +4,7 @@ const csv = require('csv-parser');
 const fs = require('fs');
 const DataExchangeSymbolModel = require('../models/dataExchangeSymbolModel');
 const DataExchangeRateModel = require('../models/dataExchangeRateModel');
+const { priceCache, rateCache, symbolCache } = require('../utils/cacheManager');
 const logger = require('../utils/logger');
 const config = require('../../config');
 
@@ -15,6 +16,14 @@ class SymbolService {
   */
   async getAllSymbols(params) {
     const start = Date.now();
+
+    // Check cache for simple exchange+symbol lookups (strategy list uses this pattern)
+    const cacheKey = `symbols:${JSON.stringify(params)}`;
+    const cached = symbolCache.get(cacheKey);
+    if (cached) {
+      logger.info(`\nQuery List (cached)\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${cached.list.length}\n  Response Time: \t${Date.now() - start} ms\n`);
+      return cached;
+    }
 
     let conditions = {};
 
@@ -51,14 +60,17 @@ class SymbolService {
     const symbolList = await query.collation({ locale: 'zh', numericOrdering: true }).sort({ percent: -1 }).skip((pageNumber - 1) * pageSize).limit(pageSize).lean();
     const total = await DataExchangeSymbolModel.find(conditions).countDocuments();
 
-    logger.info(`\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${symbolList.length}\n  Response Time: \t${Date.now() - start} ms\n`);
-
-    return {
+    const result = {
       list: symbolList,
       pageNumber,
       pageSize,
       total,
     };
+
+    symbolCache.set(cacheKey, result);
+    logger.info(`\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${symbolList.length}\n  Response Time: \t${Date.now() - start} ms\n`);
+
+    return result;
   }
 
   /**
@@ -106,6 +118,12 @@ class SymbolService {
   }
 
   async getPrice(startDate, endDate, exchangeId = 'binance', symbol = 'BTC/USDT', interval = '1d', limit = 1, otherCurrency = 'CNY') {
+    const cacheKey = `price:${exchangeId}:${symbol}:${startDate}:${endDate}:${interval}`;
+    const cached = priceCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const exchange = new ccxt[exchangeId]();
     const exchangeUrl = exchange.urls.www || exchange.urls.api;
     // Convert dates to timestamps
@@ -124,6 +142,7 @@ class SymbolService {
     // Process the price data
     await this.processPriceData(allOHLCV, exchangeId, symbol, otherCurrency, exchangeUrl);
 
+    priceCache.set(cacheKey, allOHLCV);
     return allOHLCV;
   }
 
@@ -181,22 +200,30 @@ class SymbolService {
   }
 
   async getUSDToOtherRate(otherCurrency) {
+    const cacheKey = `rate:USD:${otherCurrency}`;
+    const cached = rateCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const { apiUrl } = config.currencyRate;
     try {
       let exchangeRate = await DataExchangeRateModel.findOne({ from_currency: 'USD', to_currency: otherCurrency });
       if (exchangeRate) {
+        rateCache.set(cacheKey, exchangeRate.rate);
         return exchangeRate.rate;
       }
       const response = await axios.get(apiUrl);
       const rate = response.data.rates[otherCurrency];
-  
+
       exchangeRate = new DataExchangeRateModel({
         from_currency: 'USD',
         to_currency: otherCurrency,
         rate: rate
       });
-  
+
       await exchangeRate.save();
+      rateCache.set(cacheKey, rate);
       return rate;
     } catch (error) {
       // todo: we need a status code for this
