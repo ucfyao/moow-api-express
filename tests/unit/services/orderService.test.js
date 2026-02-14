@@ -7,10 +7,33 @@ jest.mock('../../../app/utils/logger', () => ({
 
 const AipOrderModel = require('../../../app/models/aipOrderModel');
 const OrderService = require('../../../app/services/orderService');
+const CustomError = require('../../../app/utils/customError');
 
 describe('OrderService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('getOrderById()', () => {
+    it('should return order when found', async () => {
+      const mockOrder = { _id: 'order-1', strategy_id: 'strat-1', side: 'buy' };
+      AipOrderModel.findById.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(mockOrder),
+      });
+
+      const result = await OrderService.getOrderById('order-1');
+
+      expect(AipOrderModel.findById).toHaveBeenCalledWith('order-1');
+      expect(result).toEqual(mockOrder);
+    });
+
+    it('should throw CustomError when order not found', async () => {
+      AipOrderModel.findById.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(OrderService.getOrderById('nonexistent')).rejects.toThrow(CustomError);
+    });
   });
 
   describe('create()', () => {

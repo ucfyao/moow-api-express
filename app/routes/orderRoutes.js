@@ -40,6 +40,29 @@ const router = express.Router();
  */
 router.get('/api/v1/orders', authMiddleware, OrderController.index);
 
+// Get order detail by id
+/**
+ * @swagger
+ * /api/v1/orders/{id}:
+ *   get:
+ *     summary: Get order detail
+ *     tags:
+ *       - Orders Management
+ *     description: Get a single order by its ID.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully returned the order detail
+ *       404:
+ *         description: Order not found
+ */
+router.get('/api/v1/orders/:id', authMiddleware, OrderController.show);
+
 // Fetch all open orders
 /**
  * @swagger

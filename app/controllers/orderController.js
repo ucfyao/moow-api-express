@@ -8,6 +8,12 @@ class OrderController {
     return ResponseHandler.success(res, orders);
   }
 
+  async show(req, res) {
+    const { id } = req.params;
+    const order = await OrderService.getOrderById(id);
+    return ResponseHandler.success(res, order);
+  }
+
   async listThirdPartyOrders(req, res) {
     const { exchangeName, symbol, apiKey, secret } = req.query;
     const oders = await OrderService.getThirdPartyOrders(exchangeName, symbol, apiKey, secret);

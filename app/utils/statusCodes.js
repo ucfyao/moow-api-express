@@ -70,6 +70,7 @@ const STATUS_TYPE = {
   AIP_INSUFFICIENT_BALANCE: 12006, // Balance is not enough
   AIP_INSUFFICIENT_PURCHASE_AMOUNT: 12007, // the purchase amount is too low
   AIP_BELOW_MINIMUM_ORDER: 12008, // Order below exchange minimum amount
+  AIP_ORDER_NOT_FOUND: 12009, // Order not found
 
   // Custom status codes for data module (13001-14000)
   DATA_SERVER_BUSY: 13001, // Data module server is busy
@@ -141,6 +142,7 @@ const STATUS_MESSAGE_ZH = {
   [STATUS_TYPE.AIP_INSUFFICIENT_BALANCE]: '交易余额不足',
   [STATUS_TYPE.AIP_INSUFFICIENT_PURCHASE_AMOUNT]: '交易数量过少',
   [STATUS_TYPE.AIP_BELOW_MINIMUM_ORDER]: '订单金额低于交易所最低要求',
+  [STATUS_TYPE.AIP_ORDER_NOT_FOUND]: '订单未找到',
 
   // Data module messages
   [STATUS_TYPE.DATA_SERVER_BUSY]: '数据模块服务器繁忙',
@@ -213,6 +215,7 @@ const STATUS_MESSAGE = {
   [STATUS_TYPE.AIP_INSUFFICIENT_BALANCE]: 'Insufficient balance for transaction',
   [STATUS_TYPE.AIP_INSUFFICIENT_PURCHASE_AMOUNT]: 'Insufficient purchase amount',
   [STATUS_TYPE.AIP_BELOW_MINIMUM_ORDER]: 'Order amount is below exchange minimum',
+  [STATUS_TYPE.AIP_ORDER_NOT_FOUND]: 'Order not found',
 
   // Data module messages
   [STATUS_TYPE.DATA_SERVER_BUSY]: 'Data module server is busy',

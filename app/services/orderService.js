@@ -1,5 +1,7 @@
 const ccxt = require('ccxt');
 const AipOrderModel = require('../models/aipOrderModel');
+const CustomError = require('../utils/customError');
+const { STATUS_TYPE } = require('../utils/statusCodes');
 const logger = require('../utils/logger');
 const config = require('../../config');
 
@@ -13,6 +15,14 @@ class OrderService {
       .limit(pageSize)
       .lean();
     return { list };
+  }
+
+  async getOrderById(id) {
+    const order = await AipOrderModel.findById(id).lean();
+    if (!order) {
+      throw new CustomError(STATUS_TYPE.AIP_ORDER_NOT_FOUND, 404);
+    }
+    return order;
   }
 
   async create(order) {

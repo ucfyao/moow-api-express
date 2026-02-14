@@ -95,4 +95,39 @@ describe('Order API Integration', () => {
       expect(res.body.data.list).toBeDefined();
     });
   });
+
+  describe('GET /api/v1/orders/:id', () => {
+    it('should return 401 when no auth headers provided', async () => {
+      const orderId = new mongoose.Types.ObjectId().toString();
+      const res = await request(app).get(`/api/v1/orders/${orderId}`);
+
+      expect(res.status).toBe(401);
+    });
+
+    it('should return order detail when found', async () => {
+      const auth = await createAuthHeaders();
+      const order = await AipOrderModel.create(createOrderData({ side: 'buy' }));
+
+      const res = await request(app)
+        .get(`/api/v1/orders/${order._id}`)
+        .set('token', auth.token)
+        .set('user_id', auth.user_id);
+
+      expect(res.status).toBe(200);
+      expect(res.body.code).toBe(0);
+      expect(res.body.data._id).toBe(order._id.toString());
+    });
+
+    it('should return 404 when order not found', async () => {
+      const auth = await createAuthHeaders();
+      const fakeId = new mongoose.Types.ObjectId().toString();
+
+      const res = await request(app)
+        .get(`/api/v1/orders/${fakeId}`)
+        .set('token', auth.token)
+        .set('user_id', auth.user_id);
+
+      expect(res.status).toBe(404);
+    });
+  });
 });
