@@ -1,4 +1,5 @@
 const express = require('express');
+const authMiddleware = require('../middlewares/authMiddleware');
 const OrderController = require('../controllers/orderController');
 const router = express.Router();
 
@@ -37,7 +38,7 @@ const router = express.Router();
  *                     type: number
  *                     example: 2
  */
-router.get('/api/v1/orders', OrderController.index);
+router.get('/api/v1/orders', authMiddleware, OrderController.index);
 
 // Fetch all open orders
 /**
@@ -74,7 +75,7 @@ router.get('/api/v1/orders', OrderController.index);
  *                     type: number
  *                     example: 1.5
  */
-router.get('/api/v1/openOrders', OrderController.listThirdPartyOrders);
+router.get('/api/v1/openOrders', authMiddleware, OrderController.listThirdPartyOrders);
 
 // Cancel all open orders
 /**
@@ -100,6 +101,6 @@ router.get('/api/v1/openOrders', OrderController.listThirdPartyOrders);
  *                   type: string
  *                   example: "All open orders have been cancelled successfully"
  */
-router.delete('/api/v1/openOrders', OrderController.cancelAllOpenThirdPartyOrders);
+router.delete('/api/v1/openOrders', authMiddleware, OrderController.cancelAllOpenThirdPartyOrders);
 
 module.exports = router;
