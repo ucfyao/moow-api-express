@@ -239,7 +239,7 @@ describe('StrategyService', () => {
       OrderService.create.mockResolvedValue({ _id: 'order-1' });
     });
 
-    it('should execute a regular buy order successfully', async () => {
+    it('should execute a regular buy order with correct strategy params', async () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
@@ -263,13 +263,75 @@ describe('StrategyService', () => {
       const result = await StrategyService.processBuy(strategy);
 
       expect(mockExchange.fetchTicker).toHaveBeenCalledWith('BTC/USDT');
+      expect(mockExchange.loadMarkets).toHaveBeenCalled();
       expect(mockExchange.fetchBalance).toHaveBeenCalled();
-      expect(mockExchange.createOrder).toHaveBeenCalled();
+      // Verify createOrder is called with strategy's actual symbol, not hardcoded values
+      expect(mockExchange.createOrder).toHaveBeenCalledWith(
+        'BTC/USDT',
+        'market',
+        'buy',
+        expect.any(String), // amount (toFixed returns string)
+        50000, // price from ticker.ask
+        {} // inParams (not okex)
+      );
       expect(OrderService.create).toHaveBeenCalled();
       expect(strategy.buy_times).toBe(6);
       expect(strategy.now_buy_times).toBe(4);
       expect(strategy.save).toHaveBeenCalled();
       expect(result).toBe(true);
+    });
+
+    it('should throw when order cost is below exchange minimum', async () => {
+      const strategy = {
+        _id: 'strat-1',
+        exchange: 'binance',
+        key: 'api-key',
+        secret: 'api-secret',
+        symbol: 'BTC/USDT',
+        base: 'USDT',
+        base_limit: 2, // below minimum cost of 5
+        type: AipStrategyModel.INVESTMENT_TYPE_REGULAR,
+        buy_times: 0,
+        now_buy_times: 0,
+        quote_total: 0,
+        base_total: 0,
+        save: jest.fn(),
+      };
+
+      await expect(StrategyService.processBuy(strategy)).rejects.toThrow();
+      expect(mockExchange.createOrder).not.toHaveBeenCalled();
+    });
+
+    it('should throw when order amount is below exchange minimum', async () => {
+      // Set up markets with a high minimum amount
+      mockExchange.markets = {
+        'BTC/USDT': {
+          symbol: 'BTC/USDT',
+          limits: {
+            amount: { min: 1, max: 9000 }, // min 1 BTC
+            cost: { min: 5, max: undefined },
+          },
+        },
+      };
+
+      const strategy = {
+        _id: 'strat-1',
+        exchange: 'binance',
+        key: 'api-key',
+        secret: 'api-secret',
+        symbol: 'BTC/USDT',
+        base: 'USDT',
+        base_limit: 100, // 100/50000 = 0.002 BTC, below min 1 BTC
+        type: AipStrategyModel.INVESTMENT_TYPE_REGULAR,
+        buy_times: 0,
+        now_buy_times: 0,
+        quote_total: 0,
+        base_total: 0,
+        save: jest.fn(),
+      };
+
+      await expect(StrategyService.processBuy(strategy)).rejects.toThrow();
+      expect(mockExchange.createOrder).not.toHaveBeenCalled();
     });
 
     it('should throw when balance is insufficient', async () => {
