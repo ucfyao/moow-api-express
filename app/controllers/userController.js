@@ -25,5 +25,24 @@ class UserController {
     const user = await UserService.updateUser(req.params.id, req.body);
     return ResponseHandler.success(res, user);
   }
+
+  async destroy(req, res) {
+    const result = await UserService.deleteUser(req.params.id, req.userId);
+    return ResponseHandler.success(res, result);
+  }
+
+  async profile(req, res) {
+    const user = await UserService.getProfile(req.userId);
+    return ResponseHandler.success(res, user);
+  }
+
+  async inviteList(req, res) {
+    const params = {
+      pageNumber: parseInt(req.query.pageNumber, 10) || 1,
+      pageSize: parseInt(req.query.pageSize, 10) || 20,
+    };
+    const data = await UserService.getInviteList(req.userId, params);
+    return ResponseHandler.success(res, data);
+  }
 }
 module.exports = new UserController();

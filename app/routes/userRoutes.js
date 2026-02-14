@@ -39,6 +39,49 @@ router.get('/api/v1/users', authMiddleware, UserController.index);
 
 /**
  * @swagger
+ * /api/v1/users/profile:
+ *   get:
+ *     summary: Get current user's profile
+ *     tags:
+ *       - Users Management
+ *     description: Get the authenticated user's profile including referral code.
+ *     security:
+ *       - tokenAuth: []
+ *     responses:
+ *       200:
+ *         description: User profile with ref_code
+ */
+router.get('/api/v1/users/profile', authMiddleware, UserController.profile);
+
+/**
+ * @swagger
+ * /api/v1/users/invitations:
+ *   get:
+ *     summary: Get list of invited users
+ *     tags:
+ *       - Users Management
+ *     description: Get paginated list of users invited by the current user.
+ *     security:
+ *       - tokenAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: pageNumber
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: pageSize
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Paginated invitation list
+ */
+router.get('/api/v1/users/invitations', authMiddleware, UserController.inviteList);
+
+/**
+ * @swagger
  * /api/v1/users/{id}:
  *   get:
  *     summary: Get the specified user information
@@ -115,10 +158,12 @@ router.patch(
  * @swagger
  * /api/v1/users/{id}:
  *   delete:
- *     summary: Delete user (not enabled yet)
+ *     summary: Soft delete user account
  *     tags:
  *       - Users Management
- *     description: Delete a user by ID (not enabled in the current interface).
+ *     description: Soft delete a user account (sets is_deleted flag). Users can only delete their own account.
+ *     security:
+ *       - tokenAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -127,9 +172,9 @@ router.patch(
  *         required: true
  *         description: Unique ID of the user
  *     responses:
- *       501:
- *         description: This interface is not enabled yet
+ *       200:
+ *         description: User soft deleted successfully
  */
-// router.delete('/users/:id', UserController.deleteUser);
+router.delete('/api/v1/users/:id', authMiddleware, UserController.destroy);
 
 module.exports = router;
