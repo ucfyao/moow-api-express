@@ -50,6 +50,36 @@ router.get('/api/v1/arbitrage/opportunities', ArbitrageController.getOpportuniti
 
 /**
  * @swagger
+ * /api/v1/arbitrage/opportunities/custom:
+ *   get:
+ *     summary: Get filtered arbitrage opportunities
+ *     tags:
+ *       - Arbitrage
+ *     parameters:
+ *       - in: query
+ *         name: minProfit
+ *         schema:
+ *           type: number
+ *           default: 1
+ *         description: Minimum profit percentage
+ *       - in: query
+ *         name: exchanges
+ *         schema:
+ *           type: string
+ *         description: Comma-separated exchange IDs (e.g. binance,bittrex)
+ *       - in: query
+ *         name: symbols
+ *         schema:
+ *           type: string
+ *         description: Comma-separated symbols (e.g. BTC/USDT,ETH/USDT)
+ *     responses:
+ *       200:
+ *         description: Filtered arbitrage opportunities
+ */
+router.get('/api/v1/arbitrage/opportunities/custom', ArbitrageController.getCustomOpportunities);
+
+/**
+ * @swagger
  * /api/v1/arbitrage/tickers/by-exchange:
  *   get:
  *     summary: Get tickers grouped by exchange
@@ -96,7 +126,7 @@ router.put(
   '/api/v1/arbitrage/config',
   authMiddleware,
   validateParams(saveConfigValidatorSchema),
-  ArbitrageController.saveConfig,
+  ArbitrageController.saveConfig
 );
 
 /**
@@ -133,6 +163,10 @@ router.get('/api/v1/arbitrage/symbols', authMiddleware, ArbitrageController.getA
  *     security:
  *       - tokenAuth: []
  */
-router.post('/api/v1/arbitrage/symbols/refresh', authMiddleware, ArbitrageController.refreshSymbols);
+router.post(
+  '/api/v1/arbitrage/symbols/refresh',
+  authMiddleware,
+  ArbitrageController.refreshSymbols
+);
 
 module.exports = router;

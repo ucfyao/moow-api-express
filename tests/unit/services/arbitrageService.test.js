@@ -26,7 +26,7 @@ describe('ArbitrageService', () => {
 
       expect(result.tickers).toHaveLength(1);
       expect(ArbitrageTickerModel.find).toHaveBeenCalledWith(
-        expect.objectContaining({ updated_at: expect.any(Object) }),
+        expect.objectContaining({ updated_at: expect.any(Object) })
       );
     });
   });
@@ -101,7 +101,7 @@ describe('ArbitrageService', () => {
       expect(ArbitrageConfigModel.findOneAndUpdate).toHaveBeenCalledWith(
         { user_id: 'user123' },
         mockConfig,
-        { upsert: true, new: true },
+        { upsert: true, new: true }
       );
     });
   });
@@ -111,6 +111,111 @@ describe('ArbitrageService', () => {
       const result = ArbitrageService.getAllExchanges();
       expect(result.allExchanges).toBeInstanceOf(Array);
       expect(result.allExchanges.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('queryCustomOpportunities()', () => {
+    it('should filter by exchanges only', async () => {
+      ArbitrageTickerModel.aggregate.mockResolvedValue([
+        {
+          _id: 'BTC/USDT',
+          tickers: [
+            { exchange: 'binance', bid: 50000, ask: 49900 },
+            { exchange: 'huobi', bid: 50600, ask: 50500 },
+          ],
+        },
+      ]);
+
+      const result = await ArbitrageService.queryCustomOpportunities(1, ['binance', 'huobi'], []);
+
+      expect(result.list.length).toBeGreaterThan(0);
+      expect(ArbitrageTickerModel.aggregate).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            $match: expect.objectContaining({
+              exchange: { $in: ['binance', 'huobi'] },
+            }),
+          }),
+        ])
+      );
+    });
+
+    it('should filter by symbols only', async () => {
+      ArbitrageTickerModel.aggregate.mockResolvedValue([
+        {
+          _id: 'ETH/USDT',
+          tickers: [
+            { exchange: 'binance', bid: 3000, ask: 2990 },
+            { exchange: 'huobi', bid: 3050, ask: 3040 },
+          ],
+        },
+      ]);
+
+      const result = await ArbitrageService.queryCustomOpportunities(1, [], ['ETH/USDT']);
+
+      expect(result.list.length).toBeGreaterThan(0);
+      expect(ArbitrageTickerModel.aggregate).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            $match: expect.objectContaining({
+              symbol: { $in: ['ETH/USDT'] },
+            }),
+          }),
+        ])
+      );
+    });
+
+    it('should filter by both exchanges and symbols', async () => {
+      ArbitrageTickerModel.aggregate.mockResolvedValue([
+        {
+          _id: 'BTC/USDT',
+          tickers: [
+            { exchange: 'binance', bid: 50000, ask: 49900 },
+            { exchange: 'huobi', bid: 50600, ask: 50500 },
+          ],
+        },
+      ]);
+
+      const result = await ArbitrageService.queryCustomOpportunities(1, ['binance'], ['BTC/USDT']);
+
+      expect(result.list.length).toBeGreaterThan(0);
+      expect(ArbitrageTickerModel.aggregate).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            $match: expect.objectContaining({
+              exchange: { $in: ['binance'] },
+              symbol: { $in: ['BTC/USDT'] },
+            }),
+          }),
+        ])
+      );
+    });
+
+    it('should work with no filters (same as queryOpportunities)', async () => {
+      ArbitrageTickerModel.aggregate.mockResolvedValue([
+        {
+          _id: 'BTC/USDT',
+          tickers: [
+            { exchange: 'binance', bid: 50000, ask: 49900 },
+            { exchange: 'huobi', bid: 50600, ask: 50500 },
+          ],
+        },
+      ]);
+
+      const result = await ArbitrageService.queryCustomOpportunities(1, [], []);
+
+      expect(result.list.length).toBeGreaterThan(0);
+      const matchArg = ArbitrageTickerModel.aggregate.mock.calls[0][0][0].$match;
+      expect(matchArg.exchange).toBeUndefined();
+      expect(matchArg.symbol).toBeUndefined();
+    });
+
+    it('should return empty results when filters match nothing', async () => {
+      ArbitrageTickerModel.aggregate.mockResolvedValue([]);
+
+      const result = await ArbitrageService.queryCustomOpportunities(1, ['nonexistent'], []);
+
+      expect(result.list).toHaveLength(0);
     });
   });
 

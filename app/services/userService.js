@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const PortalUserModel = require('../models/portalUserModel');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
+const { hashidsEncode } = require('../utils/hashidsHandler');
 
 class UserService {
   async getAllUsers(params = {}) {
@@ -58,6 +59,40 @@ class UserService {
     return queryData;
   }
 
+  async getProfile(userId) {
+    const user = await PortalUserModel.findById(userId).select('-password -salt').lean();
+    if (!user) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
+
+    // Generate shareable referral code from seq_id
+    user.ref_code = user.seq_id ? hashidsEncode(user.seq_id) : null;
+
+    // Look up inviter email if exists
+    if (user.inviter) {
+      const inviterUser = await PortalUserModel.findById(user.inviter).select('email').lean();
+      user.inviter_email = inviterUser ? inviterUser.email : null;
+    }
+
+    return user;
+  }
+
+  async getInviteList(userId, params = {}) {
+    const pageNumber = params.pageNumber || 1;
+    const pageSize = params.pageSize || 20;
+
+    const conditions = { inviter: userId };
+    const total = await PortalUserModel.countDocuments(conditions);
+    const list = await PortalUserModel.find(conditions)
+      .select('email nick_name created_at')
+      .sort({ created_at: -1 })
+      .skip((pageNumber - 1) * pageSize)
+      .limit(pageSize)
+      .lean();
+
+    return { list, pageNumber, pageSize, total };
+  }
+
   async updateUser(id, userData) {
     const user = await PortalUserModel.findOne({ seq_id: id });
     if (!user) {
@@ -102,6 +137,23 @@ class UserService {
     delete doc.password;
     delete doc.salt;
     return doc;
+  }
+
+  async deleteUser(id, requestUserId) {
+    const user = await PortalUserModel.findOne({ seq_id: id });
+    if (!user) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
+
+    // Only allow users to delete their own account
+    if (user._id.toString() !== requestUserId) {
+      throw new CustomError(STATUS_TYPE.COMMON_ACCESS_FORBIDDEN, 403, 'Access forbidden');
+    }
+
+    user.is_deleted = true;
+    await user.save();
+
+    return { seq_id: user.seq_id };
   }
 
   async generatePassword(password) {

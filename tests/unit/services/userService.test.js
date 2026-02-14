@@ -2,8 +2,11 @@ const crypto = require('crypto');
 
 // Mock the PortalUserModel before requiring the service
 jest.mock('../../../app/models/portalUserModel');
+jest.mock('../../../app/utils/hashidsHandler');
 const PortalUserModel = require('../../../app/models/portalUserModel');
+const { hashidsEncode } = require('../../../app/utils/hashidsHandler');
 const UserService = require('../../../app/services/userService');
+const CustomError = require('../../../app/utils/customError');
 
 describe('UserService', () => {
   beforeEach(() => {
@@ -146,6 +149,136 @@ describe('UserService', () => {
       expect(PortalUserModel.find).toHaveBeenCalled();
       expect(result.list).toEqual(mockUsers);
       expect(result.total).toBe(2);
+    });
+  });
+
+  describe('deleteUser()', () => {
+    it('should soft delete user by setting is_deleted to true', async () => {
+      const mockUser = {
+        _id: { toString: () => 'user123' },
+        seq_id: 1,
+        is_deleted: false,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      PortalUserModel.findOne.mockResolvedValue(mockUser);
+
+      const result = await UserService.deleteUser(1, 'user123');
+
+      expect(mockUser.is_deleted).toBe(true);
+      expect(mockUser.save).toHaveBeenCalled();
+      expect(result).toEqual({ seq_id: 1 });
+    });
+
+    it('should throw PORTAL_USER_NOT_FOUND when user does not exist', async () => {
+      PortalUserModel.findOne.mockResolvedValue(null);
+
+      await expect(UserService.deleteUser(999, 'user123')).rejects.toThrow(CustomError);
+    });
+
+    it('should throw COMMON_ACCESS_FORBIDDEN when deleting another user', async () => {
+      const mockUser = {
+        _id: { toString: () => 'user123' },
+        seq_id: 1,
+      };
+      PortalUserModel.findOne.mockResolvedValue(mockUser);
+
+      await expect(UserService.deleteUser(1, 'differentUser')).rejects.toThrow(CustomError);
+    });
+  });
+
+  describe('getProfile()', () => {
+    it('should return user with ref_code generated from seq_id', async () => {
+      const mockUser = { _id: 'user123', seq_id: 42, email: 'test@test.com' };
+      PortalUserModel.findById.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue(mockUser),
+        }),
+      });
+      hashidsEncode.mockReturnValue('ABC123');
+
+      const result = await UserService.getProfile('user123');
+
+      expect(result.ref_code).toBe('ABC123');
+      expect(hashidsEncode).toHaveBeenCalledWith(42);
+    });
+
+    it('should throw PORTAL_USER_NOT_FOUND when user does not exist', async () => {
+      PortalUserModel.findById.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue(null),
+        }),
+      });
+
+      await expect(UserService.getProfile('nonexistent')).rejects.toThrow(CustomError);
+    });
+
+    it('should include inviter_email when inviter exists', async () => {
+      const mockUser = { _id: 'user123', seq_id: 1, inviter: 'inviter456' };
+      const mockInviter = { email: 'inviter@test.com' };
+      PortalUserModel.findById
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue(mockUser),
+          }),
+        })
+        .mockReturnValueOnce({
+          select: jest.fn().mockReturnValue({
+            lean: jest.fn().mockResolvedValue(mockInviter),
+          }),
+        });
+      hashidsEncode.mockReturnValue('XYZ');
+
+      const result = await UserService.getProfile('user123');
+
+      expect(result.inviter_email).toBe('inviter@test.com');
+    });
+  });
+
+  describe('getInviteList()', () => {
+    it('should return paginated list of invited users', async () => {
+      const mockList = [{ email: 'invited1@test.com', nick_name: 'User1', created_at: new Date() }];
+      PortalUserModel.countDocuments.mockResolvedValue(1);
+      PortalUserModel.find.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          sort: jest.fn().mockReturnValue({
+            skip: jest.fn().mockReturnValue({
+              limit: jest.fn().mockReturnValue({
+                lean: jest.fn().mockResolvedValue(mockList),
+              }),
+            }),
+          }),
+        }),
+      });
+
+      const result = await UserService.getInviteList('user123', {
+        pageNumber: 1,
+        pageSize: 20,
+      });
+
+      expect(result.list).toEqual(mockList);
+      expect(result.total).toBe(1);
+      expect(result.pageNumber).toBe(1);
+      expect(result.pageSize).toBe(20);
+    });
+
+    it('should return empty list when no invitations exist', async () => {
+      PortalUserModel.countDocuments.mockResolvedValue(0);
+      PortalUserModel.find.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          sort: jest.fn().mockReturnValue({
+            skip: jest.fn().mockReturnValue({
+              limit: jest.fn().mockReturnValue({
+                lean: jest.fn().mockResolvedValue([]),
+              }),
+            }),
+          }),
+        }),
+      });
+
+      const result = await UserService.getInviteList('user123');
+
+      expect(result.list).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 });

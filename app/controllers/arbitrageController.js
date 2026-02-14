@@ -49,6 +49,14 @@ class ArbitrageController {
     const data = await ArbitrageService.refreshSymbols();
     return ResponseHandler.success(res, data);
   }
+
+  async getCustomOpportunities(req, res) {
+    const minProfit = parseFloat(req.query.minProfit) || 1;
+    const exchanges = req.query.exchanges ? req.query.exchanges.split(',') : [];
+    const symbols = req.query.symbols ? req.query.symbols.split(',') : [];
+    const data = await ArbitrageService.queryCustomOpportunities(minProfit, exchanges, symbols);
+    return ResponseHandler.success(res, data);
+  }
 }
 
 module.exports = new ArbitrageController();

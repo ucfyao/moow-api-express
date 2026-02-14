@@ -64,6 +64,64 @@ class ArbitrageService {
   }
 
   /**
+   * Find arbitrage opportunities filtered by specific exchanges and/or symbols
+   * @param {number} minProfit - Minimum profit percentage (default: 1)
+   * @param {string[]} exchanges - Filter by these exchanges only
+   * @param {string[]} symbols - Filter by these symbols only
+   */
+  async queryCustomOpportunities(minProfit = 1, exchanges = [], symbols = []) {
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000);
+
+    // Build match conditions
+    const matchConditions = { updated_at: { $gt: cutoff } };
+    if (exchanges.length > 0) {
+      matchConditions.exchange = { $in: exchanges };
+    }
+    if (symbols.length > 0) {
+      matchConditions.symbol = { $in: symbols };
+    }
+
+    const list = await ArbitrageTickerModel.aggregate([
+      { $match: matchConditions },
+      { $group: { _id: '$symbol', tickers: { $push: '$ticker' } } },
+    ]);
+
+    const arbitrageList = [];
+    list.forEach((item) => {
+      if (!item.tickers || item.tickers.length < 2) return;
+
+      let lowest = item.tickers[0];
+      let highest = item.tickers[0];
+
+      for (const t of item.tickers) {
+        if (t.ask > 0 && (lowest.ask <= 0 || t.ask < lowest.ask)) {
+          lowest = t;
+        }
+        if (t.bid > 0 && t.bid > highest.bid) {
+          highest = t;
+        }
+      }
+
+      if (lowest.ask <= 0) return;
+      const diff = ((highest.bid - lowest.ask) / lowest.ask) * 100;
+
+      if (highest.exchange !== lowest.exchange && diff > minProfit) {
+        arbitrageList.push({
+          symbol: item._id,
+          from: lowest,
+          to: highest,
+          rawdiff: diff,
+          diff: diff.toFixed(2),
+        });
+      }
+    });
+
+    return {
+      list: arbitrageList.sort((a, b) => b.rawdiff - a.rawdiff),
+    };
+  }
+
+  /**
    * Group tickers by exchange
    */
   async queryTickersByExchange() {
@@ -98,7 +156,7 @@ class ArbitrageService {
     const config = await ArbitrageConfigModel.findOneAndUpdate(
       { user_id: userId },
       { exchanges, symbols },
-      { upsert: true, new: true },
+      { upsert: true, new: true }
     );
     return { config };
   }
@@ -143,7 +201,7 @@ class ArbitrageService {
     await ArbitrageCacheModel.findOneAndUpdate(
       { name: 'allSymbols' },
       { content: uniqueSymbols },
-      { upsert: true },
+      { upsert: true }
     );
 
     return { allSymbols: uniqueSymbols };
