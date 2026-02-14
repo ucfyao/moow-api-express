@@ -1,6 +1,7 @@
 const authMiddleware = require('../../../app/middlewares/authMiddleware');
 const AuthService = require('../../../app/services/authService');
 const ResponseHandler = require('../../../app/utils/responseHandler');
+const { STATUS_TYPE } = require('../../../app/utils/statusCodes');
 
 // Mock dependencies
 jest.mock('../../../app/services/authService');
@@ -33,7 +34,11 @@ describe('authMiddleware', () => {
 
     await authMiddleware(req, res, next);
 
-    expect(ResponseHandler.fail).toHaveBeenCalled();
+    expect(ResponseHandler.fail).toHaveBeenCalledWith(
+      res,
+      STATUS_TYPE.HTTP_UNAUTHORIZED,
+      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL,
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -42,7 +47,11 @@ describe('authMiddleware', () => {
 
     await authMiddleware(req, res, next);
 
-    expect(ResponseHandler.fail).toHaveBeenCalled();
+    expect(ResponseHandler.fail).toHaveBeenCalledWith(
+      res,
+      STATUS_TYPE.HTTP_UNAUTHORIZED,
+      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL,
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -52,7 +61,11 @@ describe('authMiddleware', () => {
     await authMiddleware(req, res, next);
 
     expect(AuthService.getLoginfoByToken).toHaveBeenCalledWith('valid-token-123');
-    expect(ResponseHandler.fail).toHaveBeenCalled();
+    expect(ResponseHandler.fail).toHaveBeenCalledWith(
+      res,
+      STATUS_TYPE.HTTP_UNAUTHORIZED,
+      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL,
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -69,7 +82,11 @@ describe('authMiddleware', () => {
     await authMiddleware(req, res, next);
 
     expect(AuthService.deleteToken).toHaveBeenCalledWith(loginInfo);
-    expect(ResponseHandler.fail).toHaveBeenCalled();
+    expect(ResponseHandler.fail).toHaveBeenCalledWith(
+      res,
+      STATUS_TYPE.HTTP_UNAUTHORIZED,
+      STATUS_TYPE.PORTAL_TOKEN_EXPIRED,
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -82,7 +99,11 @@ describe('authMiddleware', () => {
 
     await authMiddleware(req, res, next);
 
-    expect(ResponseHandler.fail).toHaveBeenCalled();
+    expect(ResponseHandler.fail).toHaveBeenCalledWith(
+      res,
+      STATUS_TYPE.HTTP_UNAUTHORIZED,
+      STATUS_TYPE.PORTAL_TOKEN_ILLEGAL,
+    );
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -99,5 +120,18 @@ describe('authMiddleware', () => {
     expect(AuthService.modifyAccessTime).toHaveBeenCalledWith(loginInfo);
     expect(next).toHaveBeenCalled();
     expect(ResponseHandler.fail).not.toHaveBeenCalled();
+  });
+
+  it('should set req.userId on valid token', async () => {
+    const loginInfo = {
+      user_id: { toString: () => '507f1f77bcf86cd799439011' },
+      last_access_time: Date.now(),
+    };
+    AuthService.getLoginfoByToken.mockResolvedValue(loginInfo);
+    AuthService.modifyAccessTime.mockResolvedValue(loginInfo);
+
+    await authMiddleware(req, res, next);
+
+    expect(req.userId).toBe('507f1f77bcf86cd799439011');
   });
 });
