@@ -12,7 +12,7 @@ const PortalUserSchema = new mongoose.Schema(
     mobile: { type: String, default: '', trim: true }, // phone number
     instagram: { type: String, default: '', trim: true }, // instagram account
     invitation_code: { type: String, trim: true }, // user's own referral code
-    // role: { type: Schema.Types.ObjectId, ref: 'PortalRole', default: [] }, // role resource
+    role: { type: mongoose.Schema.Types.ObjectId, ref: 'portal_role', default: null },
     last_login_time: { type: Date }, // lastest login time
     vip_time_out_at: { type: Date }, // VIP expire time
     last_login_IP: { type: String, trim: true }, // lastest login IP

@@ -1,6 +1,7 @@
 jest.mock('../../../app/models/portalTokenModel');
 jest.mock('../../../app/models/portalUserModel');
 jest.mock('../../../app/models/portalEmailInfoModel');
+jest.mock('../../../app/models/portalRoleModel');
 jest.mock('../../../app/services/userService');
 jest.mock('../../../app/services/sequenceService');
 jest.mock('../../../app/services/emailService');
@@ -520,6 +521,163 @@ describe('AuthService', () => {
         'SMTP connection error'
       );
       expect(result.message).toBe('Activation email will be sent!');
+    });
+  });
+
+  describe('sendVerificationCode()', () => {
+    it('should throw when user not found', async () => {
+      PortalUserModel.findById.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(AuthService.sendVerificationCode('bad-id')).rejects.toThrow();
+    });
+
+    it('should throw rate limit when code was recently sent', async () => {
+      PortalUserModel.findById.mockReturnValue({
+        lean: jest.fn().mockResolvedValue({
+          _id: 'user-id',
+          email: 'test@test.com',
+          nick_name: 'Test',
+        }),
+      });
+      PortalTokenModel.findOne.mockResolvedValue({
+        _id: 'token-id',
+        last_access_time: Date.now(), // just now
+      });
+
+      await expect(AuthService.sendVerificationCode('user-id')).rejects.toThrow();
+    });
+
+    it('should send verification code email successfully', async () => {
+      PortalUserModel.findById.mockReturnValue({
+        lean: jest.fn().mockResolvedValue({
+          _id: 'user-id',
+          email: 'test@test.com',
+          nick_name: 'Test',
+        }),
+      });
+      PortalTokenModel.findOne.mockResolvedValue(null); // no existing token
+
+      const mockSave = jest.fn().mockResolvedValue(true);
+      PortalTokenModel.mockImplementation(() => ({ save: mockSave }));
+
+      PortalEmailInfoModel.STATUS_FAILED = 'failed';
+      EmailService.sendEmail.mockResolvedValue({ emailStatus: 'success' });
+
+      const result = await AuthService.sendVerificationCode('user-id');
+
+      expect(result.message).toBe('Verification code email will be sent!');
+      expect(EmailService.sendEmail).toHaveBeenCalled();
+    });
+  });
+
+  describe('changePassword()', () => {
+    it('should throw when verification code is invalid', async () => {
+      PortalTokenModel.findOne.mockResolvedValue(null);
+
+      await expect(AuthService.changePassword('user-id', '000000', 'newpass')).rejects.toThrow();
+    });
+
+    it('should throw when verification code is expired', async () => {
+      PortalTokenModel.findOne.mockResolvedValue({
+        _id: 'token-id',
+        user_id: 'user-id',
+        last_access_time: Date.now() - 2000 * 1000, // expired
+      });
+      PortalTokenModel.deleteOne.mockResolvedValue({});
+
+      await expect(AuthService.changePassword('user-id', '123456', 'newpass')).rejects.toThrow();
+    });
+
+    it('should change password successfully', async () => {
+      PortalTokenModel.findOne.mockResolvedValue({
+        _id: 'token-id',
+        user_id: 'user-id',
+        last_access_time: Date.now(), // fresh
+      });
+
+      const mockUser = {
+        _id: 'user-id',
+        password: 'old-hash',
+        salt: 'old-salt',
+        save: jest.fn().mockResolvedValue(true),
+      };
+      PortalUserModel.findById.mockResolvedValue(mockUser);
+      UserService.generatePassword.mockResolvedValue({
+        salt: 'new-salt',
+        password: 'new-hash',
+      });
+      PortalTokenModel.deleteOne.mockResolvedValue({});
+
+      const result = await AuthService.changePassword('user-id', '123456', 'newpass123');
+
+      expect(UserService.generatePassword).toHaveBeenCalledWith('newpass123');
+      expect(mockUser.password).toBe('new-hash');
+      expect(mockUser.salt).toBe('new-salt');
+      expect(mockUser.save).toHaveBeenCalled();
+      expect(result.message).toBe('Password changed successfully');
+    });
+  });
+
+  describe('getUserPermission()', () => {
+    const PortalRoleModel = require('../../../app/models/portalRoleModel');
+
+    it('should return null role and empty resources when user not found', async () => {
+      PortalUserModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue(null),
+        }),
+      });
+
+      const result = await AuthService.getUserPermission('nonexistent-id');
+
+      expect(result.role).toBeNull();
+      expect(result.resources).toEqual([]);
+    });
+
+    it('should return null role and empty resources when user has no role', async () => {
+      PortalUserModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue({ _id: 'user-id', role: null }),
+        }),
+      });
+
+      const result = await AuthService.getUserPermission('user-id');
+
+      expect(result.role).toBeNull();
+      expect(result.resources).toEqual([]);
+    });
+
+    it('should return role and resources when user has a role', async () => {
+      const mockResources = [
+        { _id: 'res-1', resource_code: 'admin_purchase', resource_name: 'Purchases' },
+        { _id: 'res-2', resource_code: 'admin_role', resource_name: 'Roles' },
+      ];
+      const mockRole = {
+        _id: 'role-1',
+        role_name: 'admin',
+        role_description: 'Administrator',
+        resource: mockResources,
+      };
+
+      PortalUserModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue({ _id: 'user-id', role: { _id: 'role-1' } }),
+        }),
+      });
+
+      PortalRoleModel.findById.mockReturnValue({
+        populate: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue(mockRole),
+        }),
+      });
+
+      const result = await AuthService.getUserPermission('user-id');
+
+      expect(result.role.role_name).toBe('admin');
+      expect(result.resources).toHaveLength(2);
+      expect(result.resources[0].resource_code).toBe('admin_purchase');
     });
   });
 });

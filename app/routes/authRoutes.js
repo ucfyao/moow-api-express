@@ -6,6 +6,7 @@ const {
   sendActivateEmailValidatorSchema,
   createUserValidatorSchema,
   retrievePasswordValidatorSchema,
+  changePasswordValidatorSchema,
 } = require('../validators/authValidator');
 const authMiddleware = require('../middlewares/authMiddleware');
 const AuthController = require('../controllers/authController');
@@ -230,5 +231,71 @@ router.post(
   validateParams(retrievePasswordValidatorSchema),
   AuthController.sendRetrieveEmail
 );
+
+/**
+ * @swagger
+ * /api/v1/auth/send-code:
+ *   post:
+ *     summary: Send verification code for password change
+ *     tags:
+ *       - Authentication
+ *     description: Sends a 6-digit verification code to the authenticated user's email.
+ *     security:
+ *       - tokenAuth: []
+ *     responses:
+ *       200:
+ *         description: Verification code sent
+ */
+router.post('/api/v1/auth/send-code', authMiddleware, AuthController.sendCode);
+
+/**
+ * @swagger
+ * /api/v1/auth/change-password:
+ *   post:
+ *     summary: Change password with verification code
+ *     tags:
+ *       - Authentication
+ *     description: Change the authenticated user's password using the verification code.
+ *     security:
+ *       - tokenAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 example: '123456'
+ *               newPassword:
+ *                 type: string
+ *                 example: 'newpassword123'
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ */
+router.post(
+  '/api/v1/auth/change-password',
+  authMiddleware,
+  validateParams(changePasswordValidatorSchema),
+  AuthController.changePassword,
+);
+
+/**
+ * @swagger
+ * /api/v1/auth/permissions:
+ *   get:
+ *     summary: Get current user permissions
+ *     tags:
+ *       - Authentication
+ *     description: Returns the current user's role and resource permissions.
+ *     security:
+ *       - tokenAuth: []
+ *     responses:
+ *       200:
+ *         description: User permissions retrieved successfully
+ */
+router.get('/api/v1/auth/permissions', authMiddleware, AuthController.permissions);
 
 module.exports = router;
