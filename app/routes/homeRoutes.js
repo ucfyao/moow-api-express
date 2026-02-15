@@ -1,5 +1,6 @@
 const express = require('express');
 const HomeController = require('../controllers/homeController');
+
 const router = express.Router();
 
 /**
@@ -67,5 +68,84 @@ router.get('/test', HomeController.test);
  *                   example: true
  */
 router.get('/check-task', HomeController.checkTask);
+
+/**
+ * @swagger
+ * /api/v1/public/btc-history:
+ *   get:
+ *     summary: Get BTC price history
+ *     tags:
+ *       - Home
+ *     description: Returns BTC/USDT daily price history for the homepage chart. No authentication required.
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 365
+ *         description: Maximum number of data points to return
+ *     responses:
+ *       200:
+ *         description: Successfully returned BTC price history
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 0
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     list:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ *                         properties:
+ *                           date:
+ *                             type: string
+ *                             example: "2025-01-15"
+ *                           open:
+ *                             type: number
+ *                           high:
+ *                             type: number
+ *                           low:
+ *                             type: number
+ *                           close:
+ *                             type: number
+ *                           volume:
+ *                             type: number
+ */
+router.get('/api/v1/public/btc-history', HomeController.getBtcHistory);
+
+/**
+ * @swagger
+ * /api/v1/public/dingtou/orders:
+ *   get:
+ *     summary: Get public DCA demo orders
+ *     tags:
+ *       - Home
+ *     description: Returns the order history for the showcase DCA strategy. No authentication required.
+ *     responses:
+ *       200:
+ *         description: Successfully returned DCA demo orders
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: integer
+ *                   example: 0
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     list:
+ *                       type: array
+ *                       items:
+ *                         type: object
+ */
+router.get('/api/v1/public/dingtou/orders', HomeController.getDingtouOrders);
 
 module.exports = router;
