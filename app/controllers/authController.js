@@ -99,6 +99,25 @@ class AuthController {
     return ResponseHandler.success(res, data);
   }
 
+  async sendCode(req, res) {
+    const { userId } = req;
+    const data = await AuthService.sendVerificationCode(userId);
+    return ResponseHandler.success(res, data);
+  }
+
+  async changePassword(req, res) {
+    const { userId } = req;
+    const { code, newPassword } = req.body;
+    const data = await AuthService.changePassword(userId, code, newPassword);
+    return ResponseHandler.success(res, data);
+  }
+
+  async permissions(req, res) {
+    const { userId } = req;
+    const data = await AuthService.getUserPermission(userId);
+    return ResponseHandler.success(res, data);
+  }
+
   // send retrieve password email
   async sendRetrieveEmail(req, res) {
     const { userEmail, captcha } = req.body;

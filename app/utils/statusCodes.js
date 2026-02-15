@@ -61,6 +61,8 @@ const STATUS_TYPE = {
   PORTAL_USER_ALREADY_ACTIVATED: 11014, // This user account is already activated
   PORTAL_EMAIL_SEND_LIMIT: 11015, // Email cannot be sent more than once within 5 minutes.
   PORTAL_CAPTCHA_INVAILD: 11016, // Captcha is invaild.
+  PORTAL_VERIFICATION_CODE_INVALID: 11017, // Verification code is invalid
+  PORTAL_VERIFICATION_CODE_EXPIRED: 11018, // Verification code has expired
 
   // Custom status codes for aip module (12001-13000)
   AIP_SERVER_BUSY: 12001, // Trading module server is busy
@@ -138,6 +140,8 @@ const STATUS_MESSAGE_ZH = {
   [STATUS_TYPE.PORTAL_USER_ALREADY_ACTIVATED]: '该注册账号已经处于激活状态',
   [STATUS_TYPE.PORTAL_EMAIL_SEND_LIMIT]: '邮箱请求在5分钟内不能超过一次',
   [STATUS_TYPE.PORTAL_CAPTCHA_INVAILD]: '验证码错误',
+  [STATUS_TYPE.PORTAL_VERIFICATION_CODE_INVALID]: '验证码无效',
+  [STATUS_TYPE.PORTAL_VERIFICATION_CODE_EXPIRED]: '验证码已过期',
 
   // AIP module messages
   [STATUS_TYPE.AIP_SERVER_BUSY]: '交易模块服务器繁忙',
@@ -216,6 +220,8 @@ const STATUS_MESSAGE = {
   [STATUS_TYPE.PORTAL_EMAIL_SEND_LIMIT]:
     'Multiple email sends within a short period are not allowed. Please wait 5 minutes to resend',
   [STATUS_TYPE.PORTAL_CAPTCHA_INVAILD]: 'Captcha is invaild',
+  [STATUS_TYPE.PORTAL_VERIFICATION_CODE_INVALID]: 'Verification code is invalid',
+  [STATUS_TYPE.PORTAL_VERIFICATION_CODE_EXPIRED]: 'Verification code has expired',
 
   // AIP module messages
   [STATUS_TYPE.AIP_SERVER_BUSY]: 'Trading module server is busy',

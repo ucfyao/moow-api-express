@@ -17,6 +17,7 @@ const { hashidsEncode, hashidsDecode } = require('../utils/hashidsHandler');
 const logger = require('../utils/logger');
 const CommonConfigService = require('./commonConfigService');
 const AssetsService = require('./assetsService');
+const PortalRoleModel = require('../models/portalRoleModel');
 
 class AuthService {
   // verify captcha
@@ -370,6 +371,115 @@ class AuthService {
     await PortalTokenModel.deleteOne({ _id: existToken._id });
     return {
       message: 'Account activation successful.',
+    };
+  }
+
+  async sendVerificationCode(userId) {
+    const user = await PortalUserModel.findById(userId).lean();
+    if (!user) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
+
+    // Rate limit: check whether already sent code in 5 mins
+    const existToken = await PortalTokenModel.findOne({
+      user_id: user._id,
+      type: 'change_password',
+    });
+    if (existToken) {
+      if ((+new Date() - existToken.last_access_time) / 1000 < config.minEmailSendInterval) {
+        throw new CustomError(STATUS_TYPE.PORTAL_EMAIL_SEND_LIMIT);
+      } else {
+        await PortalTokenModel.deleteOne({ _id: existToken._id });
+      }
+    }
+
+    // Generate 6-digit code
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    await new PortalTokenModel({
+      user_id: user._id,
+      token: code,
+      email: user.email,
+      nick_name: user.nick_name,
+      type: 'change_password',
+      last_access_time: +new Date(),
+    }).save();
+
+    const { siteName } = config;
+    const { siteUrl } = config;
+    const displayName = user.nick_name;
+    const codMailPath = path.resolve(__dirname, '../views/verification_code_mail.html');
+
+    const html = await ejs.renderFile(codMailPath, {
+      siteName,
+      displayName,
+      code,
+      siteUrl,
+    });
+    const codeEmail = {
+      async: false,
+      to: [user.email],
+      subject: `[${siteName}] Verification Code`,
+      text: `Hello ${displayName}, your verification code is: ${code}. It expires in 5 minutes.`,
+      html,
+    };
+
+    const sendEmailRes = await EmailService.sendEmail(codeEmail);
+    if (sendEmailRes.emailStatus === PortalEmailInfoModel.STATUS_FAILED) {
+      logger.error('Error sending verification code email:', sendEmailRes.desc);
+    }
+
+    return { message: 'Verification code email will be sent!' };
+  }
+
+  async changePassword(userId, code, newPassword) {
+    const tokenDoc = await PortalTokenModel.findOne({
+      user_id: userId,
+      token: code,
+      type: 'change_password',
+    });
+
+    if (!tokenDoc) {
+      throw new CustomError(STATUS_TYPE.PORTAL_VERIFICATION_CODE_INVALID);
+    }
+
+    if ((+new Date() - tokenDoc.last_access_time) / 1000 > config.tokenTimeOut) {
+      await PortalTokenModel.deleteOne({ _id: tokenDoc._id });
+      throw new CustomError(STATUS_TYPE.PORTAL_VERIFICATION_CODE_EXPIRED);
+    }
+
+    const user = await PortalUserModel.findById(userId);
+    if (!user) {
+      throw new CustomError(STATUS_TYPE.PORTAL_USER_NOT_FOUND);
+    }
+
+    const pwd = await UserService.generatePassword(newPassword);
+    user.password = pwd.password;
+    user.salt = pwd.salt;
+    await user.save();
+
+    await PortalTokenModel.deleteOne({ _id: tokenDoc._id });
+
+    return { message: 'Password changed successfully' };
+  }
+
+  async getUserPermission(userId) {
+    const user = await PortalUserModel.findById(userId).populate('role').lean();
+    if (!user || !user.role) {
+      return { role: null, resources: [] };
+    }
+
+    const role = await PortalRoleModel.findById(user.role._id).populate('resource').lean();
+    if (!role) {
+      return { role: null, resources: [] };
+    }
+
+    return {
+      role: {
+        _id: role._id,
+        role_name: role.role_name,
+        role_description: role.role_description,
+      },
+      resources: role.resource || [],
     };
   }
 

@@ -44,10 +44,29 @@ const createUserValidatorSchema = {
   },
 };
 
+const changePasswordValidatorSchema = {
+  code: {
+    notEmpty: { errorMessage: 'Verification code is required' },
+    isString: { errorMessage: 'Verification code must be a string' },
+    isLength: {
+      options: { min: 6, max: 6 },
+      errorMessage: 'Verification code must be 6 digits',
+    },
+  },
+  newPassword: {
+    notEmpty: { errorMessage: 'New password is required' },
+    isLength: {
+      options: { min: 6 },
+      errorMessage: 'New password must be at least 6 characters long',
+    },
+  },
+};
+
 module.exports = {
   signinValidatorSchema,
   signoutValidatorSchema,
   sendActivateEmailValidatorSchema,
   retrievePasswordValidatorSchema,
   createUserValidatorSchema,
+  changePasswordValidatorSchema,
 };
