@@ -4,6 +4,8 @@ jest.mock('../../../app/models/portalEmailInfoModel');
 jest.mock('../../../app/services/userService');
 jest.mock('../../../app/services/sequenceService');
 jest.mock('../../../app/services/emailService');
+jest.mock('../../../app/services/commonConfigService');
+jest.mock('../../../app/services/assetsService');
 jest.mock('../../../app/utils/hashidsHandler');
 jest.mock('../../../app/utils/logger', () => ({
   info: jest.fn(),
@@ -17,6 +19,8 @@ const PortalEmailInfoModel = require('../../../app/models/portalEmailInfoModel')
 const UserService = require('../../../app/services/userService');
 const SequenceService = require('../../../app/services/sequenceService');
 const EmailService = require('../../../app/services/emailService');
+const CommonConfigService = require('../../../app/services/commonConfigService');
+const AssetsService = require('../../../app/services/assetsService');
 const { hashidsEncode, hashidsDecode } = require('../../../app/utils/hashidsHandler');
 const logger = require('../../../app/utils/logger');
 const AuthService = require('../../../app/services/authService');
@@ -311,11 +315,15 @@ describe('AuthService', () => {
 
       const refUser = {
         _id: 'aabbccddeeff001122334455',
+        email: 'inviter@test.com',
         vip_time_out_at: new Date('2026-03-01'),
+        invite_reward: '0',
+        invite_total: '0',
         save: jest.fn().mockResolvedValue(true),
       };
       const mockUser = {
         _id: 'user-id',
+        email: 'invitee@test.com',
         is_activated: false,
         inviter: 'aabbccddeeff001122334455', // valid 24-char hex ObjectId
         save: jest.fn().mockResolvedValue(true),
@@ -324,6 +332,12 @@ describe('AuthService', () => {
         .mockResolvedValueOnce(mockUser) // user lookup
         .mockResolvedValueOnce(refUser); // inviter lookup
       PortalTokenModel.deleteOne.mockResolvedValue({});
+      CommonConfigService.getGiveToken.mockResolvedValue({
+        from: 'system-user-id',
+        coin: 'XBT',
+        invitation: 5,
+      });
+      AssetsService.sendToken.mockResolvedValue(refUser);
 
       const result = await AuthService.activateUser('valid-token');
 
@@ -335,6 +349,87 @@ describe('AuthService', () => {
       expect(refUser.vip_time_out_at).toBeInstanceOf(Date);
       // The new date should be 1 day after 2026-03-01
       expect(refUser.vip_time_out_at.getTime()).toBeGreaterThan(new Date('2026-03-01').getTime());
+      // Verify invite reward counters were updated
+      expect(refUser.invite_reward).toBe('1');
+      expect(refUser.invite_total).toBe('5');
+      // Verify sendToken was called with correct params
+      expect(AssetsService.sendToken).toHaveBeenCalledWith({
+        from: 'system-user-id',
+        email: 'inviter@test.com',
+        token: 'XBT',
+        amount: 5,
+        describe: 'invitation',
+        invitee: 'user-id',
+        invitee_email: 'invitee@test.com',
+      });
+    });
+
+    it('should skip token reward when giveToken config is not available', async () => {
+      const existToken = {
+        _id: 'token-id',
+        user_id: 'user-id',
+        last_access_time: Date.now(),
+      };
+      PortalTokenModel.findOne.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(existToken),
+      });
+
+      const refUser = {
+        _id: 'aabbccddeeff001122334455',
+        email: 'inviter@test.com',
+        vip_time_out_at: new Date('2026-03-01'),
+        invite_reward: '0',
+        invite_total: '0',
+        save: jest.fn().mockResolvedValue(true),
+      };
+      const mockUser = {
+        _id: 'user-id',
+        email: 'invitee@test.com',
+        is_activated: false,
+        inviter: 'aabbccddeeff001122334455',
+        save: jest.fn().mockResolvedValue(true),
+      };
+      PortalUserModel.findById
+        .mockResolvedValueOnce(mockUser)
+        .mockResolvedValueOnce(refUser);
+      PortalTokenModel.deleteOne.mockResolvedValue({});
+      CommonConfigService.getGiveToken.mockResolvedValue(undefined);
+
+      const result = await AuthService.activateUser('valid-token');
+
+      expect(result.message).toBe('Account activation successful.');
+      expect(AssetsService.sendToken).not.toHaveBeenCalled();
+      expect(refUser.invite_reward).toBe('0');
+      expect(refUser.invite_total).toBe('0');
+      expect(refUser.save).toHaveBeenCalled();
+    });
+
+    it('should activate user without inviter and skip token reward', async () => {
+      const existToken = {
+        _id: 'token-id',
+        user_id: 'user-id',
+        last_access_time: Date.now(),
+      };
+      PortalTokenModel.findOne.mockReturnValue({
+        lean: jest.fn().mockResolvedValue(existToken),
+      });
+
+      const mockUser = {
+        _id: 'user-id',
+        email: 'solo@test.com',
+        is_activated: false,
+        inviter: null,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      PortalUserModel.findById.mockResolvedValueOnce(mockUser);
+      PortalTokenModel.deleteOne.mockResolvedValue({});
+
+      const result = await AuthService.activateUser('valid-token');
+
+      expect(result.message).toBe('Account activation successful.');
+      expect(mockUser.is_activated).toBe(true);
+      expect(AssetsService.sendToken).not.toHaveBeenCalled();
+      expect(CommonConfigService.getGiveToken).not.toHaveBeenCalled();
     });
 
     it('should throw when activation token not found', async () => {

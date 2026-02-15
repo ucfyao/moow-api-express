@@ -15,6 +15,8 @@ const EmailService = require('./emailService');
 const PortalEmailInfoModel = require('../models/portalEmailInfoModel');
 const { hashidsEncode, hashidsDecode } = require('../utils/hashidsHandler');
 const logger = require('../utils/logger');
+const CommonConfigService = require('./commonConfigService');
+const AssetsService = require('./assetsService');
 
 class AuthService {
   // verify captcha
@@ -343,21 +345,22 @@ class AuthService {
         const toDate = dayjs(fromTime).add(1, 'day').toDate();
         refUser.vip_time_out_at = toDate;
 
-        // TODO: handle this part after completing assets module
-        // const giveToken = await this.ctx.service.commonConfig.getGiveToken();
-        // const { from, coin, invitation } = giveToken;
-        // refUser.invite_reward = +refUser.invite_reward + 1;
-        // refUser.invite_total = +refUser.invite_total + invitation;
+        const giveToken = await CommonConfigService.getGiveToken();
+        if (giveToken) {
+          const { from, coin, invitation } = giveToken;
+          refUser.invite_reward = String(+refUser.invite_reward + 1);
+          refUser.invite_total = String(+refUser.invite_total + invitation);
 
-        // await this.ctx.service.assets.sendToken({
-        //   from,
-        //   email: refUser.email,
-        //   token: coin,
-        //   amount: invitation,
-        //   describe: 'invitation',
-        //   invitee: tokenDoc.userId,
-        //   invitee_email: user.email,
-        // });
+          await AssetsService.sendToken({
+            from,
+            email: refUser.email,
+            token: coin,
+            amount: invitation,
+            describe: 'invitation',
+            invitee: existToken.user_id,
+            invitee_email: user.email,
+          });
+        }
 
         await refUser.save();
       }
