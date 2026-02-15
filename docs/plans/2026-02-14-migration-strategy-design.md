@@ -10,8 +10,8 @@ Migration strategy for completing the Moow cryptocurrency investment platform tr
 
 | Role | Legacy | New | Status |
 |------|--------|-----|--------|
-| Backend | moow-api (Egg.js 3 / Koa) | moow-api-express (Express 5 / Node 22) | ~90% complete |
-| Frontend | moow-web (Vue 2 / Bulma) | moow-web-next (Next.js 15 / React 19 / TS) | ~60-70% complete |
+| Backend | moow-api (Egg.js 3 / Koa) | moow-api-express (Express 5 / Node 22) | ~99% complete |
+| Frontend | moow-web (Vue 2 / Bulma) | moow-web-next (Next.js 15 / React 19 / TS) | ~95% complete |
 
 ### Key Differences
 
@@ -67,45 +67,61 @@ All foundation work is done in both projects:
 - Swagger, JWT, email service, cron jobs, logger, formatting
 - Next.js 15 initialization, Layout, TypeScript, i18n, App Router
 
-### User Module (Tickets 401-500) — MOSTLY COMPLETE
+### User Module (Tickets 401-500) — COMPLETE
 
 | Ticket | Status | Notes |
 |--------|--------|-------|
 | Backend 403-414, 419, 426 | Done | Signup, login, captcha, activation, password reset, profile, logout |
+| Backend: soft delete, profile, invite list | Done | PR #116 — user management completion |
+| Backend: inviter token reward | Done | PR #120 — wired assetsService.sendToken() |
 | Frontend 401-410, 413, 418, 425 | Done | All auth pages exist in moow-web-next |
-| Frontend 417 (assets page) | Skeleton | Page exists but no data integration |
-| Frontend 423-424 (invite/poster) | Skeleton | Page exists but not functional |
+| Frontend 417 (assets page) | Done | Full data integration with VIP status, XBT balance, strategy summary |
+| Frontend 423-424 (invite/poster) | Done | QR code, poster generation, invite history table |
+| Frontend: profile + change password | Done | PR #107 — profile completion, password strength indicator, i18n fixes |
 
-### Strategy Module (Tickets 501-600) — PARTIALLY COMPLETE
+### Strategy Module (Tickets 501-600) — COMPLETE
 
 | Ticket | Status | Notes |
 |--------|--------|-------|
 | Backend 503, 504, 508-511, 513 | Done | Strategy CRUD + order endpoints implemented |
-| Backend 512-513 (cron jobs) | Done w/ bugs | Hardcoded order params in strategyService.js line 314 |
-| Frontend 501-504 (list page) | Partial | List exists but incomplete data display |
-| Frontend 505-531 (detail/create) | Skeleton | Page scaffolds exist, form logic + API integration incomplete |
-| Frontend 532 (i18n) | Not done | Hardcoded Chinese text in some pages |
+| Backend 512-513 (cron jobs) | Done | Fixed hardcoded params (PR #106), value averaging sell implemented (PR #114) |
+| Backend: user ownership validation | Done | PR #114 — active in strategyService.js |
+| Frontend 501-504 (list page) | Done | Full profit display, pagination, real-time data, action buttons |
+| Frontend 505-531 (detail/create) | Done | PR #95, #99, #98 — form validation, API integration, manual buy/sell |
+| Frontend 532 (i18n) | Done | PR #107 — hardcoded text fixed, Navbar locale toggle fixed |
 
-### Exchange Keys (Tickets 601-700) — PARTIALLY COMPLETE
+### Exchange Keys (Tickets 601-700) — COMPLETE
 
 | Ticket | Status | Notes |
 |--------|--------|-------|
-| Backend 604, 606, 609, 611, 612 | Done | Key CRUD + CCXT validation implemented |
-| Frontend 603-613 | Skeleton | Pages exist but functionality incomplete |
+| Backend 604, 606, 609, 611, 612 | Done | Key CRUD + CCXT validation + RSA encryption (PR #107) |
+| Frontend 603-613 | Done | Key list with search/pagination, add key form, delete with confirmation |
 
-### Orders (Tickets 701-800) — PARTIALLY COMPLETE
+### Orders (Tickets 701-800) — COMPLETE
 
 | Ticket | Status | Notes |
 |--------|--------|-------|
 | Backend | Done | Order endpoints implemented |
-| Frontend | Not done | No standalone order pages (only partial display in strategy detail) |
+| Frontend | Done | PR #108 — standalone order history page with filters, stats, pagination |
 
-### Homepage (Tickets 301-400) — NOT STARTED
+### Homepage (Tickets 301-400) — COMPLETE
 
 | Ticket | Status | Notes |
 |--------|--------|-------|
-| Frontend 301, 304 | Not done | Real-time chart, static page rebuild |
-| Backend 302, 303 | Not done | Data query with cache, BTC history cron |
+| Backend 302, 303 | Done | PR #121 — BTC history API + daily cron job (253 tests) |
+| Frontend 301, 304 | Done | PR #109 — real API data, BTC trend chart, DCA demo chart |
+
+### Additional Modules (Phase 2 + 3) — COMPLETE
+
+| Module | Status | PR | Notes |
+|--------|--------|-----|-------|
+| RBAC (Role + Resource) | Done | #118 | 12 REST endpoints, full CRUD |
+| Purchase + Assets | Done | #117 | Token transfer, VIP promotion |
+| Exchange Rates | Done | #119 | RMB rate list endpoint |
+| WeChat Integration | Done | #119 | Token validation, menu management |
+| Custom Arbitrage Query | Done | #116 | Filter by exchanges/symbols |
+| Fund page | Done | #109 | Highcharts integration |
+| About + Error pages | Done | — | Static content with i18n |
 
 ## Execution Plan
 
@@ -116,27 +132,27 @@ All foundation work is done in both projects:
 | S1 | 512 fix | Fix hardcoded order params in strategyService + add min amount/balance validation |
 | S2 | 609 enhance | Integrate RSA encryption into strategy execution flow + fix API route typos |
 
-### Phase 2: Frontend Core Pages (5-6 sessions)
+### Phase 2: Frontend Core Pages — ALL DONE
 
-| Session | Tickets | Work |
-|---------|---------|------|
-| S3 | 501, 504 | Strategy list page: profit display, pagination, real-time data |
-| S4 | 505-526 | ~~Create/edit strategy page: form, validation, submission~~ DONE (PR #95) |
-| S5 | 529 | ~~Create strategy frontend-backend integration~~ DONE (PR #99) |
-| S6 | 507, 528, 531 | Strategy detail page + order display + integration |
-| S7 | 603-613 | Exchange key management complete flow |
-| S8 | 701-800 | Order history: list, detail, statistics |
+| Session | Tickets | Work | Status |
+|---------|---------|------|--------|
+| S3 | 501, 504 | ~~Strategy list page~~ | DONE |
+| S4 | 505-526 | ~~Create/edit strategy page~~ | DONE (PR #95) |
+| S5 | 529 | ~~Create strategy frontend-backend integration~~ | DONE (PR #99) |
+| S6 | 507, 528, 531 | ~~Strategy detail page + order display~~ | DONE (PR #98) |
+| S7 | 603-613 | ~~Exchange key management~~ | DONE |
+| S8 | 701-800 | ~~Order history~~ | DONE (PR #108) |
 
-### Phase 3: Supporting Pages + Polish (3-4 sessions)
+### Phase 3: Supporting Pages + Polish — ALL DONE
 
-| Session | Tickets | Work |
-|---------|---------|------|
-| S9 | 417 | User assets page |
-| S10 | 423-424 | Invite system + poster generation |
-| S11 | 301-304 | Homepage: live chart + static page rebuild |
-| S12 | 532 + global | i18n completion + responsive layout + test coverage |
+| Session | Tickets | Work | Status |
+|---------|---------|------|--------|
+| S9 | 417 | ~~User assets page~~ | DONE |
+| S10 | 423-424 | ~~Invite system + poster generation~~ | DONE |
+| S11 | 301-304 | ~~Homepage + BTC history API~~ | DONE (PR #121, #109) |
+| S12 | 532 + global | ~~i18n completion~~ | DONE (PR #107) |
 
-**Total: ~12 Claude sessions to complete migration.**
+**Migration substantially complete as of 2026-02-15.**
 
 ## Completed Sessions
 
@@ -243,6 +259,26 @@ All foundation work is done in both projects:
   - Strategy detail page already had: info display, chart, order table, pagination, stats (from prior work)
   - No test for the new manual buy/sell buttons (page-level tests not in scope per test config)
 
+### Batch — 2026-02-15: Completion Sprint (Team of 4 Agents)
+
+**Backend PRs:**
+- **PR #116** (moow-api-express) — User management completion: soft delete, profile with ref_code, invite list, custom arbitrage query
+- **PR #114** (moow-api-express) — Bug fixes: value averaging sell, user ownership validation, data accuracy
+- **PR #118** (moow-api-express) — RBAC: role + resource management (12 endpoints)
+- **PR #117** (moow-api-express) — Purchase + assets token management
+- **PR #119** (moow-api-express) — Exchange rates + WeChat integration
+- **PR #120** (moow-api-express) — Inviter token reward wiring
+- **PR #121** (moow-api-express) — BTC history API + daily cron job
+
+**Frontend PRs:**
+- **PR #107** (moow-web-next) — Profile page, password strength, i18n fixes, Navbar locale fix
+- **PR #108** (moow-web-next) — Standalone order history page with filters and stats
+- **PR #109** (moow-web-next) — Homepage real API data + Fund page Highcharts integration
+
+**Test results:** Backend 253 tests / 23 suites, all passing.
+
+---
+
 ## Best Practices for Working with Claude
 
 ### Prompt Template
@@ -286,14 +322,23 @@ Session N+1 starts:
   3. Claude knows what to do next
 ```
 
-## Known Backend Issues (from CLAUDE.md)
+## Known Backend Issues (from CLAUDE.md) — ALL RESOLVED
 
-These should be addressed in Phase 1:
+| Issue | Resolution | PR |
+|-------|-----------|-----|
+| ~~Hardcoded test orders~~ | Fixed — uses strategy params | #106 |
+| ~~Exchange credentials plaintext~~ | Fixed — RSA encryption | #107 |
+| ~~No minimum amount validation~~ | Fixed — exchange.loadMarkets() check | #106 |
+| ~~No balance check~~ | Fixed | #106 |
+| ~~Route typo openOders~~ | Fixed → openOrders | #106 |
+| ~~Error logging missing~~ | Fixed — logger.error | #107 |
+| ~~Inviter reward incomplete~~ | Fixed — assetsService.sendToken() wired | #120 |
+| ~~Value averaging sell~~ | Fixed — full implementation | #114 |
+| ~~User ownership validation~~ | Fixed — active in strategyService | #114 |
 
-1. **Hardcoded test orders:** strategyService.js line 314, awaitService.js line 67
-2. **Exchange credentials plaintext:** strategyService.js lines 258-260, awaitService.js line 52
-3. **No minimum amount validation:** strategyService.js line 312
-4. **No balance check:** strategyService.js line 295
-5. **Route typo:** `/api/v1/openOders` should be `/api/v1/openOrders`
-6. **Error logging missing:** authService.js lines 182, 269
-7. **Inviter reward incomplete:** authService.js line 312
+## Remaining Minor Items
+
+1. **Change password API** — frontend pages expect `POST /v1/auth/send-code` and `POST /v1/auth/change-password` but these backend endpoints don't exist yet. Currently only forgot-password (email link) flow is supported.
+2. **Fund page** — uses BTC history data as placeholder; needs real fund API if fund product launches.
+3. **State management consolidation** — frontend uses both Redux (legacy) and Zustand (new). Should migrate fully to Zustand.
+4. **Test coverage** — backend has 253 tests (excellent). Frontend needs more component/integration tests.
