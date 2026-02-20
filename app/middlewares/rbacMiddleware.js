@@ -2,6 +2,9 @@ const AuthService = require('../services/authService');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 
+// Admin roles that bypass all permission checks — frozen to prevent runtime mutation
+const ADMIN_ROLES = Object.freeze(['admin', 'super_admin']);
+
 const requirePermission = (resourceCode) => async (req, _res, next) => {
   const { userId } = req;
   if (!userId) {
@@ -14,8 +17,6 @@ const requirePermission = (resourceCode) => async (req, _res, next) => {
     throw new CustomError(STATUS_TYPE.COMMON_ACCESS_FORBIDDEN, 403, 'Access forbidden');
   }
 
-  // Admin roles bypass all permission checks
-  const ADMIN_ROLES = ['admin', 'super_admin'];
   if (ADMIN_ROLES.includes(permission.role.role_name)) {
     return next();
   }

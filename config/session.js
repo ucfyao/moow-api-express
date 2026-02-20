@@ -8,7 +8,7 @@ const sessionConfig = {
   cookie: {
     secure: config.env === 'production',
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
   },
 };
 

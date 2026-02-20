@@ -187,6 +187,8 @@ router.patch(
  *       200:
  *         description: User soft deleted successfully
  */
+// NOTE: Admin-only deletion — RBAC gate intentionally restricts this to admin/super_admin roles.
+// The Swagger description referencing self-delete is outdated; users cannot delete their own account.
 router.delete(
   '/api/v1/users/:id',
   authMiddleware,
