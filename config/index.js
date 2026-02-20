@@ -16,6 +16,7 @@ const config = {
   // Security configuration
   sessionSecret: process.env.SESSION_SECRET || crypto.randomBytes(64).toString('hex'),
   tokenTimeOut: 1000, // Token expiration time in seconds
+  sessionTimeout: parseInt(process.env.SESSION_TIMEOUT || '3600', 10), // Session token timeout in seconds (1 hour default)
   exchangeTimeOut: 6000, // Exchange connection time in ms
 
   // Key file paths

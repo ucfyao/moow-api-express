@@ -1,6 +1,7 @@
 const express = require('express');
 const UserController = require('../controllers/userController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { requirePermission } = require('../middlewares/rbacMiddleware');
 const validateParams = require('../middlewares/validateMiddleware');
 
 const { updateUserValidatorSchema } = require('../validators/userValidator');
@@ -35,7 +36,12 @@ const router = express.Router();
  *                     type: string
  *                     example: "alice@example.com"
  */
-router.get('/api/v1/users', authMiddleware, UserController.index);
+router.get(
+  '/api/v1/users',
+  authMiddleware,
+  requirePermission('user_management'),
+  UserController.index
+);
 
 /**
  * @swagger
@@ -113,7 +119,12 @@ router.get('/api/v1/users/invitations', authMiddleware, UserController.inviteLis
  *                   type: string
  *                   example: "alice@example.com"
  */
-router.get('/api/v1/users/:id', authMiddleware, UserController.show);
+router.get(
+  '/api/v1/users/:id',
+  authMiddleware,
+  requirePermission('user_management'),
+  UserController.show
+);
 
 /**
  * @swagger
@@ -150,6 +161,7 @@ router.get('/api/v1/users/:id', authMiddleware, UserController.show);
 router.patch(
   '/api/v1/users/:id',
   authMiddleware,
+  requirePermission('user_management'),
   validateParams(updateUserValidatorSchema),
   UserController.patch
 );
@@ -175,6 +187,11 @@ router.patch(
  *       200:
  *         description: User soft deleted successfully
  */
-router.delete('/api/v1/users/:id', authMiddleware, UserController.destroy);
+router.delete(
+  '/api/v1/users/:id',
+  authMiddleware,
+  requirePermission('user_management'),
+  UserController.destroy
+);
 
 module.exports = router;

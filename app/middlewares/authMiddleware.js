@@ -2,6 +2,7 @@ const _ = require('lodash');
 const ResponseHandler = require('../utils/responseHandler');
 const { STATUS_TYPE } = require('../utils/statusCodes');
 const AuthService = require('../services/authService');
+const config = require('../../config');
 
 const authMiddleware = async (req, res, next) => {
   // In non-production environments, if needToken = false, do not validate the token
@@ -32,7 +33,7 @@ const authMiddleware = async (req, res, next) => {
   }
 
   // Check if the token has expired
-  if ((+new Date() - loginInfoObj.last_access_time) / 1000 > 100000) {
+  if ((+new Date() - loginInfoObj.last_access_time) / 1000 > config.sessionTimeout) {
     await AuthService.deleteToken(loginInfoObj);
     ResponseHandler.fail(res, STATUS_TYPE.HTTP_UNAUTHORIZED, STATUS_TYPE.PORTAL_TOKEN_EXPIRED);
     return;

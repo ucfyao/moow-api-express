@@ -14,8 +14,9 @@ const requirePermission = (resourceCode) => async (req, _res, next) => {
     throw new CustomError(STATUS_TYPE.COMMON_ACCESS_FORBIDDEN, 403, 'Access forbidden');
   }
 
-  // Admin role bypasses all permission checks
-  if (permission.role.role_name === 'admin') {
+  // Admin roles bypass all permission checks
+  const ADMIN_ROLES = ['admin', 'super_admin'];
+  if (ADMIN_ROLES.includes(permission.role.role_name)) {
     return next();
   }
 

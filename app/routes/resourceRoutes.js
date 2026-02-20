@@ -1,6 +1,7 @@
 const express = require('express');
 const ResourceController = require('../controllers/resourceController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { requirePermission } = require('../middlewares/rbacMiddleware');
 const validateParams = require('../middlewares/validateMiddleware');
 const {
   createResourceValidatorSchema,
@@ -27,7 +28,12 @@ const router = express.Router();
  *       200:
  *         description: Resource list
  */
-router.get('/api/v1/resources', authMiddleware, ResourceController.index);
+router.get(
+  '/api/v1/resources',
+  authMiddleware,
+  requirePermission('resource_management'),
+  ResourceController.index
+);
 
 /**
  * @swagger
@@ -46,7 +52,12 @@ router.get('/api/v1/resources', authMiddleware, ResourceController.index);
  *       200:
  *         description: Resource tree
  */
-router.get('/api/v1/resources/tree', authMiddleware, ResourceController.tree);
+router.get(
+  '/api/v1/resources/tree',
+  authMiddleware,
+  requirePermission('resource_management'),
+  ResourceController.tree
+);
 
 /**
  * @swagger
@@ -66,7 +77,12 @@ router.get('/api/v1/resources/tree', authMiddleware, ResourceController.tree);
  *       200:
  *         description: Resource details
  */
-router.get('/api/v1/resources/:id', authMiddleware, ResourceController.show);
+router.get(
+  '/api/v1/resources/:id',
+  authMiddleware,
+  requirePermission('resource_management'),
+  ResourceController.show
+);
 
 /**
  * @swagger
@@ -102,8 +118,9 @@ router.get('/api/v1/resources/:id', authMiddleware, ResourceController.show);
 router.post(
   '/api/v1/resources',
   authMiddleware,
+  requirePermission('resource_management'),
   validateParams(createResourceValidatorSchema),
-  ResourceController.create,
+  ResourceController.create
 );
 
 /**
@@ -127,8 +144,9 @@ router.post(
 router.patch(
   '/api/v1/resources/:id',
   authMiddleware,
+  requirePermission('resource_management'),
   validateParams(updateResourceValidatorSchema),
-  ResourceController.update,
+  ResourceController.update
 );
 
 /**
@@ -149,6 +167,11 @@ router.patch(
  *       200:
  *         description: Resource deleted
  */
-router.delete('/api/v1/resources/:id', authMiddleware, ResourceController.destroy);
+router.delete(
+  '/api/v1/resources/:id',
+  authMiddleware,
+  requirePermission('resource_management'),
+  ResourceController.destroy
+);
 
 module.exports = router;
