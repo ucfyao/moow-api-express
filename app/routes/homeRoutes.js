@@ -117,7 +117,13 @@ router.get('/check-task', HomeController.checkTask);
  *                           volume:
  *                             type: number
  */
-router.get('/api/v1/public/btc-history', HomeController.getBtcHistory);
+const clampBtcHistoryLimit = (req, res, next) => {
+  const limit = parseInt(req.query.limit, 10);
+  req.query.limit = !limit || limit < 1 ? 365 : Math.min(limit, 365);
+  next();
+};
+
+router.get('/api/v1/public/btc-history', clampBtcHistoryLimit, HomeController.getBtcHistory);
 
 /**
  * @swagger

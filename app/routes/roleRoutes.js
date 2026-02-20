@@ -1,6 +1,7 @@
 const express = require('express');
 const RoleController = require('../controllers/roleController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { requirePermission } = require('../middlewares/rbacMiddleware');
 const validateParams = require('../middlewares/validateMiddleware');
 const {
   createRoleValidatorSchema,
@@ -27,7 +28,12 @@ const router = express.Router();
  *       200:
  *         description: Role list
  */
-router.get('/api/v1/roles', authMiddleware, RoleController.index);
+router.get(
+  '/api/v1/roles',
+  authMiddleware,
+  requirePermission('role_management'),
+  RoleController.index
+);
 
 /**
  * @swagger
@@ -41,7 +47,12 @@ router.get('/api/v1/roles', authMiddleware, RoleController.index);
  *       200:
  *         description: Role dropdown list
  */
-router.get('/api/v1/roles/droplist', authMiddleware, RoleController.droplist);
+router.get(
+  '/api/v1/roles/droplist',
+  authMiddleware,
+  requirePermission('role_management'),
+  RoleController.droplist
+);
 
 /**
  * @swagger
@@ -61,7 +72,12 @@ router.get('/api/v1/roles/droplist', authMiddleware, RoleController.droplist);
  *       200:
  *         description: Role details
  */
-router.get('/api/v1/roles/:id', authMiddleware, RoleController.show);
+router.get(
+  '/api/v1/roles/:id',
+  authMiddleware,
+  requirePermission('role_management'),
+  RoleController.show
+);
 
 /**
  * @swagger
@@ -94,8 +110,9 @@ router.get('/api/v1/roles/:id', authMiddleware, RoleController.show);
 router.post(
   '/api/v1/roles',
   authMiddleware,
+  requirePermission('role_management'),
   validateParams(createRoleValidatorSchema),
-  RoleController.create,
+  RoleController.create
 );
 
 /**
@@ -119,8 +136,9 @@ router.post(
 router.patch(
   '/api/v1/roles/:id',
   authMiddleware,
+  requirePermission('role_management'),
   validateParams(updateRoleValidatorSchema),
-  RoleController.update,
+  RoleController.update
 );
 
 /**
@@ -141,6 +159,11 @@ router.patch(
  *       200:
  *         description: Role deleted
  */
-router.delete('/api/v1/roles/:id', authMiddleware, RoleController.destroy);
+router.delete(
+  '/api/v1/roles/:id',
+  authMiddleware,
+  requirePermission('role_management'),
+  RoleController.destroy
+);
 
 module.exports = router;

@@ -5,7 +5,11 @@ const sessionConfig = {
   secret: config.sessionSecret,
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: config.env === 'production' },
+  cookie: {
+    secure: config.env === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+  },
 };
 
 module.exports = session(sessionConfig);

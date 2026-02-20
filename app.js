@@ -37,16 +37,22 @@ app.use((req, res, next) => {
 
 // Global error handler
 app.use((error, req, res, next) => {
-  logger.error(error.message);
+  logger.error(error);
 
   if (error instanceof CustomError) {
     return ResponseHandler.fail(res, error.statusCode, error.businessCode, error.message);
   }
+
+  const message =
+    config.env === 'production'
+      ? 'Internal Server Error'
+      : error.message || 'Internal Server Error';
+
   return ResponseHandler.fail(
     res,
     STATUS_TYPE.HTTP_INTERNAL_SERVER_ERROR,
     STATUS_TYPE.HTTP_INTERNAL_SERVER_ERROR,
-    error.message || 'Internal Server Error',
+    message
   );
 });
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const PurchaseController = require('../controllers/purchaseController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { requirePermission } = require('../middlewares/rbacMiddleware');
 const validateParams = require('../middlewares/validateMiddleware');
 const { submitPurchaseValidatorSchema } = require('../validators/purchaseValidator');
 
@@ -66,7 +67,12 @@ router.post(
  *       200:
  *         description: Purchase list
  */
-router.get('/api/v1/purchases', authMiddleware, PurchaseController.index);
+router.get(
+  '/api/v1/purchases',
+  authMiddleware,
+  requirePermission('purchase_management'),
+  PurchaseController.index
+);
 
 /**
  * @swagger
@@ -86,7 +92,12 @@ router.get('/api/v1/purchases', authMiddleware, PurchaseController.index);
  *       200:
  *         description: Purchase details
  */
-router.get('/api/v1/purchases/:id', authMiddleware, PurchaseController.show);
+router.get(
+  '/api/v1/purchases/:id',
+  authMiddleware,
+  requirePermission('purchase_management'),
+  PurchaseController.show
+);
 
 /**
  * @swagger
@@ -106,7 +117,12 @@ router.get('/api/v1/purchases/:id', authMiddleware, PurchaseController.show);
  *       200:
  *         description: Purchase updated
  */
-router.patch('/api/v1/purchases/:id', authMiddleware, PurchaseController.update);
+router.patch(
+  '/api/v1/purchases/:id',
+  authMiddleware,
+  requirePermission('purchase_management'),
+  PurchaseController.update
+);
 
 /**
  * @swagger
@@ -126,6 +142,11 @@ router.patch('/api/v1/purchases/:id', authMiddleware, PurchaseController.update)
  *       200:
  *         description: Purchase promoted and VIP extended
  */
-router.post('/api/v1/purchases/:id/promote', authMiddleware, PurchaseController.promote);
+router.post(
+  '/api/v1/purchases/:id/promote',
+  authMiddleware,
+  requirePermission('purchase_management'),
+  PurchaseController.promote
+);
 
 module.exports = router;

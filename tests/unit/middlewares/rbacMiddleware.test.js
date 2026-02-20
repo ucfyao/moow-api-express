@@ -52,6 +52,18 @@ describe('rbacMiddleware - requirePermission', () => {
     expect(next).toHaveBeenCalled();
   });
 
+  it('should call next() when user has super_admin role (bypass)', async () => {
+    AuthService.getUserPermission.mockResolvedValue({
+      role: { _id: 'role-3', role_name: 'super_admin', role_description: 'Super Administrator' },
+      resources: [],
+    });
+    const middleware = requirePermission('admin_purchase');
+
+    await middleware(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+  });
+
   it('should call next() when user has the required resource_code', async () => {
     AuthService.getUserPermission.mockResolvedValue({
       role: { _id: 'role-2', role_name: 'editor', role_description: 'Editor' },
