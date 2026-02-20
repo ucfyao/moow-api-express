@@ -5,8 +5,9 @@ const logger = require('../app/utils/logger');
 const connectDB = async () => {
   try {
     await mongoose.connect(config.mongoUri, {
-      // useNewUrlParser: true,
-      // useUnifiedTopology: true,
+      maxPoolSize: 20,
+      minPoolSize: 5,
+      maxIdleTimeMS: 60000,
     });
     logger.info(`Connected to MongoDB at ${config.mongoUri}`);
   } catch (err) {

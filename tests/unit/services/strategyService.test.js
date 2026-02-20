@@ -729,10 +729,11 @@ describe('StrategyService', () => {
         .mockResolvedValueOnce(updatedOrder1)
         .mockResolvedValueOnce(updatedOrder2);
 
-      const strategy1 = { _id: 'strat-1', exchange: 'binance' };
-      const strategy2 = { _id: 'strat-2', exchange: 'binance' };
+      const strategy1 = { _id: 'strat-1', exchange: 'binance', toString() { return 'strat-1'; } };
+      const strategy2 = { _id: 'strat-2', exchange: 'binance', toString() { return 'strat-2'; } };
 
-      AipStrategyModel.findById.mockResolvedValueOnce(strategy1).mockResolvedValueOnce(strategy2);
+      // Batch fetch strategies via find({ _id: { $in: [...] } })
+      AipStrategyModel.find.mockResolvedValueOnce([strategy1, strategy2]);
 
       // First sell fails, second succeeds
       AwaitService.sellOnThirdParty
@@ -743,7 +744,9 @@ describe('StrategyService', () => {
 
       // Both should be attempted
       expect(AipAwaitModel.findOneAndUpdate).toHaveBeenCalledTimes(2);
-      expect(AipStrategyModel.findById).toHaveBeenCalledTimes(2);
+      expect(AipStrategyModel.find).toHaveBeenCalledWith({
+        _id: { $in: ['strat-1', 'strat-2'] },
+      });
       expect(AwaitService.sellOnThirdParty).toHaveBeenCalledTimes(2);
     });
 
@@ -753,7 +756,9 @@ describe('StrategyService', () => {
       AwaitService.index.mockResolvedValue(awaitOrders);
       const updatedOrder = { _id: 'await-1', strategy_id: 'strat-missing', await_status: 3 };
       AipAwaitModel.findOneAndUpdate.mockResolvedValue(updatedOrder);
-      AipStrategyModel.findById.mockResolvedValue(null);
+
+      // Batch fetch returns empty (strategy not found)
+      AipStrategyModel.find.mockResolvedValueOnce([]);
 
       await StrategyService.sellAllOrders();
 

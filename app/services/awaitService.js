@@ -33,7 +33,7 @@ class AwaitService {
    * @param {object} conditions
    */
   async index(conditions) {
-    const awaitOrders = await AipAwaitModel.find(conditions);
+    const awaitOrders = await AipAwaitModel.find(conditions).lean();
     return awaitOrders;
   }
 

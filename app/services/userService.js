@@ -49,9 +49,9 @@ class UserService {
 
     if (query.invitations && user.invitation_code) {
       // console.log(user.invitation_code);
-      const invitationList = await PortalUserModel.find({ inviter: user._id }).select(
-        'email created_at'
-      );
+      const invitationList = await PortalUserModel.find({ inviter: user._id })
+        .select('email created_at')
+        .lean();
       // console.log(invitationList);
       queryData.invitations = invitationList;
     }

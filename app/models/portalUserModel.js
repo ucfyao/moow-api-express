@@ -31,5 +31,7 @@ const PortalUserSchema = new mongoose.Schema(
   },
 );
 
+PortalUserSchema.index({ inviter: 1 });
+
 const PortalUserModel = mongoose.model('portal_user', PortalUserSchema);
 module.exports = PortalUserModel;

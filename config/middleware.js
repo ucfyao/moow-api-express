@@ -1,6 +1,7 @@
 const morgan = require('morgan');
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const session = require('./session');
@@ -30,6 +31,7 @@ const setupMiddleware = (app) => {
       credentials: true,
     })
   );
+  app.use(compression());
   app.use('/api/v1/auth', authLimiter);
   app.use('/api/v1', apiLimiter);
   app.use(session);
