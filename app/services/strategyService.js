@@ -609,6 +609,7 @@ class StrategyService {
     logger.info(`### Pending await orders: ${awaitOrders.length}`);
 
     // Batch-fetch all strategies to avoid N+1 queries
+    // NOTE: Do NOT add .lean() — strategies are mutated and .save()'d in sellOnThirdParty()
     const uniqueStrategyIds = [
       ...new Set(awaitOrders.map((o) => o.strategy_id).filter(Boolean)),
     ];
