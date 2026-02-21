@@ -14,5 +14,7 @@ const PortalMarketSchema = new mongoose.Schema(
   },
 );
 
+PortalMarketSchema.index({ is_deleted: 1 });
+
 const PortalMarketModel = mongoose.model('portal_market', PortalMarketSchema);
 module.exports = PortalMarketModel;

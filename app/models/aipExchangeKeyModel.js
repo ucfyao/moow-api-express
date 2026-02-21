@@ -22,6 +22,8 @@ const AipExchangeKeySchema = new mongoose.Schema(
   },
 );
 
+AipExchangeKeySchema.index({ uid: 1 });
+
 // Key Status
 AipExchangeKeySchema.statics.KEY_STATUS_NORMAL = 1;
 AipExchangeKeySchema.statics.KEY_STATUS_CLOSED = 2;

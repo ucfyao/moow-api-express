@@ -12,6 +12,7 @@ const SymbolService = require('./symbolService');
 const AwaitService = require('./awaitService');
 const CustomError = require('../utils/customError');
 const { encrypt, decrypt } = require('../utils/cryptoUtils');
+const { publicOrderCache } = require('../utils/cacheManager');
 const config = require('../../config');
 
 class StrategyService {
@@ -606,6 +607,18 @@ class StrategyService {
     };
     const awaitOrders = await AwaitService.index(conditions);
     logger.info(`### Pending await orders: ${awaitOrders.length}`);
+
+    // Batch-fetch all strategies to avoid N+1 queries
+    // NOTE: Do NOT add .lean() — strategies are mutated and .save()'d in sellOnThirdParty()
+    const uniqueStrategyIds = [
+      ...new Set(awaitOrders.map((o) => o.strategy_id).filter(Boolean)),
+    ];
+    const strategies =
+      uniqueStrategyIds.length > 0
+        ? await AipStrategyModel.find({ _id: { $in: uniqueStrategyIds } })
+        : [];
+    const strategyMap = new Map(strategies.map((s) => [s._id.toString(), s]));
+
     for (const awaitorder of awaitOrders) {
       try {
         const updatedOrder = await AipAwaitModel.findOneAndUpdate(
@@ -617,7 +630,9 @@ class StrategyService {
           logger.info(`[sellAllOrders] Await order ${awaitorder._id} already processing, skipping`);
           continue;
         }
-        const strategy = await AipStrategyModel.findById(awaitorder.strategy_id);
+        const strategy = strategyMap.get(
+          awaitorder.strategy_id ? awaitorder.strategy_id.toString() : '',
+        );
         if (!strategy) {
           logger.error(
             `Strategy not found for await order ${awaitorder._id}, strategy_id: ${awaitorder.strategy_id}`,
@@ -735,12 +750,20 @@ class StrategyService {
    * @returns {Object} Recent buy orders list
    */
   async getPublicOrders() {
+    const cacheKey = 'publicOrders';
+    const cached = publicOrderCache.get(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
     const orders = await AipOrderModel.find({ side: 'buy' })
       .select('symbol price amount side created_at')
       .sort({ created_at: -1 })
       .limit(20)
       .lean();
-    return { list: orders };
+    const result = { list: orders };
+    publicOrderCache.set(cacheKey, result);
+    return result;
   }
 
   /**

@@ -12,4 +12,6 @@ const PortalRoleSchema = new mongoose.Schema(
   },
 );
 
+PortalRoleSchema.index({ role_name: 1 });
+
 module.exports = mongoose.model('portal_role', PortalRoleSchema);

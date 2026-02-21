@@ -96,7 +96,7 @@ class SymbolService {
    */
   async getSymbolById(id) {
     const start = Date.now();
-    const info = await DataExchangeSymbolModel.findById(id);
+    const info = await DataExchangeSymbolModel.findById(id).lean();
 
     logger.info(
       `\nQuery Details\n  Symbol Id: \t${id}\n  Info Details: \t${JSON.stringify(info)}\n    Response Time: \t${Date.now() - start} ms\n`,

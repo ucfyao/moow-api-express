@@ -14,4 +14,6 @@ const PortalResourceSchema = new mongoose.Schema(
   },
 );
 
+PortalResourceSchema.index({ resource_code: 1 });
+
 module.exports = mongoose.model('portal_resource', PortalResourceSchema);
