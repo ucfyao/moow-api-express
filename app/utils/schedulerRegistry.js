@@ -1,6 +1,6 @@
 const registry = {};
 
-function recordStart(schedulerName) {
+function ensureEntry(schedulerName) {
   if (!registry[schedulerName]) {
     registry[schedulerName] = {
       lastRun: null,
@@ -10,41 +10,30 @@ function recordStart(schedulerName) {
       isRunning: false,
     };
   }
-  registry[schedulerName].lastRun = new Date().toISOString();
-  registry[schedulerName].isRunning = true;
+  return registry[schedulerName];
+}
+
+function recordStart(schedulerName) {
+  const entry = ensureEntry(schedulerName);
+  entry.lastRun = new Date().toISOString();
+  entry.isRunning = true;
 }
 
 function recordSuccess(schedulerName) {
-  if (!registry[schedulerName]) {
-    registry[schedulerName] = {
-      lastRun: null,
-      lastSuccess: null,
-      lastFailure: null,
-      lastError: null,
-      isRunning: false,
-    };
-  }
-  registry[schedulerName].lastSuccess = new Date().toISOString();
-  registry[schedulerName].isRunning = false;
+  const entry = ensureEntry(schedulerName);
+  entry.lastSuccess = new Date().toISOString();
+  entry.isRunning = false;
 }
 
 function recordFailure(schedulerName, error) {
-  if (!registry[schedulerName]) {
-    registry[schedulerName] = {
-      lastRun: null,
-      lastSuccess: null,
-      lastFailure: null,
-      lastError: null,
-      isRunning: false,
-    };
-  }
-  registry[schedulerName].lastFailure = new Date().toISOString();
-  registry[schedulerName].lastError = error?.message || String(error);
-  registry[schedulerName].isRunning = false;
+  const entry = ensureEntry(schedulerName);
+  entry.lastFailure = new Date().toISOString();
+  entry.lastError = error?.message || String(error);
+  entry.isRunning = false;
 }
 
 function getStatus() {
-  return { ...registry };
+  return JSON.parse(JSON.stringify(registry));
 }
 
 module.exports = { recordStart, recordSuccess, recordFailure, getStatus };
