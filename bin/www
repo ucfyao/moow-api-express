@@ -7,6 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('moow:server');
 var http = require('http');
+var mongoose = require('mongoose');
+var logger = require('../app/utils/logger');
 
 /**
  * Get port from environment and store in Express.
@@ -84,3 +86,34 @@ function onListening() {
   var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+
+/**
+ * Graceful shutdown handler.
+ */
+
+function gracefulShutdown(signal) {
+  logger.info(`Received ${signal}. Starting graceful shutdown...`);
+
+  // Stop accepting new connections
+  server.close(() => {
+    logger.info('HTTP server closed');
+
+    // Close MongoDB connection
+    mongoose.connection.close().then(() => {
+      logger.info('MongoDB connection closed');
+      process.exit(0);
+    }).catch((err) => {
+      logger.error('Error closing MongoDB connection:', err);
+      process.exit(1);
+    });
+  });
+
+  // Force shutdown after 10 seconds if in-flight requests don't finish
+  setTimeout(() => {
+    logger.error('Graceful shutdown timed out after 10s, forcing exit');
+    process.exit(1);
+  }, 10000);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

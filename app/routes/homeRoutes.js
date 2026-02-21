@@ -49,25 +49,37 @@ router.get('/test', HomeController.test);
 
 /**
  * @swagger
- * /check-task:
+ * /health:
  *   get:
- *     summary: Check scheduled tasks
+ *     summary: Health check endpoint
  *     tags:
  *       - Home
- *     description: Checks the status of background tasks or scheduled jobs.
+ *     description: Returns system health including MongoDB status, memory usage, uptime, and scheduler statuses.
  *     responses:
  *       200:
- *         description: Task check successful
+ *         description: System is healthy
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 tasksRunning:
- *                   type: boolean
- *                   example: true
+ *                 status:
+ *                   type: string
+ *                   example: "ok"
+ *                 uptime:
+ *                   type: number
+ *                 timestamp:
+ *                   type: string
+ *                 mongodb:
+ *                   type: object
+ *                 memory:
+ *                   type: object
+ *                 schedulers:
+ *                   type: object
+ *       503:
+ *         description: System is degraded or in error state
  */
-router.get('/check-task', HomeController.checkTask);
+router.get('/health', HomeController.health);
 
 /**
  * @swagger

@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const StrategyService = require('../services/strategyService');
 const logger = require('../utils/logger');
+const { recordStart, recordSuccess, recordFailure } = require('../utils/schedulerRegistry');
 
 let isRunning = false;
 
@@ -12,10 +13,13 @@ const buyScheduler = () => {
       return;
     }
     isRunning = true;
+    recordStart('buy');
     try {
       logger.info(`Running Task Buy schedule at ${new Date().toLocaleString()}`);
       await StrategyService.executeAllBuys();
+      recordSuccess('buy');
     } catch (error) {
+      recordFailure('buy', error);
       logger.error(`Error running buyScheduler: ${error.message}`);
     } finally {
       isRunning = false;

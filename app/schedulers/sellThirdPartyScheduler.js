@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const StrategyService = require('../services/strategyService');
 const logger = require('../utils/logger');
+const { recordStart, recordSuccess, recordFailure } = require('../utils/schedulerRegistry');
 
 let isRunning = false;
 
@@ -11,10 +12,13 @@ const sellThirdPartyScheduler = () => {
       return;
     }
     isRunning = true;
+    recordStart('sellThirdParty');
     try {
       logger.info('Running Task One at 6 PM every day.');
       await StrategyService.sellAllOrders();
+      recordSuccess('sellThirdParty');
     } catch (error) {
+      recordFailure('sellThirdParty', error);
       logger.error(`Error running sellThirdPartyScheduler: ${error.message}`);
     } finally {
       isRunning = false;
