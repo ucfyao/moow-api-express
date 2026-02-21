@@ -3,6 +3,7 @@ const ccxt = require('ccxt');
 const ArbitrageTickerModel = require('../models/arbitrageTickerModel');
 const ArbitrageConfigModel = require('../models/arbitrageConfigModel');
 const logger = require('../utils/logger');
+const { recordStart, recordSuccess, recordFailure } = require('../utils/schedulerRegistry');
 
 const DEFAULT_EXCHANGES = ['binance', 'huobi', 'okx'];
 const DEFAULT_SYMBOLS = ['BTC/USDT', 'ETH/USDT'];
@@ -86,10 +87,13 @@ const tickerScheduler = () => {
       return;
     }
     isRunning = true;
+    recordStart('ticker');
     try {
       logger.info(`[tickerScheduler] Starting ticker fetch at ${new Date().toISOString()}`);
       await fetchAllTickers();
+      recordSuccess('ticker');
     } catch (error) {
+      recordFailure('ticker', error);
       logger.error(`[tickerScheduler] Error: ${error.message}`);
     } finally {
       isRunning = false;

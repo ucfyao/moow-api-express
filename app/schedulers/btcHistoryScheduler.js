@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const HomeService = require('../services/homeService');
 const logger = require('../utils/logger');
+const { recordStart, recordSuccess, recordFailure } = require('../utils/schedulerRegistry');
 
 let isRunning = false;
 
@@ -12,10 +13,13 @@ const btcHistoryScheduler = () => {
       return;
     }
     isRunning = true;
+    recordStart('btcHistory');
     try {
       logger.info(`btcHistoryScheduler: running at ${new Date().toISOString()}`);
       await HomeService.fetchAndStoreBtcPrice();
+      recordSuccess('btcHistory');
     } catch (error) {
+      recordFailure('btcHistory', error);
       logger.error(`btcHistoryScheduler: error - ${error.message}`);
     } finally {
       isRunning = false;

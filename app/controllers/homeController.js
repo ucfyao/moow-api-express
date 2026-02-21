@@ -1,6 +1,15 @@
+const mongoose = require('mongoose');
 const { hashidsEncode, hashidsDecode } = require('../utils/hashidsHandler');
 const HomeService = require('../services/homeService');
 const ResponseHandler = require('../utils/responseHandler');
+const { getStatus: getSchedulerStatus } = require('../utils/schedulerRegistry');
+
+const READY_STATE_MAP = {
+  0: 'disconnected',
+  1: 'connected',
+  2: 'connecting',
+  3: 'disconnecting',
+};
 
 class HomeController {
   async index(req, res) {
@@ -13,10 +22,37 @@ class HomeController {
     res.json({ x, y });
   }
 
-  // Route to check the status of the scheduled task
-  async checkTask(req, res) {
-    // const taskStatus = task.getStatus(); // Returns the status of the scheduled task
-    res.json({ status: true });
+  async health(req, res) {
+    const { readyState } = mongoose.connection;
+    const mongoStatus = READY_STATE_MAP[readyState] || 'disconnected';
+
+    let status = 'ok';
+    if (readyState === 0) {
+      status = 'error';
+    } else if (readyState === 2 || readyState === 3) {
+      status = 'degraded';
+    }
+
+    const memUsage = process.memoryUsage();
+
+    const body = {
+      status,
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      mongodb: {
+        status: mongoStatus,
+        readyState,
+      },
+      memory: {
+        rss: memUsage.rss,
+        heapUsed: memUsage.heapUsed,
+        heapTotal: memUsage.heapTotal,
+      },
+      schedulers: getSchedulerStatus(),
+    };
+
+    const httpCode = status === 'ok' ? 200 : 503;
+    res.status(httpCode).json(body);
   }
 
   /**
