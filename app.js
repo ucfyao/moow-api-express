@@ -36,6 +36,7 @@ app.use((req, res, next) => {
 });
 
 // Global error handler
+// eslint-disable-next-line no-unused-vars
 app.use((error, req, res, next) => {
   logger.error(error);
 

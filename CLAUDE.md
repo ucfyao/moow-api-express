@@ -824,6 +824,17 @@ app.js:
   9. initializeSchedulers()   — Auto-discover and register all cron jobs
 ```
 
+## 不迁移模块 (Modules Not Being Migrated)
+
+The following modules from the old Egg.js codebase (moow-api) are confirmed as **not needed** and will NOT be migrated:
+
+| Module | Old File | Reason |
+|--------|----------|--------|
+| 文章系统 (Articles) | `moow-api/app/service/article.js` | Feature deprecated |
+| 货币汇率数据 (Currency Rates) | `moow-api/app/service/currency.js` | Feature deprecated |
+| 搜索功能 (Search) | `moow-api/app/service/search.js` | Feature deprecated |
+| 微信集成 (WeChat) | `moow-api/app/service/wx.js` | Feature deprecated, wechatService removed |
+
 ## Known Issues and TODOs
 
 These are documented incomplete features in the codebase. When working on related code, be aware:
@@ -836,7 +847,7 @@ These are documented incomplete features in the codebase. When working on relate
 
 - **Inviter reward incomplete:** `authService.js` — token reward for referrer not implemented.
 
-### Resolved
+### Resolved (PR #127)
 
 - ~~**User ownership validation:** `strategyService.js`~~ — Now enforced in `getStrategyById()`, `deleteStrategy()`, `partiallyUpdateStrategy()`, and `getBalance()`.
 - ~~**Third-party order credential exposure:** `orderController.js`/`orderService.js`~~ — Refactored to accept `keyId` and decrypt server-side via `_resolveExchangeKey()`.

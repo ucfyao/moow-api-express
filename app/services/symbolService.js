@@ -289,13 +289,7 @@ class SymbolService {
         }
       })
       .on('end', async () => {
-        const newSymbolData = await this.processPriceData(
-          records,
-          exchangeId,
-          symbol,
-          otherCurrency,
-          exchangeUrl
-        );
+        await this.processPriceData(records, exchangeId, symbol, otherCurrency, exchangeUrl);
       });
   }
 }

@@ -6,8 +6,6 @@ const { STATUS_TYPE } = require('../utils/statusCodes');
 
 class KeyService {
   async getAllKeys(params) {
-    const start = Date.now();
-
     let conditions = {
       // is_deleted: false,
     };
