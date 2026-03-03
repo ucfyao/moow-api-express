@@ -73,11 +73,11 @@ const createMockExchange = (overrides = {}) => ({
  */
 const setupCcxtMock = (ccxtModule, mockExchange) => {
   const MockExchangeClass = jest.fn(() => mockExchange);
-  /* eslint-disable no-param-reassign */
+
   ccxtModule.binance = MockExchangeClass;
   ccxtModule.okex = MockExchangeClass;
   ccxtModule.huobi = MockExchangeClass;
-  /* eslint-enable no-param-reassign */
+
   return MockExchangeClass;
 };
 

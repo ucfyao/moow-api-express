@@ -36,7 +36,7 @@ const PortalEmailInfoSchema = new mongoose.Schema(
       updatedAt: 'updated_at',
     }, // auto create created_at and updated_at
     collection: 'portal_email_infos',
-  },
+  }
 );
 
 // Email send mark

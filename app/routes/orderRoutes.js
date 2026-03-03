@@ -104,7 +104,20 @@ router.get('/api/v1/orders/:id', authMiddleware, OrderController.show);
  *     summary: Get all uncompleted orders
  *     tags:
  *       - Orders Management
- *     description: Get all outstanding orders (including third-party orders).
+ *     description: Get all outstanding orders from exchange via stored key.
+ *     parameters:
+ *       - in: query
+ *         name: keyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Exchange key document ID (credentials decrypted server-side)
+ *       - in: query
+ *         name: symbol
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Trading pair (e.g. BTC/USDT)
  *     responses:
  *       200:
  *         description: Successfully returned a list of uncompleted orders.
@@ -141,7 +154,20 @@ router.get('/api/v1/openOrders', authMiddleware, OrderController.listThirdPartyO
  *     summary: Cancel all outstanding orders
  *     tags:
  *       - Orders Management
- *     description: Cancel all outstanding orders (including third-party orders).
+ *     description: Cancel all outstanding orders on exchange via stored key.
+ *     parameters:
+ *       - in: query
+ *         name: keyId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Exchange key document ID (credentials decrypted server-side)
+ *       - in: query
+ *         name: symbol
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Trading pair (e.g. BTC/USDT)
  *     responses:
  *       200:
  *         description: All outstanding orders have been cancelled

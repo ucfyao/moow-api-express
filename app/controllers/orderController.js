@@ -3,8 +3,8 @@ const ResponseHandler = require('../utils/responseHandler');
 
 class OrderController {
   async index(req, res) {
-    const { strategy_id } = req.query;
-    const orders = await OrderService.getAllOrders(strategy_id);
+    const { strategy_id: strategyId } = req.query;
+    const orders = await OrderService.getAllOrders(strategyId);
     return ResponseHandler.success(res, orders);
   }
 
@@ -19,22 +19,15 @@ class OrderController {
     return ResponseHandler.success(res, order);
   }
 
-  // TODO: Accept keyId instead of raw credentials, decrypt server-side
   async listThirdPartyOrders(req, res) {
-    const { exchangeName, symbol, apiKey, secret } = req.query;
-    const orders = await OrderService.getThirdPartyOrders(exchangeName, symbol, apiKey, secret);
+    const { keyId, symbol } = req.query;
+    const orders = await OrderService.getThirdPartyOrders(keyId, symbol);
     return ResponseHandler.success(res, orders);
   }
 
-  // TODO: Accept keyId instead of raw credentials, decrypt server-side
   async cancelAllOpenThirdPartyOrders(req, res) {
-    const { exchangeName, symbol, apiKey, secret } = req.query;
-    const orders = await OrderService.cancelAllOpenThirdPartyOrders(
-      exchangeName,
-      symbol,
-      apiKey,
-      secret
-    );
+    const { keyId, symbol } = req.query;
+    const orders = await OrderService.cancelAllOpenThirdPartyOrders(keyId, symbol);
     return ResponseHandler.success(res, orders);
   }
 }

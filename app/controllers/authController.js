@@ -13,10 +13,10 @@ class AuthController {
       name,
       email,
       password,
-      refCode,
       captcha,
       sessionCaptcha,
-      userIp
+      userIp,
+      refCode
     );
     return ResponseHandler.success(res, user, STATUS_TYPE.HTTP_CREATED);
   }

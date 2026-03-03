@@ -1,3 +1,4 @@
+const ccxt = require('ccxt');
 const AipAwaitModel = require('../models/aipAwaitModel');
 const AipStrategyModel = require('../models/aipStrategyModel');
 const logger = require('../utils/logger');
@@ -5,8 +6,10 @@ const OrderService = require('./orderService');
 const { decrypt } = require('../utils/cryptoUtils');
 const config = require('../../config');
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const ccxt = require('ccxt');
+const sleep = (ms) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 class AwaitService {
   /**
@@ -74,12 +77,7 @@ class AwaitService {
     const side = 'sell';
     // Use partial sell amount if specified (intelligent strategy), otherwise sell all
     const amount = awaitOrder.sell_amount > 0 ? awaitOrder.sell_amount : strategy.now_quote_total;
-    const orderRes = await exchange.createOrder(
-      strategy.symbol,
-      type,
-      side,
-      amount,
-    );
+    const orderRes = await exchange.createOrder(strategy.symbol, type, side, amount);
 
     logger.info(`[order id ] - ${orderRes.id}`);
 
@@ -137,7 +135,7 @@ class AwaitService {
           strategy.quote_total -= orderInfo.amount;
           strategy.now_quote_total -= orderInfo.amount;
           logger.info(
-            `Partial sell completed (value averaging):\n Investment ID: \t${strategy._id}\n Sold Amount: \t${orderInfo.amount}\n Remaining: \t${strategy.quote_total}\n`,
+            `Partial sell completed (value averaging):\n Investment ID: \t${strategy._id}\n Sold Amount: \t${orderInfo.amount}\n Remaining: \t${strategy.quote_total}\n`
           );
         } else if (strategy.auto_create === 'Y') {
           // auto_create filed is not in the strategy module
@@ -145,13 +143,13 @@ class AwaitService {
           strategy.now_buy_times = 0;
           strategy.value_total = 0;
           logger.info(
-            `Automatically restart after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `,
+            `Automatically restart after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `
           );
         } else {
           strategy.status = AipStrategyModel.STRATEGY_STATUS_CLOSED;
           strategy.stop_reason = 'profit auto sell';
           logger.info(
-            `Automatically close after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `,
+            `Automatically close after selling:\n Investment ID: \t${strategy._id}\n Investment Info: \t${strategy}\n `
           );
         }
       } else if (awaitOrder.sell_type === AipAwaitModel.SELL_TYPE_DEL_INVEST) {

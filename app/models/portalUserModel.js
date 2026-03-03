@@ -28,7 +28,7 @@ const PortalUserSchema = new mongoose.Schema(
       updatedAt: 'updated_at',
     }, // auto create created_at and updated_at
     collection: 'portal_users',
-  },
+  }
 );
 
 PortalUserSchema.index({ inviter: 1 });

@@ -28,7 +28,7 @@ class AuthService {
     return sessionCaptcha === text;
   }
 
-  async signUp(name, email, password, refCode = '', inputCaptcha, sessionCaptcha, userIp) {
+  async signUp(name, email, password, inputCaptcha, sessionCaptcha, userIp, refCode = '') {
     // verify captcha
     const captchaValid = await this.captchaIsValid(inputCaptcha, sessionCaptcha, config.env);
     if (!captchaValid) {

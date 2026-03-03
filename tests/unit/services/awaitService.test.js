@@ -204,12 +204,7 @@ describe('AwaitService', () => {
       await AwaitService.sellOnThirdParty(strategy, awaitOrder);
 
       // Should use sell_amount (0.1), not now_quote_total (0.5)
-      expect(mockExchange.createOrder).toHaveBeenCalledWith(
-        'BTC/USDT',
-        'market',
-        'sell',
-        0.1,
-      );
+      expect(mockExchange.createOrder).toHaveBeenCalledWith('BTC/USDT', 'market', 'sell', 0.1);
     });
 
     it('should keep strategy NORMAL and decrement quote_total on partial sell', async () => {

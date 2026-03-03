@@ -14,7 +14,7 @@ const CommonConfigSchema = new mongoose.Schema(
       updatedAt: 'updated_at',
     }, // auto create created_at and updated_at
     collection: 'common_configs',
-  },
+  }
 );
 
 const CommonConfigModel = mongoose.model('common_config', CommonConfigSchema);

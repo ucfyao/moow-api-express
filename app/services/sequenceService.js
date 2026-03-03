@@ -7,7 +7,7 @@ class SequenceService {
         sequence_name: sequenceName,
       },
       { $inc: { sequence_value: 1 } },
-      { new: true, upsert: true },
+      { new: true, upsert: true }
     );
     if (!sequenceDocument) {
       throw new Error('Unable to fetch or create the sequence document');

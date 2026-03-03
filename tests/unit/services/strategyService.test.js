@@ -481,7 +481,7 @@ describe('StrategyService', () => {
 
       const result = await StrategyService.processSell(strategy);
 
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
     });
 
     it('should return when profit has not reached stop_profit_percentage', async () => {
@@ -524,7 +524,7 @@ describe('StrategyService', () => {
       const result = await StrategyService.processSell(strategy);
 
       // No drawdown, returns undefined
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
     });
 
     it('should sell when drawdown is not enabled (drawdown_status=N)', async () => {
@@ -643,7 +643,7 @@ describe('StrategyService', () => {
       const result = await StrategyService.processSell(strategy);
 
       expect(StrategyService.sellout).not.toHaveBeenCalled();
-      expect(result).toBeUndefined();
+      expect(result).toBeNull();
     });
 
     it('should reset drawdown_price when price has not dropped below threshold', async () => {
@@ -676,9 +676,11 @@ describe('StrategyService', () => {
   describe('executeAllBuys()', () => {
     it('should skip strategies with no exchange', async () => {
       AipStrategyModel.find.mockReturnValue({
-        lean: jest.fn().mockResolvedValue([
-          { _id: 'strat-1', exchange: undefined, period: 1, period_value: [10] },
-        ]),
+        lean: jest
+          .fn()
+          .mockResolvedValue([
+            { _id: 'strat-1', exchange: undefined, period: 1, period_value: [10] },
+          ]),
       });
 
       const results = await StrategyService.executeAllBuys();
@@ -729,8 +731,20 @@ describe('StrategyService', () => {
         .mockResolvedValueOnce(updatedOrder1)
         .mockResolvedValueOnce(updatedOrder2);
 
-      const strategy1 = { _id: 'strat-1', exchange: 'binance', toString() { return 'strat-1'; } };
-      const strategy2 = { _id: 'strat-2', exchange: 'binance', toString() { return 'strat-2'; } };
+      const strategy1 = {
+        _id: 'strat-1',
+        exchange: 'binance',
+        toString() {
+          return 'strat-1';
+        },
+      };
+      const strategy2 = {
+        _id: 'strat-2',
+        exchange: 'binance',
+        toString() {
+          return 'strat-2';
+        },
+      };
 
       // Batch fetch strategies via find({ _id: { $in: [...] } })
       AipStrategyModel.find.mockResolvedValueOnce([strategy1, strategy2]);

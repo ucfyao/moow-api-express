@@ -25,7 +25,7 @@ const transportsArray = [
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.errors({ stack: true }),
       format.align(),
-      logFormat,
+      logFormat
     ),
   }),
   new DailyRotateFile({
@@ -36,7 +36,7 @@ const transportsArray = [
     format: format.combine(
       format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
       format.align(),
-      logFormat,
+      logFormat
     ),
   }),
 ];
@@ -49,9 +49,9 @@ if (process.env.NODE_ENV !== 'production') {
         format.colorize(),
         format.timestamp(),
         format.errors({ stack: true }),
-        logFormat,
+        logFormat
       ),
-    }),
+    })
   );
 }
 

@@ -9,7 +9,7 @@ const PortalRoleSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'portal_roles',
-  },
+  }
 );
 
 PortalRoleSchema.index({ role_name: 1 });

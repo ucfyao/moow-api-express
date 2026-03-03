@@ -86,7 +86,7 @@ describe('AuthService', () => {
       AuthService.captchaIsValid.mockResolvedValue(false);
 
       await expect(
-        AuthService.signUp('Test', 'test@test.com', 'pass123', '', 'bad', 'good', '127.0.0.1')
+        AuthService.signUp('Test', 'test@test.com', 'pass123', 'bad', 'good', '127.0.0.1')
       ).rejects.toThrow();
     });
 
@@ -96,7 +96,7 @@ describe('AuthService', () => {
       });
 
       await expect(
-        AuthService.signUp('Test', 'test@test.com', 'pass123', '', '888', '888', '127.0.0.1')
+        AuthService.signUp('Test', 'test@test.com', 'pass123', '888', '888', '127.0.0.1')
       ).rejects.toThrow();
     });
 
@@ -108,7 +108,7 @@ describe('AuthService', () => {
       hashidsDecode.mockReturnValue(999);
 
       await expect(
-        AuthService.signUp('Test', 'new@test.com', 'pass123', 'BADCODE', '888', '888', '127.0.0.1')
+        AuthService.signUp('Test', 'new@test.com', 'pass123', '888', '888', '127.0.0.1', 'BADCODE')
       ).rejects.toThrow();
     });
 
@@ -117,7 +117,6 @@ describe('AuthService', () => {
         'Test',
         'new@test.com',
         'pass123',
-        '',
         '888',
         '888',
         '127.0.0.1'
@@ -390,9 +389,7 @@ describe('AuthService', () => {
         inviter: 'aabbccddeeff001122334455',
         save: jest.fn().mockResolvedValue(true),
       };
-      PortalUserModel.findById
-        .mockResolvedValueOnce(mockUser)
-        .mockResolvedValueOnce(refUser);
+      PortalUserModel.findById.mockResolvedValueOnce(mockUser).mockResolvedValueOnce(refUser);
       PortalTokenModel.deleteOne.mockResolvedValue({});
       CommonConfigService.getGiveToken.mockResolvedValue(undefined);
 

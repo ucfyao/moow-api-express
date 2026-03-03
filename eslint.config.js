@@ -31,10 +31,15 @@ module.exports = [
       'no-unused-vars': 'warn',
       'no-underscore-dangle': 'off',
       'class-methods-use-this': 'off',
-      'semi': ['error', 'always'],
-      'quotes': ['error', 'single'],
-      'indent': ['error', 2],
-      'comma-dangle': ['error', 'always-multiline'],
+      // Let Prettier handle all formatting (indent, semi, quotes, comma-dangle)
+      // — do NOT re-enable them here to avoid circular fix conflicts
+      'no-restricted-syntax': ['error', 'ForInStatement', 'LabeledStatement', 'WithStatement'],
+      'no-plusplus': 'off',
+      'no-continue': 'off',
+      'no-param-reassign': ['error', { props: false }],
+      'no-shadow': 'warn',
+      'no-await-in-loop': 'off',
+      'import/no-unresolved': ['error', { ignore: ['^ccxt$'] }],
     },
   },
   {
@@ -55,8 +60,6 @@ module.exports = [
       'import/order': 'off',
       'global-require': 'off',
       'no-unused-vars': 'off',
-      'no-plusplus': 'off',
-      'comma-dangle': 'off',
     },
   },
   {

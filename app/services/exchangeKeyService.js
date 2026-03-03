@@ -56,10 +56,10 @@ class KeyService {
   async getKeyById(id) {
     const exchangeKey = await AipExchangeKeyModel.findById(id).lean();
     if (exchangeKey && exchangeKey.access_key && exchangeKey.secret_key) {
-      const decryptedaccess_key = decrypt(exchangeKey.access_key);
-      const decryptedsecret_key = decrypt(exchangeKey.secret_key);
-      exchangeKey.access_key = `${decryptedaccess_key.slice(0, 3)}******${decryptedaccess_key.slice(-3)}`;
-      exchangeKey.secret_key = `${decryptedsecret_key.slice(0, 3)}******${decryptedsecret_key.slice(-3)}`;
+      const decryptedAccessKey = decrypt(exchangeKey.access_key);
+      const decryptedSecretKey = decrypt(exchangeKey.secret_key);
+      exchangeKey.access_key = `${decryptedAccessKey.slice(0, 3)}******${decryptedAccessKey.slice(-3)}`;
+      exchangeKey.secret_key = `${decryptedSecretKey.slice(0, 3)}******${decryptedSecretKey.slice(-3)}`;
     }
     return exchangeKey;
   }
@@ -69,9 +69,8 @@ class KeyService {
       apiKey: keyData.access_key,
       secret: keyData.secret_key,
     });
-    let validation;
     const response = await newExchange.fetchBalance();
-    validation = response.info.balances;
+    const validation = response.info.balances;
     keyData.secret_show = `${keyData.secret_key.slice(0, 3)}******${keyData.secret_key.slice(-3)}`;
 
     keyData.access_key = encrypt(keyData.access_key);

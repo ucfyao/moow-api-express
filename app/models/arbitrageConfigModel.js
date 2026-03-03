@@ -9,7 +9,7 @@ const ArbitrageConfigSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'arbitrage_configs',
-  },
+  }
 );
 
 ArbitrageConfigSchema.index({ user_id: 1 });

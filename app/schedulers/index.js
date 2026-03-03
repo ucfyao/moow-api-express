@@ -18,6 +18,7 @@ const initializeSchedulers = () => {
   fs.readdirSync(schedulersPath).forEach((file) => {
     // Exclude index.js file itself
     if (file !== 'index.js' && file.endsWith('Scheduler.js')) {
+      // eslint-disable-next-line global-require, import/no-dynamic-require
       const scheduler = require(path.join(schedulersPath, file));
       // If the file exports a function, call it
       if (typeof scheduler === 'function') {

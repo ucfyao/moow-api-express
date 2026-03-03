@@ -1,9 +1,10 @@
 const ccxt = require('ccxt');
 const AipOrderModel = require('../models/aipOrderModel');
+const AipExchangeKeyModel = require('../models/aipExchangeKeyModel');
 const AipStrategyModel = require('../models/aipStrategyModel');
 const CustomError = require('../utils/customError');
 const { STATUS_TYPE } = require('../utils/statusCodes');
-const logger = require('../utils/logger');
+const { decrypt } = require('../utils/cryptoUtils');
 const config = require('../../config');
 
 class OrderService {
@@ -89,8 +90,25 @@ class OrderService {
     return { _id: orderId };
   }
 
-  // TODO: Accept keyId instead of raw credentials, decrypt server-side
-  async getThirdPartyOrders(exchangeName, symbol, apiKey, secret) {
+  /**
+   * Resolve exchange credentials from a stored key ID
+   * @param {string} keyId - The exchange key document ID
+   * @returns {Object} { exchangeName, apiKey, secret }
+   */
+  async _resolveExchangeKey(keyId) {
+    const exchangeKey = await AipExchangeKeyModel.findById(keyId);
+    if (!exchangeKey) {
+      throw new CustomError(STATUS_TYPE.HTTP_NOT_FOUND, 404, 'Exchange key not found');
+    }
+    return {
+      exchangeName: exchangeKey.exchange,
+      apiKey: decrypt(exchangeKey.access_key),
+      secret: decrypt(exchangeKey.secret_key),
+    };
+  }
+
+  async getThirdPartyOrders(keyId, symbol) {
+    const { exchangeName, apiKey, secret } = await this._resolveExchangeKey(keyId);
     const exchange = new ccxt[exchangeName]({
       apiKey,
       secret,
@@ -100,8 +118,8 @@ class OrderService {
     return openOrders;
   }
 
-  // TODO: Accept keyId instead of raw credentials, decrypt server-side
-  async cancelAllOpenThirdPartyOrders(exchangeName, symbol, apiKey, secret) {
+  async cancelAllOpenThirdPartyOrders(keyId, symbol) {
+    const { exchangeName, apiKey, secret } = await this._resolveExchangeKey(keyId);
     const exchange = new ccxt[exchangeName]({
       apiKey,
       secret,

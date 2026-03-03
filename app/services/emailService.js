@@ -42,7 +42,9 @@ class EmailService {
   }
 
   async _saveEmailInfor(params) {
-    const sendMark = params.async ? PortalEmailInfoModel.SEND_MARK_ALREADY_SENT : PortalEmailInfoModel.SEND_MARK_WAIT_TO_SEND;
+    const sendMark = params.async
+      ? PortalEmailInfoModel.SEND_MARK_ALREADY_SENT
+      : PortalEmailInfoModel.SEND_MARK_WAIT_TO_SEND;
     const emailInfo = new PortalEmailInfoModel({
       send_mark: sendMark,
       email_detail: {
