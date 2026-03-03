@@ -2,10 +2,7 @@ const express = require('express');
 const MarketController = require('../controllers/marketController');
 const authMiddleware = require('../middlewares/authMiddleware');
 const validateParams = require('../middlewares/validateMiddleware');
-const {
-  createMarketValidatorSchema,
-  updateMarketValidatorSchema,
-} = require('../validators/marketValidator');
+const { createMarketValidatorSchema } = require('../validators/marketValidator');
 
 const router = express.Router();
 

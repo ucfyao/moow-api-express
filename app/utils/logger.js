@@ -72,6 +72,7 @@ logger.stream = {
 transportsArray.forEach((transport) => {
   if (transport instanceof DailyRotateFile) {
     transport.on('error', (error) => {
+      // eslint-disable-next-line no-console
       console.error('Error in transport', error);
     });
   }

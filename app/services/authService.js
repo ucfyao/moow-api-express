@@ -84,7 +84,6 @@ class AuthService {
     if (!captchaValid) {
       throw new CustomError(STATUS_TYPE.PORTAL_CAPTCHA_INVAILD);
     }
-    const start = Date.now();
     const user = await PortalUserModel.findOne({ email: loginInfo.email }).lean();
 
     if (!user) {
@@ -503,7 +502,7 @@ class AuthService {
     return token;
   }
 
-  _generateToken(user) {
+  _generateToken() {
     return uuidv1().replace(/-/g, '');
   }
 

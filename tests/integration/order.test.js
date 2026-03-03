@@ -163,10 +163,10 @@ describe('Order API Integration', () => {
 
     it('should return correct statistics for user orders', async () => {
       const auth = await createAuthHeaders();
-      const userId = new mongoose.Types.ObjectId(auth.user_id);
+      const testUserId = new mongoose.Types.ObjectId(auth.user_id);
 
       // Create a strategy belonging to this user
-      const strategy = await AipStrategyModel.create(createStrategyData({ user: userId }));
+      const strategy = await AipStrategyModel.create(createStrategyData({ user: testUserId }));
 
       // Create orders for this strategy
       await AipOrderModel.create(
