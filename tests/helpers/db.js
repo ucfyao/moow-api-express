@@ -25,7 +25,7 @@ const clearDatabase = async () => {
   const { collections } = mongoose.connection;
   const keys = Object.keys(collections);
   for (let i = 0; i < keys.length; i++) {
-    await collections[keys[i]].deleteMany({}); // eslint-disable-line no-await-in-loop
+    await collections[keys[i]].deleteMany({});
   }
 };
 

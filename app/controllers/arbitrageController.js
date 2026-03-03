@@ -31,7 +31,7 @@ class ArbitrageController {
 
   async saveConfig(req, res) {
     const { exchanges, symbols } = req.body;
-    const data = await ArbitrageService.saveConfig(req.userId, { exchanges, symbols });
+    const data = await ArbitrageService.saveConfig({ exchanges, symbols }, req.userId);
     return ResponseHandler.success(res, data);
   }
 

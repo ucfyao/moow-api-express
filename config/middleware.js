@@ -62,7 +62,10 @@ const setupMiddleware = (app) => {
     app.use(morgan('dev'));
   } else if (config.env === 'production') {
     app.use(
-      morgan(':request-id :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"', { stream: logger.stream })
+      morgan(
+        ':request-id :remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"',
+        { stream: logger.stream }
+      )
     );
   } else {
     app.use(morgan('tiny', { stream: logger.stream }));

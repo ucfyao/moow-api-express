@@ -22,11 +22,10 @@ class SymbolService {
     const cached = symbolCache.get(cacheKey);
     if (cached) {
       logger.info(
-        `\nQuery List (cached)\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${cached.list.length}\n  Response Time: \t${Date.now() - start} ms\n`,
+        `\nQuery List (cached)\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${cached.list.length}\n  Response Time: \t${Date.now() - start} ms\n`
       );
       return cached;
     }
-
 
     const conditions = {};
 
@@ -83,7 +82,7 @@ class SymbolService {
 
     symbolCache.set(cacheKey, result);
     logger.info(
-      `\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${symbolList.length}\n  Response Time: \t${Date.now() - start} ms\n`,
+      `\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${symbolList.length}\n  Response Time: \t${Date.now() - start} ms\n`
     );
 
     return result;
@@ -99,7 +98,7 @@ class SymbolService {
     const info = await DataExchangeSymbolModel.findById(id).lean();
 
     logger.info(
-      `\nQuery Details\n  Symbol Id: \t${id}\n  Info Details: \t${JSON.stringify(info)}\n    Response Time: \t${Date.now() - start} ms\n`,
+      `\nQuery Details\n  Symbol Id: \t${id}\n  Info Details: \t${JSON.stringify(info)}\n    Response Time: \t${Date.now() - start} ms\n`
     );
 
     return info;
@@ -142,14 +141,13 @@ class SymbolService {
     symbol = 'BTC/USDT',
     interval = '1d',
     limit = 1,
-    otherCurrency = 'CNY',
+    otherCurrency = 'CNY'
   ) {
     const cacheKey = `price:${exchangeId}:${symbol}:${startDate}:${endDate}:${interval}`;
     const cached = priceCache.get(cacheKey);
     if (cached) {
       return cached;
     }
-
 
     const exchange = new ccxt[exchangeId]();
     const exchangeUrl = exchange.urls.www || exchange.urls.api;
@@ -256,8 +254,8 @@ class SymbolService {
       rateCache.set(cacheKey, rate);
       return rate;
     } catch (error) {
-      // todo: we need a status code for this
       logger.error('Error fetching USD to CNY exchange rate', error);
+      return null;
     }
   }
 
@@ -266,7 +264,7 @@ class SymbolService {
     filePath,
     exchangeId = 'binance',
     symbol = 'BTC/USDT',
-    otherCurrency = 'CNY',
+    otherCurrency = 'CNY'
   ) {
     const records = [];
     const exchange = new ccxt[exchangeId]();
@@ -296,7 +294,7 @@ class SymbolService {
           exchangeId,
           symbol,
           otherCurrency,
-          exchangeUrl,
+          exchangeUrl
         );
       });
   }

@@ -830,15 +830,16 @@ These are documented incomplete features in the codebase. When working on relate
 
 ### Core Trading Logic
 
-- **Value averaging sell not implemented:** `strategyService.js` — reducing holdings above expected value not built.
+- **Value averaging sell partially implemented:** `strategyService.js` — intelligent strategy sell logic now sells excess above expected value. Monthly buy/sell limits not yet enforced.
 
 ### Auth & User
 
 - **Inviter reward incomplete:** `authService.js` — token reward for referrer not implemented.
 
-### Other
+### Resolved
 
-- **User ownership validation:** `strategyService.js` — commented out, strategies not verified against requesting user.
+- ~~**User ownership validation:** `strategyService.js`~~ — Now enforced in `getStrategyById()`, `deleteStrategy()`, `partiallyUpdateStrategy()`, and `getBalance()`.
+- ~~**Third-party order credential exposure:** `orderController.js`/`orderService.js`~~ — Refactored to accept `keyId` and decrypt server-side via `_resolveExchangeKey()`.
 
 ## Important Notes
 

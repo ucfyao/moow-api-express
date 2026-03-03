@@ -2,7 +2,6 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUI = require('swagger-ui-express');
 const config = require('../../config');
 
-
 function swaggerInitialise(app) {
   const swaggerOptions = {
     swaggerDefinition: {
@@ -19,9 +18,7 @@ function swaggerInitialise(app) {
         },
       ],
     },
-    apis: [
-      './app/routes/*.js',    
-    ],
+    apis: ['./app/routes/*.js'],
   };
 
   const swaggerSpecs = swaggerJsdoc(swaggerOptions);
@@ -56,4 +53,3 @@ function swaggerInitialise(app) {
 }
 
 module.exports = swaggerInitialise;
-  

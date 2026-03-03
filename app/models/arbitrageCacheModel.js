@@ -8,7 +8,7 @@ const ArbitrageCacheSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'arbitrage_caches',
-  },
+  }
 );
 
 module.exports = mongoose.model('ArbitrageCache', ArbitrageCacheSchema);

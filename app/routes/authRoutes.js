@@ -279,7 +279,7 @@ router.post(
   '/api/v1/auth/change-password',
   authMiddleware,
   validateParams(changePasswordValidatorSchema),
-  AuthController.changePassword,
+  AuthController.changePassword
 );
 
 /**

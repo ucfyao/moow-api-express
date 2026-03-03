@@ -96,7 +96,7 @@ describe('ArbitrageService', () => {
       const mockConfig = { exchanges: ['binance'], symbols: ['BTC/USDT'] };
       ArbitrageConfigModel.findOneAndUpdate.mockResolvedValue(mockConfig);
 
-      const result = await ArbitrageService.saveConfig('user123', mockConfig);
+      const result = await ArbitrageService.saveConfig(mockConfig, 'user123');
 
       expect(ArbitrageConfigModel.findOneAndUpdate).toHaveBeenCalledWith(
         { user_id: 'user123' },

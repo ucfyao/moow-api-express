@@ -152,7 +152,7 @@ class ArbitrageService {
   /**
    * Save arbitrage config (upsert by user_id)
    */
-  async saveConfig(userId = null, { exchanges, symbols }) {
+  async saveConfig({ exchanges, symbols }, userId = null) {
     const config = await ArbitrageConfigModel.findOneAndUpdate(
       { user_id: userId },
       { exchanges, symbols },

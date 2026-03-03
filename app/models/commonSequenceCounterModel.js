@@ -8,8 +8,11 @@ const CommonSequenceCounterSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'common_sequence_counters',
-  },
+  }
 );
 
-const CommonSequenceCounterModel = mongoose.model('common_sequence_counter', CommonSequenceCounterSchema);
+const CommonSequenceCounterModel = mongoose.model(
+  'common_sequence_counter',
+  CommonSequenceCounterSchema
+);
 module.exports = CommonSequenceCounterModel;

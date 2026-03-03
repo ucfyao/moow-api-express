@@ -31,7 +31,7 @@ const ArbitrageTickerSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'arbitrage_tickers',
-  },
+  }
 );
 
 ArbitrageTickerSchema.index({ exchange: 1, symbol: 1 }, { unique: true });

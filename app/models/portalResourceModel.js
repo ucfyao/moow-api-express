@@ -11,7 +11,7 @@ const PortalResourceSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'portal_resources',
-  },
+  }
 );
 
 PortalResourceSchema.index({ resource_code: 1 });

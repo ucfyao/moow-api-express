@@ -67,7 +67,7 @@ class ResourceService {
       throw new CustomError(
         STATUS_TYPE.HTTP_CONFLICT,
         409,
-        'Resource is in use and cannot be deleted',
+        'Resource is in use and cannot be deleted'
       );
     }
     await PortalResourceModel.findByIdAndDelete(id);

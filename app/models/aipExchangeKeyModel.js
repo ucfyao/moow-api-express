@@ -19,7 +19,7 @@ const AipExchangeKeySchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'aip_exchange_keys',
-  },
+  }
 );
 
 AipExchangeKeySchema.index({ uid: 1 });

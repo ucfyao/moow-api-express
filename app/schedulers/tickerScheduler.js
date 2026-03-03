@@ -54,7 +54,7 @@ async function fetchAllTickers() {
         await ArbitrageTickerModel.findOneAndUpdate(
           { exchange: exchange.id, symbol },
           { ticker },
-          { upsert: true },
+          { upsert: true }
         );
 
         // Reset error count on success

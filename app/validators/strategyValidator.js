@@ -36,7 +36,9 @@ const createStrategyValidatorSchema = {
   type: {
     notEmpty: { errorMessage: 'type is required and cannot be empty' },
     isIn: {
-      options: [[AipStrategyModel.INVESTMENT_TYPE_REGULAR,  AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT]],
+      options: [
+        [AipStrategyModel.INVESTMENT_TYPE_REGULAR, AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT],
+      ],
       errorMessage: `type must be ${AipStrategyModel.INVESTMENT_TYPE_REGULAR} or ${AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT} if provided`,
     },
     toInt: true,
@@ -44,7 +46,13 @@ const createStrategyValidatorSchema = {
   period: {
     notEmpty: { errorMessage: 'period is required and cannot be empty' },
     isIn: {
-      options: [[AipStrategyModel.PERIOD_MONTHLY, AipStrategyModel.PERIOD_WEEKLY, AipStrategyModel.PERIOD_DAILY]],
+      options: [
+        [
+          AipStrategyModel.PERIOD_MONTHLY,
+          AipStrategyModel.PERIOD_WEEKLY,
+          AipStrategyModel.PERIOD_DAILY,
+        ],
+      ],
       errorMessage: `period must be ${AipStrategyModel.PERIOD_MONTHLY}, ${AipStrategyModel.PERIOD_WEEKLY} or ${AipStrategyModel.PERIOD_DAILY} if provided`,
     },
     toInt: true,
@@ -88,7 +96,13 @@ const updateStrategyValidatorSchema = {
     optional: true,
     notEmpty: { errorMessage: 'period is required and cannot be empty' },
     isIn: {
-      options: [[AipStrategyModel.PERIOD_MONTHLY, AipStrategyModel.PERIOD_WEEKLY, AipStrategyModel.PERIOD_DAILY]],
+      options: [
+        [
+          AipStrategyModel.PERIOD_MONTHLY,
+          AipStrategyModel.PERIOD_WEEKLY,
+          AipStrategyModel.PERIOD_DAILY,
+        ],
+      ],
       errorMessage: `period must be ${AipStrategyModel.PERIOD_MONTHLY}, ${AipStrategyModel.PERIOD_WEEKLY} or ${AipStrategyModel.PERIOD_DAILY} if provided`,
     },
     toInt: true,
@@ -124,7 +138,7 @@ const updateStrategyValidatorSchema = {
   status: {
     optional: true,
     isIn: {
-      options: [[AipStrategyModel.STRATEGY_STATUS_NORMAL,  AipStrategyModel.STRATEGY_STATUS_CLOSED]],
+      options: [[AipStrategyModel.STRATEGY_STATUS_NORMAL, AipStrategyModel.STRATEGY_STATUS_CLOSED]],
       errorMessage: `status must be ${AipStrategyModel.STRATEGY_STATUS_NORMAL} or ${AipStrategyModel.STRATEGY_STATUS_CLOSED} if provided`,
     },
     toInt: true,

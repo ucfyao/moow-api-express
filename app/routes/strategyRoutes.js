@@ -288,7 +288,7 @@ router.post(
  *         description: Unique ID of the trading strategy
  *     responses:
  *       200:
- *         description: Sell ​​strategy executed successfully
+ *         description: Sell strategy executed successfully
  */
 router.post(
   '/api/v1/strategies/:strategyId/execute-sell',

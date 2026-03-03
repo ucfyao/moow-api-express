@@ -43,6 +43,7 @@ const path = require('path');
 const registerRoutes = (router, routesPath) => {
   fs.readdirSync(routesPath).forEach((file) => {
     if (file.endsWith('.js') && file !== 'index.js') {
+      // eslint-disable-next-line global-require, import/no-dynamic-require
       const route = require(path.join(routesPath, file));
       router.use('/', route);
     }

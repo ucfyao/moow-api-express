@@ -11,7 +11,7 @@ const PortalMarketSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }, // Auto-add created_at and updated_at fields
     collection: 'portal_markets', // Collection name
-  },
+  }
 );
 
 PortalMarketSchema.index({ is_deleted: 1 });

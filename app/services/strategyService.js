@@ -87,7 +87,7 @@ class StrategyService {
 
     const total = await AipStrategyModel.countDocuments(conditions);
     logger.info(
-      `\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${list.length}\n  Response Time: \t${Date.now() - start} ms\n`,
+      `\nQuery List\n  Params: \t${JSON.stringify(params)}\n  Return Amount: \t${list.length}\n  Response Time: \t${Date.now() - start} ms\n`
     );
 
     return {
@@ -127,7 +127,7 @@ class StrategyService {
       symbolPrice = {};
     }
     logger.info(
-      `\nQuery Details\n  Strategy Id: \t${id}\n  Info Details: \t${info}\n   Response Time: \t${Date.now() - start} ms\n`,
+      `\nQuery Details\n  Strategy Id: \t${id}\n  Info Details: \t${info}\n   Response Time: \t${Date.now() - start} ms\n`
     );
 
     return { info, symbolPrice };
@@ -159,7 +159,7 @@ class StrategyService {
     const strategyId = doc ? doc._id : '';
 
     logger.info(
-      `\nNew Strategy\n  Strategy Id: \t${JSON.stringify(strategyId)}\n  Strategy Info: \t${JSON.stringify(processedStrategy)}\n  Response Time: \t${Date.now() - start} ms\n`,
+      `\nNew Strategy\n  Strategy Id: \t${JSON.stringify(strategyId)}\n  Strategy Info: \t${JSON.stringify(processedStrategy)}\n  Response Time: \t${Date.now() - start} ms\n`
     );
 
     return { _id: strategyId };
@@ -199,7 +199,7 @@ class StrategyService {
 
     await doc.save();
     logger.info(
-      `\nUpdate Strategy\n  Strategy Id: \t${JSON.stringify(params._id)}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`,
+      `\nUpdate Strategy\n  Strategy Id: \t${JSON.stringify(params._id)}\n  Strategy Info: \t${JSON.stringify(params)}\n  Response Time: \t${Date.now() - start} ms\n`
     );
 
     return {
@@ -235,7 +235,7 @@ class StrategyService {
     doc.status = AipStrategyModel.STRATEGY_STATUS_SOFT_DELETED;
     await doc.save();
     logger.info(
-      `\nDelete Strategy\n  Strategy Id: \t${id}\n  Response Time: \t${Date.now() - start} ms\n`,
+      `\nDelete Strategy\n  Strategy Id: \t${id}\n  Response Time: \t${Date.now() - start} ms\n`
     );
 
     return {
@@ -256,7 +256,7 @@ class StrategyService {
     };
     const strategiesArr = await AipStrategyModel.find(conditions).lean();
     logger.info(
-      `cur day: ${now.get('day')}, hour: ${now.get('hour')}, minite: ${now.get('minute')}`,
+      `cur day: ${now.get('day')}, hour: ${now.get('hour')}, minite: ${now.get('minute')}`
     );
 
     const results = [];
@@ -399,7 +399,7 @@ class StrategyService {
       side,
       amount,
       price,
-      inParams,
+      inParams
     );
 
     logger.info(`== exchange res order id: ${orderRes.id}`);
@@ -473,7 +473,7 @@ class StrategyService {
     }
     logger.info(`### Round time: ${Date.now() - start}ms`);
     logger.info(
-      "The future has arrived, it just hasn't become mainstream yet. Let us lead you into the world of blockchain ahead of time.",
+      "The future has arrived, it just hasn't become mainstream yet. Let us lead you into the world of blockchain ahead of time."
     );
     return results;
   }
@@ -505,12 +505,12 @@ class StrategyService {
       timeout: config.exchangeTimeOut,
     });
     const tickerRes = await exchange.fetchTicker(strategy.symbol);
-    const sell_price = tickerRes.bid;
-    logger.info(`[price] - ${sell_price}`);
+    const sellPrice = tickerRes.bid;
+    logger.info(`[price] - ${sellPrice}`);
 
     // Intelligent strategies use value-based sell instead of stop_profit logic
     if (strategy.type === AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT) {
-      const nowWorth = strategy.quote_total * sell_price;
+      const nowWorth = strategy.quote_total * sellPrice;
       const expectWorth =
         strategy.base_limit *
         strategy.buy_times *
@@ -518,45 +518,45 @@ class StrategyService {
 
       if (nowWorth > expectWorth) {
         const excessValue = nowWorth - expectWorth;
-        const sellAmount = excessValue / sell_price;
+        const sellAmount = excessValue / sellPrice;
         logger.info(
-          `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth}, expectWorth=${expectWorth}, selling ${sellAmount}`,
+          `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth}, expectWorth=${expectWorth}, selling ${sellAmount}`
         );
-        strategy.sell_price = sell_price;
-        return await this.sellout(strategy, sellAmount);
+        strategy.sell_price = sellPrice;
+        return this.sellout(strategy, sellAmount);
       }
       logger.info(
-        `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth} <= expectWorth=${expectWorth}, no sell needed`,
+        `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth} <= expectWorth=${expectWorth}, no sell needed`
       );
-      return;
+      return null;
     }
 
     // check whether profit reaches the stop profit
-    const profit = strategy.quote_total * sell_price - strategy.base_total;
-    const profit_percentage = (profit / strategy.base_total) * 100;
+    const profit = strategy.quote_total * sellPrice - strategy.base_total;
+    const profitPercentage = (profit / strategy.base_total) * 100;
 
     if (strategy.stop_profit_percentage == null) {
-      return;
+      return null;
     }
 
     // Did not reach the stop profit point, exiting
-    if (profit_percentage < strategy.stop_profit_percentage) {
+    if (profitPercentage < strategy.stop_profit_percentage) {
       logger.info(
-        `[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`
+        `[profitPercentage] - \n Profit Rate: ${profitPercentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`
       );
       return {
         strategyId: strategy._id,
-        result: `[profit_percentage] - \n Profit Rate: ${profit_percentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`,
+        result: `[profitPercentage] - \n Profit Rate: ${profitPercentage}%\n Stop Profit Rate: ${strategy.stop_profit_percentage}%\n Did not reach the stop profit rate, exit`,
       };
     }
     if (strategy.drawdown == null) {
-      return;
+      return null;
     }
     // Reached the stop profit point, peak not set, proceeding to sell.
     if (strategy.drawdown_status === 'N' || strategy.drawdown <= 0) {
       logger.info('[sell] - Reached the stop profit point, selling');
-      strategy.sell_price = sell_price;
-      return await this.sellout(strategy);
+      strategy.sell_price = sellPrice;
+      return this.sellout(strategy);
     }
 
     // Checking for peak drawdown
@@ -565,21 +565,23 @@ class StrategyService {
       // Below the previous price, breaching the drawdown, selling off completely
       if (
         strategy.drawdown_price != null &&
-        sell_price <= strategy.drawdown_price * (1 - strategy.drawdown / 100)
+        sellPrice <= strategy.drawdown_price * (1 - strategy.drawdown / 100)
       ) {
         logger.info('[drawdown] - Triggering drawdown, selling');
-        strategy.sell_price = sell_price;
-        return await this.sellout(strategy);
+        strategy.sell_price = sellPrice;
+        return this.sellout(strategy);
       }
       // Price is higher than the previous price, resetting the locked price
       logger.info('[drawdown_price] - Did not trigger peak drawdown, resetting the drawdown price');
-      strategy.drawdown_price = sell_price;
+      strategy.drawdown_price = sellPrice;
       await strategy.save();
       return {
         strategyId: strategy._id,
         result: `Did not trigger peak drawdown, resetting the drawdown price. New drawdown price is ${strategy.drawdown_price}.`,
       };
     }
+
+    return null;
   }
 
   async sellout(strategy, sellAmount = 0) {
@@ -610,9 +612,7 @@ class StrategyService {
 
     // Batch-fetch all strategies to avoid N+1 queries
     // NOTE: Do NOT add .lean() — strategies are mutated and .save()'d in sellOnThirdParty()
-    const uniqueStrategyIds = [
-      ...new Set(awaitOrders.map((o) => o.strategy_id).filter(Boolean)),
-    ];
+    const uniqueStrategyIds = [...new Set(awaitOrders.map((o) => o.strategy_id).filter(Boolean))];
     const strategies =
       uniqueStrategyIds.length > 0
         ? await AipStrategyModel.find({ _id: { $in: uniqueStrategyIds } })
@@ -624,18 +624,18 @@ class StrategyService {
         const updatedOrder = await AipAwaitModel.findOneAndUpdate(
           { _id: awaitorder._id, await_status: AipAwaitModel.STATUS_WAITING },
           { await_status: AipAwaitModel.STATUS_PROCESSING },
-          { new: true },
+          { new: true }
         );
         if (!updatedOrder) {
           logger.info(`[sellAllOrders] Await order ${awaitorder._id} already processing, skipping`);
           continue;
         }
         const strategy = strategyMap.get(
-          awaitorder.strategy_id ? awaitorder.strategy_id.toString() : '',
+          awaitorder.strategy_id ? awaitorder.strategy_id.toString() : ''
         );
         if (!strategy) {
           logger.error(
-            `Strategy not found for await order ${awaitorder._id}, strategy_id: ${awaitorder.strategy_id}`,
+            `Strategy not found for await order ${awaitorder._id}, strategy_id: ${awaitorder.strategy_id}`
           );
           continue;
         }

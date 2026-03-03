@@ -18,7 +18,7 @@ const AssetsUserOrderSchema = new mongoose.Schema(
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
     collection: 'assets_user_orders',
-  },
+  }
 );
 
 module.exports = mongoose.model('AssetsUserOrder', AssetsUserOrderSchema);
