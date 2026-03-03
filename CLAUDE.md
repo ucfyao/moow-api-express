@@ -839,13 +839,10 @@ The following modules from the old Egg.js codebase (moow-api) are confirmed as *
 
 These are documented incomplete features in the codebase. When working on related code, be aware:
 
-### Core Trading Logic
+### Resolved
 
-- **Value averaging sell partially implemented:** `strategyService.js` — intelligent strategy sell logic now sells excess above expected value. Monthly buy/sell limits not yet enforced.
-
-### Auth & User
-
-- **Inviter reward incomplete:** `authService.js` — token reward for referrer not implemented.
+- ~~**Value averaging sell + monthly cap:**~~ `strategyService.js` — `_valueAveraging()` now returns negative for sell signal, capped to ±5x `base_limit` per transaction. Both `processBuy()` and `processSell()` use it.
+- ~~**Inviter reward incomplete:**~~ `authService.js` — signup token reward now active via `CommonConfigService.getGiveToken()`. Failures are logged but don't block registration.
 
 ### Resolved (PR #127)
 

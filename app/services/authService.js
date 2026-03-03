@@ -68,9 +68,24 @@ class AuthService {
       throw new CustomError(STATUS_TYPE.PORTAL_REGISTRATION_FAILED);
     }
 
-    // const giveToken = await commonConfig.getGiveToken();
-    // const { from, coin, sign } = giveToken;
-    // await assets.sendToken({ from, email: user.email, token: coin, amount: sign, describe: 'signup', invitee: '', invitee_email: '' });
+    // Send signup token reward to new user (non-blocking)
+    try {
+      const giveToken = await CommonConfigService.getGiveToken();
+      if (giveToken && giveToken.sign) {
+        const { from, coin, sign } = giveToken;
+        await AssetsService.sendToken({
+          from,
+          email,
+          token: coin,
+          amount: sign,
+          describe: 'signup',
+          invitee: '',
+          invitee_email: '',
+        });
+      }
+    } catch (tokenError) {
+      logger.error(`Failed to send signup token reward: ${tokenError.message}`);
+    }
 
     await this.sendActivateEmail(email, userIp);
 

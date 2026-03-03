@@ -113,6 +113,13 @@ describe('AuthService', () => {
     });
 
     it('should create user successfully without ref code', async () => {
+      CommonConfigService.getGiveToken.mockResolvedValue({
+        from: 'system-id',
+        coin: 'XBT',
+        sign: 10,
+      });
+      AssetsService.sendToken.mockResolvedValue({});
+
       const result = await AuthService.signUp(
         'Test',
         'new@test.com',
@@ -126,6 +133,56 @@ describe('AuthService', () => {
       expect(SequenceService.getNextSequenceValue).toHaveBeenCalledWith('portal_user');
       expect(AuthService.sendActivateEmail).toHaveBeenCalledWith('new@test.com', '127.0.0.1');
       expect(result).toBeDefined();
+    });
+
+    it('should send signup token reward when giveToken config exists', async () => {
+      CommonConfigService.getGiveToken.mockResolvedValue({
+        from: 'system-id',
+        coin: 'XBT',
+        sign: 10,
+      });
+      AssetsService.sendToken.mockResolvedValue({});
+
+      await AuthService.signUp('Test', 'reward@test.com', 'pass123', '888', '888', '127.0.0.1');
+
+      expect(CommonConfigService.getGiveToken).toHaveBeenCalled();
+      expect(AssetsService.sendToken).toHaveBeenCalledWith({
+        from: 'system-id',
+        email: 'reward@test.com',
+        token: 'XBT',
+        amount: 10,
+        describe: 'signup',
+        invitee: '',
+        invitee_email: '',
+      });
+    });
+
+    it('should not block registration when token reward fails', async () => {
+      CommonConfigService.getGiveToken.mockRejectedValue(new Error('Config DB error'));
+
+      const result = await AuthService.signUp(
+        'Test',
+        'fail@test.com',
+        'pass123',
+        '888',
+        '888',
+        '127.0.0.1'
+      );
+
+      // Registration should succeed even though token reward failed
+      expect(result).toBeDefined();
+      expect(AuthService.sendActivateEmail).toHaveBeenCalledWith('fail@test.com', '127.0.0.1');
+    });
+
+    it('should skip token reward when giveToken has no sign field', async () => {
+      CommonConfigService.getGiveToken.mockResolvedValue({
+        from: 'system-id',
+        coin: 'XBT',
+      });
+
+      await AuthService.signUp('Test', 'nosign@test.com', 'pass123', '888', '888', '127.0.0.1');
+
+      expect(AssetsService.sendToken).not.toHaveBeenCalled();
     });
   });
 

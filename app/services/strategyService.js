@@ -355,7 +355,12 @@ class StrategyService {
     if (strategy.type === AipStrategyModel.INVESTMENT_TYPE_REGULAR) {
       amount = (strategy.base_limit / price).toFixed(6);
     } else {
-      amount = (await this._valueAveraging(strategy, price)).toFixed(6);
+      const vaAmount = await this._valueAveraging(strategy, price);
+      if (vaAmount <= 0) {
+        logger.info(`== value averaging suggests no buy (amount=${vaAmount.toFixed(6)}), skipping`);
+        return null;
+      }
+      amount = vaAmount.toFixed(6);
     }
 
     if (amount <= 0) {
@@ -510,23 +515,17 @@ class StrategyService {
 
     // Intelligent strategies use value-based sell instead of stop_profit logic
     if (strategy.type === AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT) {
-      const nowWorth = strategy.quote_total * sellPrice;
-      const expectWorth =
-        strategy.base_limit *
-        strategy.buy_times *
-        (1 + (strategy.expect_growth_rate || 0.008)) ** strategy.buy_times;
-
-      if (nowWorth > expectWorth) {
-        const excessValue = nowWorth - expectWorth;
-        const sellAmount = excessValue / sellPrice;
+      const vaAmount = await this._valueAveraging(strategy, sellPrice);
+      if (vaAmount < 0) {
+        const sellAmount = Math.abs(vaAmount);
         logger.info(
-          `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth}, expectWorth=${expectWorth}, selling ${sellAmount}`
+          `[processSell] Intelligent strategy ${strategy._id}: selling ${sellAmount} (value averaging, capped)`
         );
         strategy.sell_price = sellPrice;
         return this.sellout(strategy, sellAmount);
       }
       logger.info(
-        `[processSell] Intelligent strategy ${strategy._id}: nowWorth=${nowWorth} <= expectWorth=${expectWorth}, no sell needed`
+        `[processSell] Intelligent strategy ${strategy._id}: no sell needed (vaAmount=${vaAmount})`
       );
       return null;
     }
@@ -773,23 +772,22 @@ class StrategyService {
    * @returns {number} Calculated funds to be bought
    */
   async _valueAveraging(strategy, price) {
-    // The difference between the current value of the target in the account and the expected value is the value to be purchased this time.
-    // expectGrowthRate is the expected growth rate. If it's 0.8% (0.008), it means the target's value is expected to grow by 0.8% daily.
-    // If there is no expected growth rate, after buying for a period, no further purchase may be needed as the self-growth may have already met the expected value growth.
-    // Operate only if the single target investment exceeds 10%, to avoid wasting transaction fees.
     // Vt = C*t*(1 + R)^t
     // Current value = already purchased * current price
     // Expected value = each purchase amount * (1 + R)^number of purchases
-    // Amount to be purchased = current value - expected value
+    // Positive return = amount to buy, negative = amount to sell
     const nowWorth = strategy.quote_total * price;
     const expectWorth =
       strategy.base_limit *
       strategy.buy_times *
-      (1 + strategy.expect_growth_rate) ** strategy.buy_times;
+      (1 + (strategy.expect_growth_rate || 0.008)) ** strategy.buy_times;
     const funds = expectWorth - nowWorth;
-    // TODO In theory, value averaging sell strategy means selling the portion that exceeds the expected value, so this should be calculated here and added to the sell strategy.
-    // TODO Set the maximum or minimum monthly buy/sell limit, for example, 5 times the preset monthly growth amount, to reduce the fund requirement during significant market fluctuations.
-    return funds > 0 ? funds / price : 0;
+
+    // Cap buy/sell to 5x base_limit per transaction to limit exposure during volatile markets
+    const maxFunds = strategy.base_limit * 5;
+    const cappedFunds = Math.max(-maxFunds, Math.min(maxFunds, funds));
+
+    return cappedFunds / price;
   }
 }
 

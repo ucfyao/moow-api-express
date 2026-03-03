@@ -430,8 +430,7 @@ describe('StrategyService', () => {
       await expect(StrategyService.processBuy(strategy)).rejects.toThrow();
     });
 
-    it('should throw when purchase amount is too low', async () => {
-      // Set up amount to be 0 via value averaging returning 0
+    it('should return null when value averaging suggests sell (no buy)', async () => {
       const strategy = {
         _id: 'strat-1',
         exchange: 'binance',
@@ -441,21 +440,19 @@ describe('StrategyService', () => {
         base: 'USDT',
         base_limit: 100,
         type: AipStrategyModel.INVESTMENT_TYPE_INTELLIGENT,
-        buy_times: 100,
-        now_buy_times: 50,
+        buy_times: 2,
+        now_buy_times: 2,
         quote_total: 100, // huge amount already held
         base_total: 5000,
-        expect_growth_rate: 0.001,
+        expect_growth_rate: 0.008,
         save: jest.fn(),
       };
 
-      // With a very high quote_total * price, value averaging could return <= 0
-      mockExchange.fetchTicker.mockResolvedValue({
-        ask: 50000,
-        bid: 49900,
-      });
+      // With quote_total=100, price=50000 → nowWorth=5000000 >> expectWorth
+      const result = await StrategyService.processBuy(strategy);
 
-      await expect(StrategyService.processBuy(strategy)).rejects.toThrow();
+      expect(result).toBeNull();
+      expect(mockExchange.createOrder).not.toHaveBeenCalled();
     });
   });
 
@@ -585,7 +582,7 @@ describe('StrategyService', () => {
       expect(AwaitService.createAwait).toHaveBeenCalled();
     });
 
-    it('should call sellout with sellAmount for intelligent strategy when nowWorth > expectWorth', async () => {
+    it('should call sellout with capped sellAmount for intelligent strategy when nowWorth > expectWorth', async () => {
       mockExchange.fetchTicker.mockResolvedValue({ bid: 60000 });
 
       const strategy = {
@@ -606,8 +603,8 @@ describe('StrategyService', () => {
 
       // nowWorth = 1.0 * 60000 = 60000
       // expectWorth = 100 * 5 * (1.008)^5 ≈ 520.32
-      // excessValue = 60000 - 520.32 = 59479.68
-      // sellAmount = 59479.68 / 60000 ≈ 0.9913
+      // funds = 520.32 - 60000 = -59479.68 → capped to -500 (5x base_limit)
+      // sellAmount = 500 / 60000 ≈ 0.00833
       AwaitService.createAwait.mockResolvedValue({
         _id: 'await-intel',
         strategy_id: 'strat-intel',
@@ -617,7 +614,11 @@ describe('StrategyService', () => {
 
       await StrategyService.processSell(strategy);
 
-      expect(StrategyService.sellout).toHaveBeenCalledWith(strategy, expect.closeTo(0.9913, 2));
+      // Sell amount is capped to 5x base_limit / price = 500/60000 ≈ 0.00833
+      expect(StrategyService.sellout).toHaveBeenCalledWith(
+        strategy,
+        expect.closeTo(500 / 60000, 4)
+      );
     });
 
     it('should not sell intelligent strategy when nowWorth <= expectWorth', async () => {
@@ -872,45 +873,26 @@ describe('StrategyService', () => {
   });
 
   describe('_valueAveraging()', () => {
-    it('should calculate correct funds for value averaging', async () => {
+    it('should calculate correct positive amount for value averaging buy', async () => {
       const strategy = {
-        quote_total: 0.01, // currently holds 0.01 BTC
-        base_limit: 100, // each purchase $100
-        expect_growth_rate: 0.008, // 0.8% growth rate
+        quote_total: 0.01,
+        base_limit: 100,
+        expect_growth_rate: 0.008,
         buy_times: 5,
       };
       const price = 50000;
 
       // nowWorth = 0.01 * 50000 = 500
-      // expectWorth = 100 * 5 * (1 + 0.008)^5 ≈ 500 * 1.0406 ≈ 520.32
-      // funds = 520.32 - 500 = 20.32
-      // amount = 20.32 / 50000 ≈ 0.000406
+      // expectWorth = 100 * 5 * (1.008)^5 ≈ 520.32
+      // funds = 520.32 - 500 = 20.32 → positive (buy)
       const result = await StrategyService._valueAveraging(strategy, price);
 
       expect(result).toBeGreaterThan(0);
     });
 
-    it('should return positive amount when expected > current value', async () => {
+    it('should return negative amount when current value exceeds expected value (sell signal)', async () => {
       const strategy = {
-        quote_total: 0.001, // small holdings
-        base_limit: 100,
-        expect_growth_rate: 0.008,
-        buy_times: 10,
-      };
-      const price = 50000;
-
-      // nowWorth = 0.001 * 50000 = 50
-      // expectWorth = 100 * 10 * (1.008)^10 ≈ 1000 * 1.0829 ≈ 1082.94
-      // funds = 1082.94 - 50 = 1032.94
-      // amount = 1032.94 / 50000 ≈ 0.02066
-      const result = await StrategyService._valueAveraging(strategy, price);
-
-      expect(result).toBeGreaterThan(0);
-    });
-
-    it('should return 0 when current value exceeds expected value', async () => {
-      const strategy = {
-        quote_total: 1.0, // large holdings
+        quote_total: 1.0,
         base_limit: 100,
         expect_growth_rate: 0.008,
         buy_times: 2,
@@ -918,11 +900,63 @@ describe('StrategyService', () => {
       const price = 50000;
 
       // nowWorth = 1.0 * 50000 = 50000
-      // expectWorth = 100 * 2 * (1.008)^2 ≈ 200 * 1.016 ≈ 203.21
-      // funds = 203.21 - 50000 < 0 → returns 0
+      // expectWorth = 100 * 2 * (1.008)^2 ≈ 203.21
+      // funds = 203.21 - 50000 = -49796.79 → capped to -500 (5x base_limit)
       const result = await StrategyService._valueAveraging(strategy, price);
 
-      expect(result).toBe(0);
+      expect(result).toBeLessThan(0);
+    });
+
+    it('should cap buy amount to 5x base_limit', async () => {
+      const strategy = {
+        quote_total: 0.001,
+        base_limit: 100,
+        expect_growth_rate: 0.008,
+        buy_times: 10,
+      };
+      const price = 50000;
+
+      // nowWorth = 0.001 * 50000 = 50
+      // expectWorth = 100 * 10 * (1.008)^10 ≈ 1082.94
+      // funds = 1082.94 - 50 = 1032.94 → capped to 500 (5x 100)
+      // amount = 500 / 50000 = 0.01
+      const result = await StrategyService._valueAveraging(strategy, price);
+
+      expect(result).toBeGreaterThan(0);
+      const maxAmount = (100 * 5) / price;
+      expect(result).toBeLessThanOrEqual(maxAmount + 0.0001);
+    });
+
+    it('should cap sell amount to 5x base_limit', async () => {
+      const strategy = {
+        quote_total: 1.0,
+        base_limit: 100,
+        expect_growth_rate: 0.008,
+        buy_times: 2,
+      };
+      const price = 50000;
+
+      // Sell signal capped to -500 / 50000 = -0.01
+      const result = await StrategyService._valueAveraging(strategy, price);
+
+      expect(result).toBeLessThan(0);
+      const maxSellAmount = (100 * 5) / price;
+      expect(Math.abs(result)).toBeLessThanOrEqual(maxSellAmount + 0.0001);
+    });
+
+    it('should default expect_growth_rate to 0.008 when not set', async () => {
+      const strategy = {
+        quote_total: 0.01,
+        base_limit: 100,
+        buy_times: 5,
+      };
+      const price = 50000;
+
+      const result = await StrategyService._valueAveraging(strategy, price);
+
+      // Should not throw and should return a valid number
+      expect(typeof result).toBe('number');
+      expect(Number.isFinite(result)).toBe(true);
     });
   });
 });
